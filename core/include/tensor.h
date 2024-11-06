@@ -11,6 +11,7 @@
 /* Define this to enable matrix bound checking */
 #define MATRIX_USE_BOUNDS_CHECKING
 
+#define PRECISION_TOLERANCE 1e-9
 
 // Base class: TensorND
 template <typename T, size_t... Dims>
@@ -66,6 +67,182 @@ public:
 
         size_t idxArray[] = {static_cast<size_t>(indices)...};
         return data_[computeIndex(idxArray)];
+    }
+
+    // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
+    bool operator==(const TensorND &other) const
+    {
+        const double tolerance = 1e-9;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            if (std::abs(data_[i] - other.data_[i]) > PRECISION_TOLERANCE)
+            {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    // overload != operator to compare two tensors
+    bool operator!=(const TensorND &other) const
+    {
+        return !(*this == other);
+    }
+
+    // overload = operator to assign a tensor to the tensor
+    TensorND &operator=(const TensorND &other)
+    {
+        std::copy(other.data_, other.data_ + totalSize, data_);
+        return *this;
+    }
+
+    // overload + operator to add a scalar to the tensor
+    TensorND operator+(const T scalar) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] += scalar;
+        }
+        return outp;
+    }
+
+    // overload + operator to add the tensor to a scalar
+    friend TensorND operator+(const T scalar, const TensorND& tensor)
+    {
+        return tensor + scalar;
+    }
+
+    // overload + operator to add a tensor to the tensor elementwise
+    TensorND operator+(const TensorND &other) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] += other.data_[i];
+        }
+        return outp;
+    }
+
+    // overload - operator to subtract a scalar from the tensor
+    TensorND operator-(const T scalar) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] -= scalar;
+        }
+        return outp;
+    }
+
+    // overload - operator to subtract a scalar from the tensor
+    friend TensorND operator-(const T scalar, const TensorND& tensor)
+    {
+        return tensor - scalar;
+    }
+
+    // overload - operator to get the negative of the tensor
+    TensorND operator-(void) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] = -outp.data_[i];
+        }
+        return outp;
+    }
+
+    // overload - operator to subtract a tensor from the tensor elementwise
+    TensorND operator-(const TensorND &other) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] -= other.data_[i];
+        }
+        return outp;
+    }
+
+    // overload * operator to multiply a scalar with the tensor
+    TensorND operator*(const T scalar) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] *= scalar;
+        }
+        return outp;
+    }
+
+    // overload * operator to multiply a tensor with a scalar
+    friend TensorND operator*(const T scalar, const TensorND& tensor)
+    {
+        return tensor * scalar;
+    }
+
+    // overload an operator to multiply a tensor with a tensor elementwise
+    TensorND operator*(const TensorND &other) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] *= other.data_[i];
+        }
+        return outp;
+    }
+
+    // overload / operator to divide the tensor by a scalar, check for division by zero, account floats as well
+    TensorND operator/(const T scalar) const
+    {
+        if (scalar == 0)
+        {
+            throw std::runtime_error("Division by zero");
+        }
+
+        return *this * (1 / scalar);
+    }
+
+    // overload / operator to divide a scalar by the tensor
+    friend TensorND operator/(const T scalar, const TensorND& tensor)
+    {
+        TensorND outp = tensor;
+        for (size_t i = 0; i < tensor.totalSize; ++i)
+        {
+            if (tensor.data_[i] == 0)
+            {
+                throw std::runtime_error("Division by zero");
+            }
+            outp.data_[i] = scalar / tensor.data_[i];
+        }
+        return outp;
+    }
+
+    // overload / operator to divide the tensor by a tensor elementwise, check for division by zero
+    TensorND operator/(const TensorND &other) const
+    {
+        TensorND outp = *this;
+        for (size_t i = 0; i < totalSize; ++i)
+        {
+            if (other.data_[i] == 0)
+            {
+                throw std::runtime_error("Division by zero");
+            }
+            outp.data_[i] /= other.data_[i];
+        }
+        return outp;
+    }
+
+    // check if all dimensions are the same at compile time
+    constexpr bool areDimsEqual() const
+    {
+        for (size_t i = 0; i < getNumDims(); ++i)
+        {
+            if (dims[i] != dims[0])
+            {
+                return false;
+            }
+        }
+        return true;
     }
 
     TensorND& transpose(const size_t order[sizeof...(Dims)])
@@ -125,7 +302,7 @@ public:
         return *this;
     }
 
-    TensorND& setRandom(T _maxRand, T _minRand)
+    TensorND& setRandom(size_t _maxRand, size_t _minRand)
     {
         for (size_t i = 0; i < totalSize; ++i)
         {
@@ -202,6 +379,66 @@ public:
             diagonalEntries(i, 0) = data_[computeIndex(indices)];
         }
     }
+
+    /* Insert submatrix into matrix at _posRow & _posCol position
+    * Example: A = Matrix 4x4, B = Matrix 2x3
+    *
+    *  C = A.InsertSubMatrix(B, 1, 1);
+    *
+    *  A = [A00  A01  A02  A03]    B = [B00  B01  B02]
+    *      [A10  A11  A12  A13]        [B10  B11  B12]
+    *      [A20  A21  A22  A23]
+    *      [A30  A31  A32  A33]
+    *
+    *
+    *  C = [A00  A01  A02  A03]
+    *      [A10  B00  B01  B02]
+    *      [A20  B10  B11  B12]
+    *      [A30  A31  A32  A33]
+    */
+    // template<size_t... DimsB>
+    // template<typename... insertion_coordinates>
+    // TensorND& InsertSubMatrix(const TensorND<T, DimsB...>& _subMatrix, insertion_coordinates... _insertion_coordinates)
+    // {
+    //     // check if the tensor is 2D
+    //     static_assert(sizeof...(Dims) > 3, "InsertSubMatrix is only supported for MAX 3D tensors");
+    //     static_assert(sizeof...(DimsB) > 3, "InsertSubMatrix is only supported for MAX 3D tensors");
+
+    //     // check if the submatrix fits into the matrix
+    //     if ((_subMatrix.dims[0] + _insertion_coordinates... > dims[0]) || (_subMatrix.dims[1] + _insertion_coordinates... > dims[1]))
+    //     {
+    //         throw std::runtime_error("Submatrix does not fit into the matrix");
+    //     }
+
+    //     for (size_t i = 0; i < _subMatrix.dims[0]; ++i)
+    //     {
+    //         for (size_t j = 0; j < _subMatrix.dims[1]; ++j)
+    //         {
+    //             (*this)(_insertion_coordinates... + i, _insertion_coordinates... + j) = _subMatrix(i, j);
+    //         }
+    //     }
+    //     return *this;
+    // }
+    // {
+    //     // check if the tensor is 2D
+    //     static_assert(sizeof...(Dims) == 2, "InsertSubMatrix is only supported for 2D tensors");
+    //     static_assert(sizeof...(DimsB) == 2, "InsertSubMatrix is only supported for 2D tensors");
+
+    //     // check if the submatrix fits into the matrix
+    //     if ((_subMatrix.dims[0] + _posRow > dims[0]) || (_subMatrix.dims[1] + _posCol > dims[1]))
+    //     {
+    //         throw std::runtime_error("Submatrix does not fit into the matrix");
+    //     }
+
+    //     for (size_t i = 0; i < _subMatrix.dims[0]; ++i)
+    //     {
+    //         for (size_t j = 0; j < _subMatrix.dims[1]; ++j)
+    //         {
+    //             (*this)(_posRow + i, _posCol + j) = _subMatrix(i, j);
+    //         }
+    //     }
+    //     return *this;
+    // }
 
     // Function to print the contents of the tensor
     void print() const {
