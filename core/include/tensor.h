@@ -13,8 +13,10 @@
 
 #define PRECISION_TOLERANCE 1e-9
 
+#define my_size_t size_t // can be uint32_t or uint64_t
+
 // Base class: TensorND
-template <typename T, size_t... Dims>
+template <typename T, my_size_t... Dims>
 class TensorND
 {
 public:
@@ -53,7 +55,7 @@ public:
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
-        size_t idxArray[] = {static_cast<size_t>(indices)...}; // Convert indices to an array
+        my_size_t idxArray[] = {static_cast<my_size_t>(indices)...}; // Convert indices to an array
         return data_[computeIndex(idxArray)];
     }
 
@@ -65,7 +67,7 @@ public:
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
-        size_t idxArray[] = {static_cast<size_t>(indices)...};
+        my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
         return data_[computeIndex(idxArray)];
     }
 
@@ -73,7 +75,7 @@ public:
     bool operator==(const TensorND &other) const
     {
         const double tolerance = 1e-9;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             if (std::abs(data_[i] - other.data_[i]) > PRECISION_TOLERANCE)
             {
@@ -100,7 +102,7 @@ public:
     TensorND operator+(const T scalar) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] += scalar;
         }
@@ -117,7 +119,7 @@ public:
     TensorND operator+(const TensorND &other) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] += other.data_[i];
         }
@@ -128,7 +130,7 @@ public:
     TensorND operator-(const T scalar) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] -= scalar;
         }
@@ -145,7 +147,7 @@ public:
     TensorND operator-(void) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] = -outp.data_[i];
         }
@@ -156,7 +158,7 @@ public:
     TensorND operator-(const TensorND &other) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] -= other.data_[i];
         }
@@ -167,7 +169,7 @@ public:
     TensorND operator*(const T scalar) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] *= scalar;
         }
@@ -184,7 +186,7 @@ public:
     TensorND operator*(const TensorND &other) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             outp.data_[i] *= other.data_[i];
         }
@@ -206,7 +208,7 @@ public:
     friend TensorND operator/(const T scalar, const TensorND& tensor)
     {
         TensorND outp = tensor;
-        for (size_t i = 0; i < tensor.totalSize; ++i)
+        for (my_size_t i = 0; i < tensor.totalSize; ++i)
         {
             if (tensor.data_[i] == 0)
             {
@@ -221,7 +223,7 @@ public:
     TensorND operator/(const TensorND &other) const
     {
         TensorND outp = *this;
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             if (other.data_[i] == 0)
             {
@@ -235,7 +237,7 @@ public:
     // check if all dimensions are the same at compile time
     constexpr bool areDimsEqual() const
     {
-        for (size_t i = 0; i < getNumDims(); ++i)
+        for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             if (dims[i] != dims[0])
             {
@@ -245,9 +247,9 @@ public:
         return true;
     }
 
-    TensorND& transpose(const size_t order[sizeof...(Dims)])
+    TensorND& transpose(const my_size_t order[sizeof...(Dims)])
     {
-        for (size_t i = 0; i < getNumDims(); ++i)
+        for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             transposeOrder_[i] = order[i];
         }
@@ -264,13 +266,13 @@ public:
     }
 
     // Utility function to retrieve total number of elements
-    constexpr size_t getTotalSize() const
+    constexpr my_size_t getTotalSize() const
     {
         return totalSize;
     }
 
     // Utility function to retrieve the number of dimensions
-    constexpr size_t getNumDims() const
+    constexpr my_size_t getNumDims() const
     {
         return sizeof...(Dims);
     }
@@ -280,7 +282,7 @@ public:
     // account for the trnaspose order as well
     {
         std::string shape = "(";
-        for (size_t i = 0; i < getNumDims(); ++i)
+        for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             shape += std::to_string(dims[transposeOrder_[i]]);
             if (i < getNumDims() - 1)
@@ -302,9 +304,9 @@ public:
         return *this;
     }
 
-    TensorND& setRandom(size_t _maxRand, size_t _minRand)
+    TensorND& setRandom(my_size_t _maxRand, my_size_t _minRand)
     {
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             // TODO: seed the random number generator
             data_[i] = static_cast<T>((rand() % (_maxRand - _minRand + 1)) + _minRand);
@@ -319,13 +321,13 @@ public:
         setToZero();
 
         // Calculate the minimum dimension
-        size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
+        my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
+        my_size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
         
-        for (size_t i = 0; i < minDim; ++i)
+        for (my_size_t i = 0; i < minDim; ++i)
         {
             // Set the current diagonal index for all dimensions
-            for (size_t d = 0; d < getNumDims(); ++d) {
+            for (my_size_t d = 0; d < getNumDims(); ++d) {
                 indices[d] = i; // Set the diagonal index, others to zero
             }
 
@@ -354,24 +356,24 @@ public:
 
     TensorND& setSequencial(void)
     {
-        for (size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < totalSize; ++i)
         {
             data_[i] = i;
         }
         return *this;
     }
 
-    template<size_t DiagonalSize>
+    template<my_size_t DiagonalSize>
     void getDiagonalEntries(TensorND<T, DiagonalSize, 1>& diagonalEntries) const
     {
         // Calculate the minimum dimension
-        size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
+        my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
+        my_size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
 
-        for (size_t i = 0; i < minDim; ++i)
+        for (my_size_t i = 0; i < minDim; ++i)
         {
             // Set the current diagonal index for all dimensions
-            for (size_t d = 0; d < getNumDims(); ++d) {
+            for (my_size_t d = 0; d < getNumDims(); ++d) {
                 indices[d] = i; // Set the diagonal index, others to zero
             }
 
@@ -396,7 +398,7 @@ public:
     *      [A20  B10  B11  B12]
     *      [A30  A31  A32  A33]
     */
-    // template<size_t... DimsB>
+    // template<my_size_t... DimsB>
     // template<typename... insertion_coordinates>
     // TensorND& InsertSubMatrix(const TensorND<T, DimsB...>& _subMatrix, insertion_coordinates... _insertion_coordinates)
     // {
@@ -410,9 +412,9 @@ public:
     //         throw std::runtime_error("Submatrix does not fit into the matrix");
     //     }
 
-    //     for (size_t i = 0; i < _subMatrix.dims[0]; ++i)
+    //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
     //     {
-    //         for (size_t j = 0; j < _subMatrix.dims[1]; ++j)
+    //         for (my_size_t j = 0; j < _subMatrix.dims[1]; ++j)
     //         {
     //             (*this)(_insertion_coordinates... + i, _insertion_coordinates... + j) = _subMatrix(i, j);
     //         }
@@ -430,9 +432,9 @@ public:
     //         throw std::runtime_error("Submatrix does not fit into the matrix");
     //     }
 
-    //     for (size_t i = 0; i < _subMatrix.dims[0]; ++i)
+    //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
     //     {
-    //         for (size_t j = 0; j < _subMatrix.dims[1]; ++j)
+    //         for (my_size_t j = 0; j < _subMatrix.dims[1]; ++j)
     //         {
     //             (*this)(_posRow + i, _posCol + j) = _subMatrix(i, j);
     //         }
@@ -457,9 +459,9 @@ public:
 
 private:
     // Calculate total number of elements at compile time
-    static constexpr size_t totalSize = (Dims * ...);
-    static constexpr size_t dims[] = {Dims...}; // Fixed array of dimensions
-    size_t transposeOrder_[sizeof...(Dims)];
+    static constexpr my_size_t totalSize = (Dims * ...);
+    static constexpr my_size_t dims[] = {Dims...}; // Fixed array of dimensions
+    my_size_t transposeOrder_[sizeof...(Dims)];
 
     
     T data_[totalSize]; // Contiguous storage of elements in a flat array
@@ -467,7 +469,7 @@ private:
     // init the transpose order
     void initTransposeOrder()
     {
-        for (size_t i = 0; i < getNumDims(); ++i)
+        for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             transposeOrder_[i] = i;
         }
@@ -476,9 +478,9 @@ private:
     // 2D print function
     void print2D() const {
         // account for the trnaspose order as well
-        for (size_t i = 0; i < dims[transposeOrder_[0]]; ++i)
+        for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i)
         {
-            for (size_t j = 0; j < dims[transposeOrder_[1]]; ++j)
+            for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j)
             {
                 // std::cout << "(" << i << "," << j << ") ";
                 std::cout << (*this)(i, j) << " ";
@@ -489,10 +491,10 @@ private:
 
     // 3D print function
     void print3D() const {
-        for (size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
+        for (my_size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
             // std::cout << "Slice " << i << ":\n";
-            for (size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
-                for (size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
+            for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
+                for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
                     std::cout << (*this)(i, j, k) << " ";
                 }
                 std::cout << std::endl;
@@ -502,13 +504,13 @@ private:
     }
 
     void print4D() const {
-        for (size_t l = 0; l < dims[transposeOrder_[3]]; ++l) {
+        for (my_size_t l = 0; l < dims[transposeOrder_[3]]; ++l) {
             std::cout << "Slice [" << l << "]:\n";
-            for (size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
+            for (my_size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
                 std::cout << "  Sub-Slice [" << k << "]:\n";
-                for (size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
+                for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
                     std::cout << "    [ ";
-                    for (size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
+                    for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
                         std::cout << operator()(i, j, k, l) << " ";
                     }
                     std::cout << "]" << std::endl;
@@ -520,12 +522,13 @@ private:
     }
 
     // Compute the flat index from multi-dimensional indices
-    size_t computeIndex(const size_t indices[getNumDims()]) const {
-        size_t index = 0;
-        size_t factor = 1;
+    my_size_t computeIndex(const my_size_t indices[getNumDims()]) const {
+        my_size_t index = 0;
+        my_size_t factor = 1;
 
-        for (int i = getNumDims() - 1; i >= 0; --i) {
-            size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
+        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
+        for (my_size_t i = getNumDims(); i-- > 0; ) {
+            my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
 
             #ifdef MATRIX_USE_BOUNDS_CHECKING
                 if (indices[dimIndex] >= dims[i]) {
