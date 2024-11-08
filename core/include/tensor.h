@@ -71,6 +71,27 @@ public:
         return data_[computeIndex(idxArray)];
     }
 
+    // version of passing a array of indices eg _tensor1(indices1), indices1 is an array of known size use template
+    template<my_size_t length>
+    T& operator()(my_size_t (&indices)[length])
+    {
+        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+            static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
+        #endif
+
+        return data_[computeIndex(indices)];
+    }
+
+    template<my_size_t length>
+    const T& operator()(my_size_t (&indices)[length]) const
+    {
+        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+            static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
+        #endif
+
+        return data_[computeIndex(indices)];
+    }
+
     // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
     bool operator==(const TensorND &other) const
     {
@@ -382,6 +403,155 @@ public:
         }
     }
 
+    // contract two tensors along a specific dimension (axis) and return the result
+    template <my_size_t... Dims1, my_size_t... Dims2>
+    static TensorND einsum(const TensorND<T, Dims1...>& _tensor1, const TensorND<T, Dims2...>& _tensor2, my_size_t a, my_size_t b)
+    {
+        // print the number of dimensions of the tensor of that tensor
+        for (my_size_t i = 0; i < sizeof...(Dims); ++i)
+        {
+            std::cout << "Dim " << i << " = " << dims[i] << std::endl;
+        }
+
+        std::cout << "Num of dims of tesnor1:" << sizeof...(Dims1) << std::endl;
+
+        std::cout << "Num of dims of tesnor2:" << sizeof...(Dims2) << std::endl;
+
+        std::cout << "dim a = " << _tensor1.getDim(a) << std::endl;
+
+        std::cout << "dim b = " << _tensor2.getDim(b) << std::endl;
+
+        // check if a and b are valid dimensions
+        if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
+        {
+            throw std::runtime_error("Invalid dimensions");
+        }
+
+        // check if the a axis of tensor1 is equal to the b axis of tensor2
+        if (_tensor1.getDim(a) != _tensor2.getDim(b))
+        {
+            throw std::runtime_error("Dimensions mismatch");
+        }
+
+        // calculate the new dimensions
+        constexpr my_size_t n_newDims = sizeof...(Dims1) + sizeof...(Dims2) - 2;
+        my_size_t newDims[n_newDims];
+        my_size_t k = 0;
+        for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+        {
+            if (i != a)
+            {
+                newDims[k++] = _tensor1.getDim(i);
+            }
+        }
+
+        for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+        {
+            if (i != b)
+            {
+                newDims[k++] = _tensor2.getDim(i);
+            }
+        }
+
+        // print the new dimensions
+        std::cout << "New dimensions: ";
+        for (my_size_t i = 0; i < n_newDims; ++i)
+        {
+            std::cout << newDims[i] << " ";
+        }
+        std::cout << std::endl;
+
+        // create a new tensor with the new dimensions
+        TensorND<T, Dims...> _outp;
+
+        //  check if the new dimensions one by one are the same as the dimensions of the new tensor
+        for (my_size_t i = 0; i < n_newDims; ++i)
+        {
+            if (newDims[i] != _outp.getDim(i))
+            {
+                throw std::runtime_error("Dimensions mismatch");
+            }
+        }
+
+        // calculate the new tensor for a variable number of dimensions (einsum)
+
+        // calculate the total number of combinations
+        constexpr my_size_t total_combinations = (1 * ... * Dims);
+        
+        my_size_t combinations[total_combinations][n_newDims];
+
+        // generate all the combinations
+
+        generate_combinations(newDims, combinations);
+
+        // print_combinations(combinations);
+
+        // calculate the contraction        
+        // ----------check this out----------------
+        for (my_size_t comb = 0; comb < total_combinations; ++comb)
+        {
+            T sum = 0;
+
+            // // print the sum with the output tensor
+            // std::cout << std::endl << "---------------" << std::endl << "_outp(";
+            // for (my_size_t i = 0; i < n_newDims; ++i)
+            // {
+            //     std::cout << combinations[comb][i] << (i < n_newDims - 1 ? ", " : "");
+            // }
+            // std::cout << ") = " << "sum" << ";" << std::endl << std::endl;
+            
+            my_size_t K = _tensor1.getDim(a); // or _tensor2.getDim(b) since they are equal
+            for (my_size_t k = 0; k < K; ++k)
+            {
+                my_size_t indices1[sizeof...(Dims1)] = {0};
+                my_size_t indices2[sizeof...(Dims2)] = {0};
+
+                my_size_t l = 0;
+                for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+                {
+                    if (i != a)
+                    {
+                        indices1[i] = combinations[comb][l++];
+                    }
+                    else
+                    {
+                        indices1[i] = k;
+                    }
+                }
+                
+                l = sizeof...(Dims1) - 1;
+                for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+                {
+                    if (i != b)
+                    {
+                        indices2[i] = combinations[comb][l++];
+                    }
+                    else
+                    {
+                        indices2[i] = k;
+                    }
+                }
+
+                // // print the sumation operation with the indices of the tensors
+                // std::cout << "Sum += _tensor1(";
+                // for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+                // {
+                //     std::cout << indices1[i] << (i < sizeof...(Dims1) - 1 ? ", " : "");
+                // }
+                // std::cout << ") * _tensor2(";
+                // for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+                // {
+                //     std::cout << indices2[i] << (i < sizeof...(Dims2) - 1 ? ", " : "");
+                // }
+                // std::cout << ");" << std::endl;
+
+                sum += _tensor1(indices1) * _tensor2(indices2);
+            }
+            _outp(combinations[comb]) = sum;
+        }
+        return _outp;
+    }
+
     /* Insert submatrix into matrix at _posRow & _posCol position
     * Example: A = Matrix 4x4, B = Matrix 2x3
     *
@@ -457,6 +627,12 @@ public:
         }
     }
 
+    // getter for dims
+    my_size_t getDim(my_size_t i) const
+    {
+        return dims[i];
+    }
+
 private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);
@@ -465,6 +641,60 @@ private:
 
     
     T data_[totalSize]; // Contiguous storage of elements in a flat array
+
+    template <my_size_t N, my_size_t M>
+    static void print_combinations(const my_size_t (&combinations)[M][N])
+    {
+        for (my_size_t i = 0; i < M; ++i)
+        {
+            std::cout << "{ ";
+            for (my_size_t j = 0; j < N; ++j)
+            {
+                std::cout << combinations[i][j] << (j < N - 1 ? ", " : " ");
+            }
+            std::cout << "}\n";
+        }
+    }
+
+    // Template function to generate all combinations and store them in a 2D array
+    template <my_size_t N, my_size_t M>
+    static void generate_combinations(const my_size_t (&max_values)[N], my_size_t (&combinations)[M][N])
+    {
+        int combination[N] = {0}; // Initialize the first combination with all 0s
+
+        // Fill each row in `combinations` with the next combination
+        for (my_size_t row = 0; row < M; ++row)
+        {
+            for (my_size_t i = 0; i < N; ++i)
+            {
+                combinations[row][i] = combination[i];
+            }
+
+            // print the combination 
+            // here you can calculate the contraction of the tensor
+            // if you don't want to store all the combinations
+            // you can calculate the contraction here
+            // for now comment this print statement 
+            // for (my_size_t i = 0; i < N; ++i)
+            // {
+            //     std::cout << combination[i] << ", ";
+            // }
+            // std::cout << std::endl;
+
+            // Increment combination like a counter with custom max values
+            int position = N - 1;
+            while (position >= 0)
+            {
+                ++combination[position];
+                if (combination[position] < max_values[position])
+                {
+                    break;
+                }
+                combination[position] = 0;
+                --position;
+            }
+        }
+    }
 
     // init the transpose order
     void initTransposeOrder()
