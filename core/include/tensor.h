@@ -407,20 +407,6 @@ public:
     template <my_size_t... Dims1, my_size_t... Dims2>
     static TensorND einsum(const TensorND<T, Dims1...>& _tensor1, const TensorND<T, Dims2...>& _tensor2, my_size_t a, my_size_t b)
     {
-        // print the number of dimensions of the tensor of that tensor
-        for (my_size_t i = 0; i < sizeof...(Dims); ++i)
-        {
-            std::cout << "Dim " << i << " = " << dims[i] << std::endl;
-        }
-
-        std::cout << "Num of dims of tesnor1:" << sizeof...(Dims1) << std::endl;
-
-        std::cout << "Num of dims of tesnor2:" << sizeof...(Dims2) << std::endl;
-
-        std::cout << "dim a = " << _tensor1.getDim(a) << std::endl;
-
-        std::cout << "dim b = " << _tensor2.getDim(b) << std::endl;
-
         // check if a and b are valid dimensions
         if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
         {
@@ -473,21 +459,16 @@ public:
             }
         }
 
-        // calculate the new tensor for a variable number of dimensions (einsum)
-
-        // calculate the total number of combinations
+        // calculate the total number of combinations and create a 2D array to store them
         constexpr my_size_t total_combinations = (1 * ... * Dims);
-        
         my_size_t combinations[total_combinations][n_newDims];
 
         // generate all the combinations
-
         generate_combinations(newDims, combinations);
 
         // print_combinations(combinations);
 
         // calculate the contraction        
-        // ----------check this out----------------
         for (my_size_t comb = 0; comb < total_combinations; ++comb)
         {
             T sum = 0;
