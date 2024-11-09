@@ -308,8 +308,18 @@ public:
     {
         // check if the tensor is 2D
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-        transposeOrder_[0] = 1;
-        transposeOrder_[1] = 0;
+        
+        // reverse the transpose order
+        if (transposeOrder_[0] == 0)
+        {
+            transposeOrder_[0] = 1;
+            transposeOrder_[1] = 0;
+        }
+        else
+        {   
+            transposeOrder_[0] = 0;
+            transposeOrder_[1] = 1;
+        }
         return *this;
     }
 
