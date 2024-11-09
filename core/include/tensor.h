@@ -36,14 +36,20 @@ public:
     // Copy constructor
     TensorND(const TensorND &other)
     {
+        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        transposeOrderSet_ = true;
         initTransposeOrder();
+
         std::copy(other.data_, other.data_ + totalSize, data_);
     }
 
     // Move constructor
     TensorND(TensorND &&other) noexcept
     {
+        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        transposeOrderSet_ = true;
         initTransposeOrder();
+
         std::move(other.data_, other.data_ + totalSize, data_);
     }
 
@@ -114,6 +120,16 @@ public:
     // overload = operator to assign a tensor to the tensor
     TensorND &operator=(const TensorND &other)
     {
+        if (this == &other)
+        {
+            return *this;
+        }
+        
+        // copy the transpose order
+        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        transposeOrderSet_ = true;
+
+        // copy the data
         std::copy(other.data_, other.data_ + totalSize, data_);
         return *this;
     }
@@ -617,9 +633,10 @@ private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);
     static constexpr my_size_t dims[] = {Dims...}; // Fixed array of dimensions
-    my_size_t transposeOrder_[sizeof...(Dims)];
 
-    
+    // These vars are being set in runtime
+    my_size_t transposeOrder_[sizeof...(Dims)];
+    bool transposeOrderSet_ = false;    
     T data_[totalSize]; // Contiguous storage of elements in a flat array
 
     template <my_size_t N, my_size_t M>
@@ -679,6 +696,13 @@ private:
     // init the transpose order
     void initTransposeOrder()
     {
+        // check if the transpose order is preset
+        if (transposeOrderSet_)
+        {
+            return;
+        }
+
+        // if not set the transpose order to the default order
         for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             transposeOrder_[i] = i;
