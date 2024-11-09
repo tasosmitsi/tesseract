@@ -154,6 +154,9 @@ public:
     // overload + operator to add a tensor to the tensor elementwise
     TensorND operator+(const TensorND &other) const
     {
+        // check for dimensions mismatch
+        checkDimensionsMismatch(other);
+
         TensorND outp = *this;
         for (my_size_t i = 0; i < totalSize; ++i)
         {
@@ -193,6 +196,9 @@ public:
     // overload - operator to subtract a tensor from the tensor elementwise
     TensorND operator-(const TensorND &other) const
     {
+        // check for dimensions mismatch
+        checkDimensionsMismatch(other);
+
         TensorND outp = *this;
         for (my_size_t i = 0; i < totalSize; ++i)
         {
@@ -221,6 +227,9 @@ public:
     // overload an operator to multiply a tensor with a tensor elementwise
     TensorND operator*(const TensorND &other) const
     {
+        // check for dimensions mismatch
+        checkDimensionsMismatch(other);
+
         TensorND outp = *this;
         for (my_size_t i = 0; i < totalSize; ++i)
         {
@@ -258,6 +267,9 @@ public:
     // overload / operator to divide the tensor by a tensor elementwise, check for division by zero
     TensorND operator/(const TensorND &other) const
     {
+        // check for dimensions mismatch
+        checkDimensionsMismatch(other);
+
         TensorND outp = *this;
         for (my_size_t i = 0; i < totalSize; ++i)
         {
@@ -350,7 +362,7 @@ public:
         return *this;
     }
 
-    // for all dimentions
+    // for all dimensions
     TensorND& setDiagonal(T _val)
     {
         // set the entire matrix to zeros
@@ -638,6 +650,18 @@ private:
     my_size_t transposeOrder_[sizeof...(Dims)];
     bool transposeOrderSet_ = false;    
     T data_[totalSize]; // Contiguous storage of elements in a flat array
+
+    inline void checkDimensionsMismatch(const TensorND &other) const
+    {
+        // check if the dimensions of the tensors are the same taking into account the transpose order
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+        {
+            if (dims[transposeOrder_[i]] != other.dims[other.transposeOrder_[i]])
+            {
+                throw std::runtime_error("Dimensions mismatch");
+            }
+        }
+    }
 
     template <my_size_t N, my_size_t M>
     static void print_combinations(const my_size_t (&combinations)[M][N])
