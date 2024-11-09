@@ -95,7 +95,6 @@ public:
     // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
     bool operator==(const TensorND &other) const
     {
-        const double tolerance = 1e-9;
         for (my_size_t i = 0; i < totalSize; ++i)
         {
             if (std::abs(data_[i] - other.data_[i]) > PRECISION_TOLERANCE)
