@@ -21,12 +21,40 @@ public:
     // Move constructor
     Matrix(Matrix &&other) noexcept : TensorND<T, Rows, Cols>(std::move(other)) {}
 
+    Matrix(T (&initList)[Rows][Cols]) : TensorND<T, Rows, Cols>() 
+    {
+        // loop trough the input and use (i,j) to store them
+        for (my_size_t i = 0; i < Rows; ++i)
+        {
+            for (my_size_t j = 0; j < Cols; ++j)
+            {
+                (*this)(i, j) = initList[i][j];
+            }
+        }
+    }
+
     // Override operator= to assign a matrix to another matrix
     Matrix &operator=(const Matrix &other)
     {
         // Call the base class operator= to assign the tensor
         TensorND<T, Rows, Cols>::operator=(other);
 
+        // Return the derived type
+        return *this;
+    }
+
+    // Override operator= to assign a 2D array to the matrix
+    Matrix &operator=(T (&initList)[Rows][Cols])
+    {
+        // loop trough the input and use (i,j) to store them
+        for (my_size_t i = 0; i < Rows; ++i)
+        {
+            for (my_size_t j = 0; j < Cols; ++j)
+            {
+                (*this)(i, j) = initList[i][j];
+            }
+        }
+        
         // Return the derived type
         return *this;
     }
@@ -213,8 +241,6 @@ public:
         // Cast the base class (TensorND) to Matrix to return the derived type
         return *this;
     }
-
-
 
     // matmul using einsum of parent class
     template <my_size_t Common, my_size_t mat1_rows, my_size_t mat2_cols>
