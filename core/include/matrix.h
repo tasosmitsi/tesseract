@@ -312,6 +312,102 @@ public:
             return *this;  // Returning the modified matrix itself
         }
     }
+
+    /* Invers operation using Gauss-Jordan algorithm */
+    Matrix inverse(void) const
+    {
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is non-invertible cause: not square");
+        }
+
+        // check if is identity
+        if (this->isIdentity())
+        {
+            return *this;
+        }
+
+        Matrix _outp = *this;
+        Matrix _temp = *this;
+
+        my_size_t rows = _temp.getDim(0);
+        my_size_t cols = _temp.getDim(1);
+        _outp.setIdentity();
+
+        /* Gauss Elimination... */
+        for (my_size_t j = 0; j < rows - 1; j++)
+        {
+            for (my_size_t i = j + 1; i < rows; i++)
+            {
+                if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
+                {
+                    /* Matrix is non-invertible */
+                    throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
+                }
+
+                T tmp = _temp(i, j) / _temp(j, j);
+
+                for (my_size_t k = 0; k < cols; k++)
+                {
+                    _temp(i, k) -= (_temp(j, k) * tmp);
+                    _outp(i, k) -= (_outp(j, k) * tmp);
+
+                    // round _temp(i, k) to zero if it's too small
+                    // round _outp(i, k) to zero if it's too small
+                }
+            }
+        }
+
+        /* At this point, the _temp matrix should be an upper triangular matrix.
+         * But because of rounding error, it might not.
+         * Make it upper triangular by setting the lower triangular to zero.
+         */
+        _temp.upperTriangular(true);
+
+        /* Jordan... */
+        for (my_size_t j = rows - 1; j > 0; j--)
+        {
+            for (int i = j - 1; i >= 0; i--)
+            {
+                if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
+                {
+                    /* Matrix is non-invertible */
+                    throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Jordan)");
+                }
+
+                T tmp = _temp(i, j) / _temp(j, j);
+                _temp(i, j) -= (_temp(j, j) * tmp);
+
+                // round _temp(i, j) to zero if it's too small
+
+                for (int k = rows - 1; k >= 0; k--)
+                {
+                    _outp(i, k) -= (_outp(j, k) * tmp);
+
+                    // round _outp(i, k) to zero if it's too small
+                }
+            }
+        }
+
+        /* Normalize the matrix */
+        for (my_size_t i = 0; i < rows; i++)
+        {
+            if (std::abs((_temp(i, i)) < T(PRECISION_TOLERANCE)))
+            {
+                /* Matrix is non-invertible */
+                throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Normalization)");
+            }
+
+            T tmp = _temp(i, i);
+            _temp(i, i) = T(1.0);
+
+            for (my_size_t j = 0; j < cols; j++)
+            {
+                _outp(i, j) /= tmp;
+            }
+        }
+        return _outp;
+    }
 };
 
 #endif // MATRIX_H
