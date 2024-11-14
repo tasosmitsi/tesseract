@@ -282,6 +282,24 @@ public:
         return true;
     }
 
+    bool isSymmetric(void)
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
+        // use the fact that A = A^T for symmetric matrices
+        // use transpose() to get the transpose of the matrix
+        // and see if it's equal to the original matrix
+
+        Matrix transpose = this->transpose();
+        this->transpose();  // transpose back to original state TODO: it should not modify the matrix itself
+
+        return (*this == transpose);
+    }
+
     bool isUpperTriangular(void) const
     {
         // Check if the matrix is square
