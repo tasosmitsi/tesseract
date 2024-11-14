@@ -283,6 +283,14 @@ public:
     }
 
     Matrix upperTriangular(bool inplace = false) {
+    Matrix upperTriangular(bool inplace = false) 
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
         if (!inplace) {
             // Create a copy and modify it
             // std::cout << "Setting matrix to upper triangular" << std::endl;
