@@ -295,6 +295,54 @@ public:
         return true;
     }
 
+    bool isIdentity() const
+    {
+        // check if the tensor is square
+        if (!areDimsEqual())
+        {
+            return false;
+        }
+
+        // Calculate all indices combinations for all dimensions
+        constexpr my_size_t total_combinations = (1 * ... * Dims); // fold expression to calculate the total number of combinations
+        my_size_t combinations[total_combinations][sizeof...(Dims)]; // 2D array to store all combinations
+        my_size_t max_vals[sizeof...(Dims)] = {Dims...}; // array to store the maximum values for each dimension
+        generate_combinations(max_vals, combinations); // generate all combinations
+
+        for (my_size_t i = 0; i < total_combinations; ++i)
+        {
+            // itterate over all dimensions
+            // if all indices are the same, then it's a diagonal element
+            bool isDiagonal = true;
+            for (my_size_t j = 0; j < getNumDims(); ++j)
+            {
+                if (combinations[i][j] != combinations[i][0])
+                {
+                    isDiagonal = false;
+                    break;
+                }
+            }
+
+            if (isDiagonal)
+            {
+                // take into account the tolerance for floating point numbers
+                if (std::abs(data_[computeIndex(combinations[i])] - 1) > PRECISION_TOLERANCE)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                // take into account the tolerance for floating point numbers
+                if (!std::abs(data_[computeIndex(combinations[i])]) < PRECISION_TOLERANCE)
+                {
+                    return false;
+                }
+            }
+        }
+        return true;        
+    }
+
     TensorND& transpose(const my_size_t order[sizeof...(Dims)])
     {
         for (my_size_t i = 0; i < getNumDims(); ++i)
@@ -477,12 +525,12 @@ public:
         }
 
         // print the new dimensions
-        std::cout << "New dimensions: ";
-        for (my_size_t i = 0; i < n_newDims; ++i)
-        {
-            std::cout << newDims[i] << " ";
-        }
-        std::cout << std::endl;
+        // std::cout << "New dimensions: ";
+        // for (my_size_t i = 0; i < n_newDims; ++i)
+        // {
+        //     std::cout << newDims[i] << " ";
+        // }
+        // std::cout << std::endl;
 
         // create a new tensor with the new dimensions
         TensorND<T, Dims...> _outp;
