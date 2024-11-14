@@ -282,7 +282,50 @@ public:
         return true;
     }
 
-    Matrix upperTriangular(bool inplace = false) {
+    bool isUpperTriangular(void) const
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
+        // Check if the matrix is upper triangular
+        for (my_size_t i = 1; i < this->getDim(0); i++)
+        {
+            for (my_size_t j = 0; j < i; j++)
+            {
+                if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    bool isLowerTriangular(void) const
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
+        // Check if the matrix is lower triangular
+        for (my_size_t i = 0; i < this->getDim(0); i++)
+        {
+            for (my_size_t j = i + 1; j < this->getDim(1); j++)
+            {
+                if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
     Matrix upperTriangular(bool inplace = false) 
     {
         // Check if the matrix is square
