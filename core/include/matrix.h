@@ -250,6 +250,38 @@ public:
         return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
     }
 
+    bool isIdentity(void) const
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            return false;
+        }
+
+        // Check if the diagonal elements are 1 and the rest are 0
+        for (my_size_t i = 0; i < this->getDim(0); i++)
+        {
+            for (my_size_t j = 0; j < this->getDim(1); j++)
+            {
+                if (i == j)
+                {
+                    if (std::abs((*this)(i, j) - T(1)) > T(PRECISION_TOLERANCE))
+                    {
+                        return false;
+                    }
+                }
+                else
+                {
+                    if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                    {
+                        return false;
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
     Matrix upperTriangular(bool inplace = false) {
         if (!inplace) {
             // Create a copy and modify it
