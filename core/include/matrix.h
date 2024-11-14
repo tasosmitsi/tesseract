@@ -250,6 +250,36 @@ public:
         return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
     }
 
+    Matrix upperTriangular(bool inplace = false) {
+        if (!inplace) {
+            // Create a copy and modify it
+            // std::cout << "Setting matrix to upper triangular" << std::endl;
+            Matrix result = *this;
+            for (my_size_t i = 1; i < result.getDim(0); i++)
+            {
+                my_size_t limit = (i < result.getDim(1)) ? i : result.getDim(1);
+
+                // this assumes that the overloaded operator () 
+                // handle memory in a contiguous manner.
+                // If not, this will not work.
+                std::fill(&result(i, 0), &result(i, limit), T(0));
+            }
+            return result;
+        } else {
+            // std::cout << "Setting matrix to upper triangular in place" << std::endl;
+            // Modify the matrix in-place
+            for (my_size_t i = 1; i < this->getDim(0); i++)
+            {
+                my_size_t limit = (i < this->getDim(1)) ? i : this->getDim(1);
+
+                // this assumes that the overloaded operator () 
+                // handle memory in a contiguous manner.
+                // If not, this will not work.
+                std::fill(&(*this)(i, 0), &(*this)(i, limit), T(0));
+            }
+            return *this;  // Returning the modified matrix itself
+        }
+    }
 };
 
 #endif // MATRIX_H
