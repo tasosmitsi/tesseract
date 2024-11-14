@@ -101,9 +101,28 @@ public:
     // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
     bool operator==(const TensorND &other) const
     {
+        // check for dimensions mismatch, we don't check if they are square
+        checkDimensionsMismatch(other);
+
+        my_size_t indices[sizeof...(Dims)] = {0};
         for (my_size_t i = 0; i < totalSize; ++i)
         {
-            if (std::abs(data_[i] - other.data_[i]) > PRECISION_TOLERANCE)
+            // increment the indices using for loop
+            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
+            {
+                if (indices[j] < getDim(j) - 1)
+                {
+                    indices[j]++;
+                    break;
+                }
+                else
+                {
+                    indices[j] = 0;
+                }
+            }
+
+            // use the () operator to access the elements
+            if (std::abs((*this)(indices) - other(indices)) > T(PRECISION_TOLERANCE))
             {
                 return false;
             }
@@ -158,9 +177,25 @@ public:
         checkDimensionsMismatch(other);
 
         TensorND outp = *this;
+        my_size_t indices[sizeof...(Dims)] = {0};
         for (my_size_t i = 0; i < totalSize; ++i)
         {
-            outp.data_[i] += other.data_[i];
+            // increment the indices using for loop
+            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
+            {
+                if (indices[j] < getDim(j) - 1)
+                {
+                    indices[j]++;
+                    break;
+                }
+                else
+                {
+                    indices[j] = 0;
+                }
+            }
+
+            // use the () operator to access the elements
+            outp(indices) += other(indices);
         }
         return outp;
     }
@@ -200,10 +235,26 @@ public:
         checkDimensionsMismatch(other);
 
         TensorND outp = *this;
+        my_size_t indices[sizeof...(Dims)] = {0};
         for (my_size_t i = 0; i < totalSize; ++i)
         {
-            outp.data_[i] -= other.data_[i];
-        }
+            // increment the indices using for loop
+            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
+            {
+                if (indices[j] < getDim(j) - 1)
+                {
+                    indices[j]++;
+                    break;
+                }
+                else
+                {
+                    indices[j] = 0;
+                }
+            }
+
+            // use the () operator to access the elements
+            outp(indices) -= other(indices);
+            }
         return outp;
     }
 
@@ -231,10 +282,26 @@ public:
         checkDimensionsMismatch(other);
 
         TensorND outp = *this;
+        my_size_t indices[sizeof...(Dims)] = {0};
         for (my_size_t i = 0; i < totalSize; ++i)
         {
-            outp.data_[i] *= other.data_[i];
-        }
+            // increment the indices using for loop
+            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
+            {
+                if (indices[j] < getDim(j) - 1)
+                {
+                    indices[j]++;
+                    break;
+                }
+                else
+                {
+                    indices[j] = 0;
+                }
+            }
+
+            // use the () operator to access the elements
+            outp(indices) *= other(indices);
+            }
         return outp;
     }
 
@@ -271,13 +338,29 @@ public:
         checkDimensionsMismatch(other);
 
         TensorND outp = *this;
+        my_size_t indices[sizeof...(Dims)] = {0};
         for (my_size_t i = 0; i < totalSize; ++i)
         {
-            if (other.data_[i] == 0)
+            // increment the indices using for loop
+            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
+            {
+                if (indices[j] < getDim(j) - 1)
+                {
+                    indices[j]++;
+                    break;
+                }
+                else
+                {
+                    indices[j] = 0;
+                }
+            }
+
+            // use the () operator to access the elements
+            if (other(indices) == 0)
             {
                 throw std::runtime_error("Division by zero");
             }
-            outp.data_[i] /= other.data_[i];
+            outp(indices) /= other(indices);
         }
         return outp;
     }
@@ -297,7 +380,7 @@ public:
 
     bool isIdentity() const
     {
-        // check if the tensor is square
+        // check if the tensor is square (hypercube)
         if (!areDimsEqual())
         {
             return false;
@@ -326,7 +409,7 @@ public:
             if (isDiagonal)
             {
                 // take into account the tolerance for floating point numbers
-                if (std::abs(data_[computeIndex(combinations[i])] - 1) > PRECISION_TOLERANCE)
+                if (std::abs((*this)(combinations[i]) - 1) > PRECISION_TOLERANCE)
                 {
                     return false;
                 }
@@ -334,7 +417,7 @@ public:
             else
             {
                 // take into account the tolerance for floating point numbers
-                if (!std::abs(data_[computeIndex(combinations[i])]) < PRECISION_TOLERANCE)
+                if (!std::abs((*this)(combinations[i])) < PRECISION_TOLERANCE)
                 {
                     return false;
                 }
