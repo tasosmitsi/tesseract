@@ -137,33 +137,43 @@ TEST_CASE("Matrix class", "[matrix]")
         }
     }
 
-    SECTION("Matrix operations")
+    SECTION("Matrix elementary operations")
     {
-        // TODO: test -tensor as well
+        // TODO: Split this section into smaller sections
+        // one for addition, one for subtraction,
+        // one for multiplication, one for division
 
-        Matrix<double, 10, 10> mat1, mat2, mat4,
-            mat5, mat6, mat7, mat8, mat9, mat10,
-            mat11, mat12, mat13, mat14, mat15,
-            mat16, mat17, mat18, mat19;
+        Matrix<double, 10, 10>
+            mat1, mat2, mat4, mat5,
+            mat6, mat7, mat8, mat9,
+            mat10, mat11, mat12, mat13,
+            mat14, mat15, mat16, mat17,
+            mat18, mat19, mat20, mat21;
 
         mat1.setIdentity();
         mat2.setIdentity();
 
+        // additon
         mat4 = mat1 + mat2;
         mat5 = mat2 + mat1;
         mat12 = mat1 + 2;
         mat13 = 2 + mat1;
 
+        // subtraction
         mat6 = mat1 - mat2;
         mat7 = mat2 - mat1;
         mat14 = mat1 - 2;
         mat15 = 2 - mat1;
+        mat20 = -mat1;
+        mat21 = -mat13;
 
+        // multiplication
         mat8 = mat1 * mat2;
         mat9 = mat2 * mat1;
         mat16 = mat1 * 2;
         mat17 = 2 * mat1;
 
+        // division
         mat1.setHomogen(4);
         mat2.setHomogen(8);
 
@@ -193,6 +203,9 @@ TEST_CASE("Matrix class", "[matrix]")
 
                     REQUIRE(mat16(i, j) == 2);
                     REQUIRE(mat17(i, j) == 2);
+
+                    REQUIRE(mat20(i, j) == -1);
+                    REQUIRE(mat21(i, j) == -3);
                 }
                 else
                 {
@@ -211,6 +224,9 @@ TEST_CASE("Matrix class", "[matrix]")
 
                     REQUIRE(mat16(i, j) == 0);
                     REQUIRE(mat17(i, j) == 0);
+
+                    REQUIRE(mat20(i, j) == 0);
+                    REQUIRE(mat21(i, j) == -2);
                 }
 
                 // check all elements
