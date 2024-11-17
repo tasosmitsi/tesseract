@@ -104,3 +104,11 @@ tensor2D.print();                               // Prints 2D tensor
 tensor3D.print();                             // Prints 3D tensor
 tensor4D.print();                             // Prints 4D tensor
 ```
+
+## How to run tests
+
+It is recommended to run the tests to ensure that the library is working correctly. To run the tests, simply run:
+
+```bash
+make -j 20 run_test 
+```
