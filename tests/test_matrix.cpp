@@ -12,7 +12,7 @@ TEST_CASE("Matrix class", "[matrix]")
     {
         mat1.setIdentity()(0, 9) = 45.654;
 
-        REQUIRE(mat1(0, 9) == 45.654);
+        CHECK(mat1(0, 9) == 45.654);
     }
 
     SECTION("Matrix total size, number of dimensions, and shape")
@@ -20,22 +20,22 @@ TEST_CASE("Matrix class", "[matrix]")
         Matrix<double, 2, 2> matrix;
         Matrix<double, 15, 32> matrix1;
 
-        REQUIRE(matrix.getTotalSize() == 4);
-        REQUIRE(matrix.getNumDims() == 2);
-        REQUIRE(matrix.getShape() == "(2,2)");
+        CHECK(matrix.getTotalSize() == 4);
+        CHECK(matrix.getNumDims() == 2);
+        CHECK(matrix.getShape() == "(2,2)");
 
-        REQUIRE(matrix1.getTotalSize() == 480);
-        REQUIRE(matrix1.getNumDims() == 2);
-        REQUIRE(matrix1.getShape() == "(15,32)");
+        CHECK(matrix1.getTotalSize() == 480);
+        CHECK(matrix1.getNumDims() == 2);
+        CHECK(matrix1.getShape() == "(15,32)");
     }
 
     SECTION("Is matrix identity")
     {
         mat1.setIdentity();
-        REQUIRE(mat1.isIdentity());
+        CHECK(mat1.isIdentity());
 
         mat1(0, 0) = 15;
-        REQUIRE_FALSE(mat1.isIdentity());
+        CHECK_FALSE(mat1.isIdentity());
 
         mat1.setIdentity();
         // check if all diagonal elements are 1
@@ -45,7 +45,7 @@ TEST_CASE("Matrix class", "[matrix]")
             {
                 if (i == j)
                 {
-                    REQUIRE(mat1(i, j) == 1);
+                    CHECK(mat1(i, j) == 1);
                 }
             }
         }
@@ -59,7 +59,7 @@ TEST_CASE("Matrix class", "[matrix]")
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
             {
-                REQUIRE(mat1(i, j) == 0);
+                CHECK(mat1(i, j) == 0);
             }
         }
     }
@@ -73,7 +73,7 @@ TEST_CASE("Matrix class", "[matrix]")
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
             {
-                REQUIRE(mat1(i, j) == value);
+                CHECK(mat1(i, j) == value);
             }
         }
     }
@@ -86,7 +86,7 @@ TEST_CASE("Matrix class", "[matrix]")
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
             {
-                REQUIRE(mat1(i, j) == i * mat1.getDim(1) + j);
+                CHECK(mat1(i, j) == i * mat1.getDim(1) + j);
             }
         }
     }
@@ -96,28 +96,40 @@ TEST_CASE("Matrix class", "[matrix]")
         mat1.setIdentity();
         mat2.setIdentity();
 
-        REQUIRE(mat1 == mat2);
+        CHECK(mat1 == mat2);
 
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
             {
-                REQUIRE(mat1(i, j) == mat2(i, j));
+                CHECK(mat1(i, j) == mat2(i, j));
             }
         }
 
         mat1(1, 2) = 3.0;
 
-        REQUIRE_FALSE(mat1 == mat2);
+        CHECK_FALSE(mat1 == mat2);
+    }
+
+    SECTION("Assign matrix to another matrix")
+    {
+        mat1.setIdentity();
+        mat2 = mat1;
+
+        CHECK(mat1 == mat2);
+
+        mat1(1, 2) = 3.0;
+
+        CHECK_FALSE(mat1 == mat2);
     }
 
     SECTION("Is matrix diagonal")
     {
         mat1.setDiagonal(1);
-        REQUIRE(mat1.isIdentity());
+        CHECK(mat1.isIdentity());
 
         mat1(1, 2) = 3.0;
-        REQUIRE_FALSE(mat1.isIdentity());
+        CHECK_FALSE(mat1.isIdentity());
 
         mat1.setDiagonal(5);
 
@@ -127,14 +139,68 @@ TEST_CASE("Matrix class", "[matrix]")
             {
                 if (i == j)
                 {
-                    REQUIRE(mat1(i, j) == 5);
+                    CHECK(mat1(i, j) == 5);
                 }
                 else
                 {
-                    REQUIRE(mat1(i, j) == 0);
+                    CHECK(mat1(i, j) == 0);
                 }
             }
         }
+    }
+
+    SECTION("Is matrix symetric")
+    {
+        mat1.setIdentity();
+        CHECK(mat1.isSymmetric());
+
+        mat1(1, 2) = 3.0;
+        CHECK_FALSE(mat1.isSymmetric());
+        mat1(2, 1) = 3.0;
+        CHECK(mat1.isSymmetric());
+    }
+
+    SECTION("Is matrix upper triangular")
+    {
+        mat1.setIdentity();
+        CHECK(mat1.isUpperTriangular());
+
+        mat1(1, 2) = 3.0;
+        CHECK(mat1.isUpperTriangular());
+
+        mat1(1, 0) = 3.0;
+        CHECK_FALSE(mat1.isUpperTriangular());
+    }
+
+    SECTION("Is matrix lower triangular")
+    {
+        mat1.setIdentity();
+        CHECK(mat1.isLowerTriangular());
+
+        mat1(2, 1) = 3.0;
+        CHECK(mat1.isLowerTriangular());
+
+        mat1(0, 1) = 3.0;
+        CHECK_FALSE(mat1.isLowerTriangular());
+    }
+
+    SECTION("Make matrix upper triangular")
+    {
+        mat1.setHomogen(5);
+
+        // check if is not upper triangular
+        CHECK_FALSE(mat1.isUpperTriangular());
+
+        // assign the upper triangular matrix to mat2 without
+        // inplace modification, check if mat1 is still not upper
+        // triangular and mat2 is upper triangular
+        mat2 = mat1.upperTriangular();
+        CHECK_FALSE(mat1.isUpperTriangular());
+        CHECK(mat2.isUpperTriangular());
+
+        // make mat1 upper triangular in place
+        mat1.upperTriangular(true);
+        CHECK(mat1.isUpperTriangular());
     }
 
     SECTION("Matrix elementary operations")
@@ -189,56 +255,71 @@ TEST_CASE("Matrix class", "[matrix]")
                 if (i == j)
                 {
                     // Check only the diagonal elements
-                    REQUIRE(mat4(i, j) == 2);
-                    REQUIRE(mat5(i, j) == 2);
+                    CHECK(mat4(i, j) == 2);
+                    CHECK(mat5(i, j) == 2);
 
-                    REQUIRE(mat8(i, j) == 1);
-                    REQUIRE(mat9(i, j) == 1);
+                    CHECK(mat8(i, j) == 1);
+                    CHECK(mat9(i, j) == 1);
 
-                    REQUIRE(mat12(i, j) == 3);
-                    REQUIRE(mat13(i, j) == 3);
+                    CHECK(mat12(i, j) == 3);
+                    CHECK(mat13(i, j) == 3);
 
-                    REQUIRE(mat14(i, j) == -1);
-                    REQUIRE(mat15(i, j) == 1);
+                    CHECK(mat14(i, j) == -1);
+                    CHECK(mat15(i, j) == 1);
 
-                    REQUIRE(mat16(i, j) == 2);
-                    REQUIRE(mat17(i, j) == 2);
+                    CHECK(mat16(i, j) == 2);
+                    CHECK(mat17(i, j) == 2);
 
-                    REQUIRE(mat20(i, j) == -1);
-                    REQUIRE(mat21(i, j) == -3);
+                    CHECK(mat20(i, j) == -1);
+                    CHECK(mat21(i, j) == -3);
                 }
                 else
                 {
                     // check only the non-diagonal elements
-                    REQUIRE(mat4(i, j) == 0);
-                    REQUIRE(mat5(i, j) == 0);
+                    CHECK(mat4(i, j) == 0);
+                    CHECK(mat5(i, j) == 0);
 
-                    REQUIRE(mat8(i, j) == 0);
-                    REQUIRE(mat9(i, j) == 0);
+                    CHECK(mat8(i, j) == 0);
+                    CHECK(mat9(i, j) == 0);
 
-                    REQUIRE(mat12(i, j) == 2);
-                    REQUIRE(mat13(i, j) == 2);
+                    CHECK(mat12(i, j) == 2);
+                    CHECK(mat13(i, j) == 2);
 
-                    REQUIRE(mat14(i, j) == -2);
-                    REQUIRE(mat15(i, j) == 2);
+                    CHECK(mat14(i, j) == -2);
+                    CHECK(mat15(i, j) == 2);
 
-                    REQUIRE(mat16(i, j) == 0);
-                    REQUIRE(mat17(i, j) == 0);
+                    CHECK(mat16(i, j) == 0);
+                    CHECK(mat17(i, j) == 0);
 
-                    REQUIRE(mat20(i, j) == 0);
-                    REQUIRE(mat21(i, j) == -2);
+                    CHECK(mat20(i, j) == 0);
+                    CHECK(mat21(i, j) == -2);
                 }
 
                 // check all elements
-                REQUIRE(mat6(i, j) == 0);
-                REQUIRE(mat7(i, j) == 0);
+                CHECK(mat6(i, j) == 0);
+                CHECK(mat7(i, j) == 0);
 
-                REQUIRE(mat10(i, j) == 0.5);
-                REQUIRE(mat11(i, j) == 2);
+                CHECK(mat10(i, j) == 0.5);
+                CHECK(mat11(i, j) == 2);
 
-                REQUIRE(mat18(i, j) == 2);
-                REQUIRE(mat19(i, j) == 0.5);
+                CHECK(mat18(i, j) == 2);
+                CHECK(mat19(i, j) == 0.5);
             }
         }
+    }
+
+    SECTION("Matrix transpose")
+    {
+        // TODO: test + benchmark
+    }
+
+    SECTION("Matrix matmul")
+    {
+        // TODO: test + benchmark
+    }
+
+    SECTION("Matrix inverse")
+    {
+        // TODO: test + benchmark
     }
 }
