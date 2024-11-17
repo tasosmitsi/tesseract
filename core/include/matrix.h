@@ -108,7 +108,8 @@ public:
     // overide operator- to subtract a matrix from a scalar
     friend Matrix operator-(const T scalar, const Matrix &matrix)
     {
-        return matrix - scalar;
+        TensorND<T, Rows, Cols> resultTensor = scalar - static_cast<const TensorND<T, Rows, Cols> &>(matrix);
+        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
     }
 
     // Override operator- to get the negative of the matrix

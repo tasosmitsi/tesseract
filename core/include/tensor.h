@@ -214,7 +214,13 @@ public:
     // overload - operator to subtract a scalar from the tensor
     friend TensorND operator-(const T scalar, const TensorND& tensor)
     {
-        return tensor - scalar;
+        // return tensor - scalar;
+        TensorND outp = tensor;
+        for (my_size_t i = 0; i < totalSize; ++i)
+        {
+            outp.data_[i] = scalar - outp.data_[i];
+        }
+        return outp;
     }
 
     // overload - operator to get the negative of the tensor
