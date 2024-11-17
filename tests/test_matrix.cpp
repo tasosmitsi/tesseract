@@ -139,8 +139,10 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Matrix operations")
     {
-        Matrix<double, 10, 10> mat1, mat2, mat4, mat5, mat6, mat7, mat8, mat9, mat10, mat11
-            , mat12, mat13, mat14, mat15, mat16, mat17, mat18, mat19;
+        Matrix<double, 10, 10> mat1, mat2, mat4,
+            mat5, mat6, mat7, mat8, mat9, mat10,
+            mat11, mat12, mat13, mat14, mat15,
+            mat16, mat17, mat18, mat19;
 
         mat1.setIdentity();
         mat2.setIdentity();
@@ -159,7 +161,7 @@ TEST_CASE("Matrix class", "[matrix]")
         mat9 = mat2 * mat1;
         mat16 = mat1 * 2;
         mat17 = 2 * mat1;
-        
+
         mat1.setHomogen(2);
         mat2.setHomogen(4);
 
@@ -171,20 +173,15 @@ TEST_CASE("Matrix class", "[matrix]")
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
-            {   
+            {
                 if (i == j)
                 {
+                    // Check only the diagonal elements
                     REQUIRE(mat4(i, j) == 2);
                     REQUIRE(mat5(i, j) == 2);
 
-                    REQUIRE(mat6(i, j) == 0);
-                    REQUIRE(mat7(i, j) == 0);
-
                     REQUIRE(mat8(i, j) == 1);
                     REQUIRE(mat9(i, j) == 1);
-
-                    REQUIRE(mat10(i, j) == 0.5);
-                    REQUIRE(mat11(i, j) == 2);
 
                     REQUIRE(mat12(i, j) == 3);
                     REQUIRE(mat13(i, j) == 3);
@@ -194,23 +191,15 @@ TEST_CASE("Matrix class", "[matrix]")
 
                     REQUIRE(mat16(i, j) == 2);
                     REQUIRE(mat17(i, j) == 2);
-
-                    REQUIRE(mat18(i, j) == 1);
-                    REQUIRE(mat19(i, j) == 1);
                 }
                 else
                 {
+                    // check only the non-diagonal elements
                     REQUIRE(mat4(i, j) == 0);
                     REQUIRE(mat5(i, j) == 0);
 
-                    REQUIRE(mat6(i, j) == 0);
-                    REQUIRE(mat7(i, j) == 0);
-
                     REQUIRE(mat8(i, j) == 0);
                     REQUIRE(mat9(i, j) == 0);
-
-                    REQUIRE(mat10(i, j) == 0.5);
-                    REQUIRE(mat11(i, j) == 2);
 
                     REQUIRE(mat12(i, j) == 2);
                     REQUIRE(mat13(i, j) == 2);
@@ -220,10 +209,17 @@ TEST_CASE("Matrix class", "[matrix]")
 
                     REQUIRE(mat16(i, j) == 0);
                     REQUIRE(mat17(i, j) == 0);
-                    
-                    REQUIRE(mat18(i, j) == 1);
-                    REQUIRE(mat19(i, j) == 1);
                 }
+
+                // check all elements
+                REQUIRE(mat6(i, j) == 0);
+                REQUIRE(mat7(i, j) == 0);
+
+                REQUIRE(mat10(i, j) == 0.5);
+                REQUIRE(mat11(i, j) == 2);
+
+                REQUIRE(mat18(i, j) == 1);
+                REQUIRE(mat19(i, j) == 1);
             }
         }
     }
