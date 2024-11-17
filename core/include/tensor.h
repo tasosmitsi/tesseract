@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
+#include <iostream>
 
 /* Define this to enable matrix number of indices checking */
 #define MATRIX_USE_NUMBER_OF_INDICES_CHECKING
