@@ -171,7 +171,8 @@ public:
     // overide operator/ to divide a scalar by the matrix
     friend Matrix operator/(const T scalar, const Matrix &matrix)
     {
-        return matrix / scalar;
+        TensorND<T, Rows, Cols> resultTensor = scalar / static_cast<const TensorND<T, Rows, Cols> &>(matrix);
+        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
     }
 
     // Override transpose to return a Matrix

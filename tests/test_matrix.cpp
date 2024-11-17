@@ -139,6 +139,8 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Matrix operations")
     {
+        // TODO: test -tensor as well
+
         Matrix<double, 10, 10> mat1, mat2, mat4,
             mat5, mat6, mat7, mat8, mat9, mat10,
             mat11, mat12, mat13, mat14, mat15,
@@ -162,8 +164,8 @@ TEST_CASE("Matrix class", "[matrix]")
         mat16 = mat1 * 2;
         mat17 = 2 * mat1;
 
-        mat1.setHomogen(2);
-        mat2.setHomogen(4);
+        mat1.setHomogen(4);
+        mat2.setHomogen(8);
 
         mat10 = mat1 / mat2;
         mat11 = mat2 / mat1;
@@ -218,8 +220,8 @@ TEST_CASE("Matrix class", "[matrix]")
                 REQUIRE(mat10(i, j) == 0.5);
                 REQUIRE(mat11(i, j) == 2);
 
-                REQUIRE(mat18(i, j) == 1);
-                REQUIRE(mat19(i, j) == 1);
+                REQUIRE(mat18(i, j) == 2);
+                REQUIRE(mat19(i, j) == 0.5);
             }
         }
     }
