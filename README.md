@@ -46,7 +46,22 @@ TensorND<int, 2, 2> result = tensor + tensor2;
 ## Examples
 Here are a few examples of how to use `TensorND` to perform common tensor operations:
 
-### Transposing a Matrix
+### Tensor Arithmetic
+
+Addition, Subtraction, Multiplication, and Division:
+
+```cpp
+TensorND<double, 3, 3> mat1, mat2;
+mat1.setIdentity();
+mat2.setIdentity();
+
+auto addition = mat1 + mat2;       // Tensor addition
+auto subtraction = mat1 - mat2;    // Tensor subtraction
+auto multiplication = mat1 * mat2; // Tensor multiplication
+auto scalarDivision = mat1 / 2.0;  // Divide by a scalar
+```
+
+### Transposing a Tensor
 For a 2D tensor (matrix), you can transpose it easily:
 
 ```cpp
@@ -56,6 +71,13 @@ TensorND<float, 2, 3> matrix;
 
 matrix.transpose(); // Only for 2D tensors
 std::cout << "Shape: " << matrix.getShape();  // Get tensor shape
+```
+
+For a higher-dimensional tensor, you can permute the axes:
+
+```cpp
+TensorND<float, 2, 3, 4> tensor;
+tensor.transpose([1, 2, 0]); // Permute axes
 ```
 
 ### Setting the Tensor to an Identity Matrix
@@ -80,7 +102,7 @@ Setting Values:
 
 ```cpp
 tensor.setToZero();                           // Set all elements to 0
-tensor.setIdentity();                         // Set as identity matrix
+tensor.setIdentity();                         // Set as identity
 ```
 
 Random Initialization:
@@ -103,6 +125,33 @@ Print 2D, 3D, or 4D tensors:
 tensor2D.print();                               // Prints 2D tensor
 tensor3D.print();                             // Prints 3D tensor
 tensor4D.print();                             // Prints 4D tensor
+```
+
+### Equality and Assignment
+
+Compare Tensors:
+
+```cpp
+TensorND<double, 3, 3> mat1, mat2;
+mat1.setIdentity();
+mat2.setIdentity();
+
+if (mat1 == mat2) {
+    std::cout << "Tensors are equal!" << std::endl;
+}
+```
+
+Assign One Tensor to Another:
+
+```cpp
+mat2 = mat1; // Copy mat1 to mat2
+```
+
+### Tensor Contraction (Einsum-style)
+
+Perform tensor contraction using the `einsum` function:
+
+```cpp
 ```
 
 ## How to run tests
