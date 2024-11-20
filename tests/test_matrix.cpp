@@ -8,7 +8,6 @@
 TEST_CASE("Matrix class", "[matrix]")
 {
     Matrix<double, 10, 10> mat1(1), mat2(2), mat4(10);
-    Matrix<double, 2, 3> matrix3(2);
 
     SECTION("Matrix accessing elements")
     {
@@ -109,7 +108,11 @@ TEST_CASE("Matrix class", "[matrix]")
         }
 
         mat1(1, 2) = 3.0;
+        CHECK_FALSE(mat1 == mat2);
 
+        // now check in case of transpose
+        mat1.transpose();
+        mat2(1, 2) = 3.0;
         CHECK_FALSE(mat1 == mat2);
     }
 
