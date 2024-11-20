@@ -203,6 +203,14 @@ TEST_CASE("Matrix class", "[matrix]")
         // make mat1 upper triangular in place
         mat1.upperTriangular(true);
         CHECK(mat1.isUpperTriangular());
+
+        mat1.setHomogen(5);
+        // transpose mat1
+        mat1.transpose();
+        // perform upper triangular on the transposed matrix
+        mat1.upperTriangular(true);
+        // mat1 should stil be upper triangular
+        CHECK(mat1.isUpperTriangular());
     }
 
     SECTION("Matrix elementary operations")

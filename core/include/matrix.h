@@ -354,31 +354,29 @@ public:
             throw std::runtime_error("Matrix is not square");
         }
 
+        my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
+
         if (!inplace) {
             // Create a copy and modify it
             // std::cout << "Setting matrix to upper triangular" << std::endl;
             Matrix result = *this;
-            for (my_size_t i = 1; i < result.getDim(0); i++)
+            for (my_size_t i = 1; i < matrix_size; i++)
             {
-                my_size_t limit = (i < result.getDim(1)) ? i : result.getDim(1);
-
-                // this assumes that the overloaded operator () 
-                // handle memory in a contiguous manner.
-                // If not, this will not work.
-                std::fill(&result(i, 0), &result(i, limit), T(0));
+                for (my_size_t j = 0; j < i; j++)
+                {
+                    result(i, j) = T(0);
+                }
             }
             return result;
         } else {
             // std::cout << "Setting matrix to upper triangular in place" << std::endl;
             // Modify the matrix in-place
-            for (my_size_t i = 1; i < this->getDim(0); i++)
+            for (my_size_t i = 1; i < matrix_size; i++)
             {
-                my_size_t limit = (i < this->getDim(1)) ? i : this->getDim(1);
-
-                // this assumes that the overloaded operator () 
-                // handle memory in a contiguous manner.
-                // If not, this will not work.
-                std::fill(&(*this)(i, 0), &(*this)(i, limit), T(0));
+                for (my_size_t j = 0; j < i; j++)
+                {
+                    (*this)(i, j) = T(0);
+                }
             }
             return *this;  // Returning the modified matrix itself
         }
