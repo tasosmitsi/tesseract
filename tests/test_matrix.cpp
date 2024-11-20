@@ -2,6 +2,8 @@
 #define CATCH_CONFIG_MAIN
 
 #include "matrix.h"
+#include "utilities.h"
+#include <chrono>
 
 TEST_CASE("Matrix class", "[matrix]")
 {
@@ -321,5 +323,59 @@ TEST_CASE("Matrix class", "[matrix]")
     SECTION("Matrix inverse")
     {
         // TODO: test + benchmark
+
+        // init the matrix
+        double initValues[2][2] = {
+            {2.0, -1},
+            {4, 5.0}};
+        Matrix<double, 2, 2> matrix3 = initValues;
+        // matrix3.transpose();
+
+        tick();
+        auto inv = matrix3.inverse();
+        // inv.print();
+        tock("C++ Inverse");
+
+        std::string numpy_string = toNumpyArray(matrix3);
+
+        std::string python_code = R"(
+import numpy as np
+import sys
+import io
+import time
+
+# Redirect output to a string
+output = io.StringIO()  # Initialize output before redirection
+sys.stdout = output
+np.set_printoptions(formatter={'float_kind': lambda x: f'{x:.3f}'})
+
+a = np.array()" + numpy_string + R"()
+# print('Original matrix:')
+# print(a)
+# print('Inverse matrix:')
+start = time.time()
+inv = np.linalg.inv(a)
+end = time.time()
+print(inv)
+# print('Time taken by numpy inverse:', (end - start) * 1000000, 'microseconds')
+
+# Capture the output
+sys.stdout = sys.__stdout__
+output_string = output.getvalue()
+        )";
+
+        // Execute the Python code
+        tick();
+        std::string result = executePythonAndGetString(python_code);
+        tock("Python inverse");
+        removeNewlines(result);
+        // Print the result
+        // std::cout << "Python output: " << std::endl
+        //           << result << std::endl;
+        // std::cout << "C++ output: " << std::endl
+        //           << toFormattedNumpyArray(inv) << std::endl;
+
+        // Check if the output is the same
+        CHECK(result == toFormattedNumpyArray(inv));
     }
 }

@@ -9,11 +9,12 @@ TEST_DIR = tests
 EXAMPLE_DIR = examples/src
 BUILD_DIR = build
 CATCH2_DIR = Catch2/extras
+PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
 
 # Flags
 DEPFLAGS = -MMD -MP
 OPT = -O0
-CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
+CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
 # ------------- test files -------------
@@ -64,7 +65,7 @@ $(CORE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES)
 
 # Linking the test executable (C++)
 $(TEST_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_TEST_FILES) $(C_OBJ_TEST_FILES)
-	$(CXX) -o $@ $^
+	$(CXX) -o $@ $^ $(PY_FLAGS)
 
 # Linking the example executable (C or C++)
 $(EXAMPLE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_EXAMPLE_FILES) $(C_OBJ_EXAMPLE_FILES)
