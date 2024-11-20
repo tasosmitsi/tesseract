@@ -480,7 +480,7 @@ public:
         std::string shape = "(";
         for (my_size_t i = 0; i < getNumDims(); ++i)
         {
-            shape += std::to_string(dims[transposeOrder_[i]]);
+            shape += std::to_string(getDim(i));
             if (i < getNumDims() - 1)
                 shape += ",";
         }
@@ -786,7 +786,7 @@ public:
     // getter for dims
     my_size_t getDim(my_size_t i) const
     {
-        return dims[i];
+        return dims[transposeOrder_[i]];
     }
 
 private:
@@ -884,9 +884,9 @@ private:
     // 2D print function
     void print2D() const {
         // account for the trnaspose order as well
-        for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i)
+        for (my_size_t i = 0; i < getDim(0); ++i)
         {
-            for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j)
+            for (my_size_t j = 0; j < getDim(1); ++j)
             {
                 // std::cout << "(" << i << "," << j << ") ";
                 std::cout << (*this)(i, j) << " ";
@@ -897,10 +897,10 @@ private:
 
     // 3D print function
     void print3D() const {
-        for (my_size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
+        for (my_size_t k = 0; k < getDim(2); ++k) {
             // std::cout << "Slice " << i << ":\n";
-            for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
-                for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
+            for (my_size_t i = 0; i < getDim(0); ++i) {
+                for (my_size_t j = 0; j < getDim(1); ++j) {
                     std::cout << (*this)(i, j, k) << " ";
                 }
                 std::cout << std::endl;
@@ -910,13 +910,13 @@ private:
     }
 
     void print4D() const {
-        for (my_size_t l = 0; l < dims[transposeOrder_[3]]; ++l) {
+        for (my_size_t l = 0; l < getDim(3); ++l) {
             std::cout << "Slice [" << l << "]:\n";
-            for (my_size_t k = 0; k < dims[transposeOrder_[2]]; ++k) {
+            for (my_size_t k = 0; k < getDim(2); ++k) {
                 std::cout << "  Sub-Slice [" << k << "]:\n";
-                for (my_size_t i = 0; i < dims[transposeOrder_[0]]; ++i) {
+                for (my_size_t i = 0; i < getDim(0); ++i) {
                     std::cout << "    [ ";
-                    for (my_size_t j = 0; j < dims[transposeOrder_[1]]; ++j) {
+                    for (my_size_t j = 0; j < getDim(1); ++j) {
                         std::cout << operator()(i, j, k, l) << " ";
                     }
                     std::cout << "]" << std::endl;
