@@ -100,7 +100,8 @@ public:
     }
 
     // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
-    bool operator==(const TensorND &other) const
+    template <my_size_t... Dims1>
+    bool operator==(const TensorND<T, Dims1...> &other) const
     {
         // check for dimensions mismatch, we don't check if they are square
         checkDimensionsMismatch(other);
@@ -132,7 +133,8 @@ public:
     }
 
     // overload != operator to compare two tensors
-    bool operator!=(const TensorND &other) const
+    template <my_size_t... Dims1>
+    bool operator!=(const TensorND<T, Dims1...> &other) const
     {
         return !(*this == other);
     }
@@ -140,6 +142,7 @@ public:
     // overload = operator to assign a tensor to the tensor
     TensorND &operator=(const TensorND &other)
     {
+        // std::cout << "Operator = called" << std::endl;
         if (this == &other)
         {
             return *this;
@@ -799,12 +802,13 @@ private:
     bool transposeOrderSet_ = false;    
     T data_[totalSize]; // Contiguous storage of elements in a flat array
 
-    inline void checkDimensionsMismatch(const TensorND &other) const
+    template <my_size_t... Dims1>
+    inline void checkDimensionsMismatch(const TensorND<T, Dims1...> &other) const
     {
         // check if the dimensions of the tensors are the same taking into account the transpose order
         for (my_size_t i = 0; i < getNumDims(); ++i)
         {
-            if (dims[transposeOrder_[i]] != other.dims[other.transposeOrder_[i]])
+            if (this->getDim(i) != other.getDim(i))
             {
                 throw std::runtime_error("Dimensions mismatch");
             }

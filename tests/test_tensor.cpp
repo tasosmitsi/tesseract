@@ -27,4 +27,19 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK(tensor1.getDim(1) == 3);
         CHECK(tensor1.getDim(2) == 2);
     }
+
+    SECTION("Check dimensions mismatch and == , != operators")
+    {
+        TensorND<double, 2, 3> tensor1(2);
+        TensorND<double, 3, 2> tensor2(2);
+
+
+        CHECK_THROWS(tensor1 == tensor2);
+        CHECK_THROWS(tensor1 != tensor2);
+
+
+        tensor2.transpose();
+        CHECK_NOTHROW(tensor1 == tensor2);
+        CHECK_FALSE(tensor1 != tensor2);
+    }
 }
