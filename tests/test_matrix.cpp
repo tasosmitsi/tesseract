@@ -5,6 +5,29 @@
 #include "utilities.h"
 #include <chrono>
 
+using namespace std::chrono;
+
+auto start = high_resolution_clock::now();
+void tick()
+{
+    start = high_resolution_clock::now();
+}
+void tock(std::string message)
+{
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << message << ": "
+              << duration.count() << " microseconds" << std::endl;
+}
+
+void tock()
+{
+    auto stop = high_resolution_clock::now();
+    auto duration = duration_cast<microseconds>(stop - start);
+    std::cout << "Time taken: "
+              << duration.count() << " microseconds" << std::endl;
+}
+
 TEST_CASE("Matrix class", "[matrix]")
 {
     Matrix<double, 10, 10> mat1(1), mat2(2), mat4(10);
@@ -114,6 +137,19 @@ TEST_CASE("Matrix class", "[matrix]")
         mat1.transpose();
         mat2(1, 2) = 3.0;
         CHECK_FALSE(mat1 == mat2);
+    }
+
+    SECTION("Check dimensions mismatch and == , != operators")
+    {
+        Matrix<double, 2, 3> matrix1(2);
+        Matrix<double, 3, 2> matrix2(2);
+
+        CHECK_THROWS(matrix1 == matrix2);
+        CHECK_THROWS(matrix1 != matrix2);
+
+        matrix2.transpose();
+        CHECK_NOTHROW(matrix1 == matrix2);
+        CHECK_FALSE(matrix1 != matrix2);
     }
 
     SECTION("Assign matrix to another matrix")
