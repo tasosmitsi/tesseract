@@ -141,6 +141,8 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Check dimensions mismatch and == , != operators")
     {
+        // this test should fail when the dimensions of the matrices are not equal
+        // and should pass when the dimensions are equal even after transposing one of the matrices
         Matrix<double, 2, 3> matrix1(2);
         Matrix<double, 3, 2> matrix2(2);
 
@@ -355,6 +357,26 @@ TEST_CASE("Matrix class", "[matrix]")
                 CHECK(mat19(i, j) == 0.5);
             }
         }
+    }
+
+    SECTION("Check dimensions mismatch on addition, subtraction, multiplication, and division")
+    {
+        // this test should fail when the dimensions of the matrices are not equal
+        // and should pass when the dimensions are equal even after transposing one of the matrices
+
+        Matrix<double, 2, 3> matrix1(2);
+        Matrix<double, 3, 2> matrix2(2);
+
+        CHECK_THROWS(matrix1 + matrix2);
+        CHECK_THROWS(matrix1 - matrix2);
+        CHECK_THROWS(matrix1 * matrix2);
+        CHECK_THROWS(matrix1 / matrix2);
+
+        matrix1.transpose();
+        CHECK_NOTHROW(matrix1 + matrix2);
+        CHECK_NOTHROW(matrix1 - matrix2);
+        CHECK_NOTHROW(matrix1 * matrix2);
+        CHECK_NOTHROW(matrix1 / matrix2);
     }
 
     SECTION("Matrix transpose")

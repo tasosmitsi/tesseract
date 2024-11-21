@@ -30,16 +30,35 @@ TEST_CASE("TensorND class", "[tensor]")
 
     SECTION("Check dimensions mismatch and == , != operators")
     {
+        // this test should fail when the dimensions of the tensors are not equal
+        // and should pass when the dimensions are equal even after transposing one of the tensors
         TensorND<double, 2, 3> tensor1(2);
         TensorND<double, 3, 2> tensor2(2);
-
 
         CHECK_THROWS(tensor1 == tensor2);
         CHECK_THROWS(tensor1 != tensor2);
 
-
         tensor2.transpose();
         CHECK_NOTHROW(tensor1 == tensor2);
         CHECK_FALSE(tensor1 != tensor2);
+    }
+
+    SECTION("Check dimensions mismatch on addition, subtraction, multiplication, and division")
+    {
+        // this test should fail when the dimensions of the tensors are not equal
+        // and should pass when the dimensions are equal even after transposing one of the tensors
+        TensorND<double, 2, 3> tensor1(2);
+        TensorND<double, 3, 2> tensor2(2);
+
+        CHECK_THROWS(tensor1 + tensor2);
+        CHECK_THROWS(tensor1 - tensor2);
+        CHECK_THROWS(tensor1 * tensor2);
+        CHECK_THROWS(tensor1 / tensor2);
+
+        tensor2.transpose();
+        CHECK_NOTHROW(tensor1 + tensor2);
+        CHECK_NOTHROW(tensor1 - tensor2);
+        CHECK_NOTHROW(tensor1 * tensor2);
+        CHECK_NOTHROW(tensor1 / tensor2);
     }
 }

@@ -60,7 +60,8 @@ public:
     }
 
     // Override operator+ to return a Matrix
-    Matrix operator+(const Matrix &other) const
+    template <my_size_t Rows1, my_size_t Cols1>
+    Matrix operator+(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator+ to get a TensorND result
         TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator+(other);
@@ -86,7 +87,8 @@ public:
     }
 
     // Override operator- to return a Matrix
-    Matrix operator-(const Matrix &other) const
+    template <my_size_t Rows1, my_size_t Cols1>
+    Matrix operator-(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator- to get a TensorND result
         TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator-(other);
@@ -123,7 +125,8 @@ public:
     }
 
     // Override operator* to return a Matrix
-    Matrix operator*(const Matrix &other) const
+    template <my_size_t Rows1, my_size_t Cols1>
+    Matrix operator*(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator* to get a TensorND result
         TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator*(other);
@@ -149,7 +152,8 @@ public:
     }
 
     // Override operator/ to return a Matrix
-    Matrix operator/(const Matrix &other) const
+    template <my_size_t Rows1, my_size_t Cols1>
+    Matrix operator/(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator/ to get a TensorND result
         TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator/(other);

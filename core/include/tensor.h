@@ -175,7 +175,8 @@ public:
     }
 
     // overload + operator to add a tensor to the tensor elementwise
-    TensorND operator+(const TensorND &other) const
+    template <my_size_t... Dims1>
+    TensorND operator+(const TensorND<T, Dims1...> &other) const
     {
         // check for dimensions mismatch
         checkDimensionsMismatch(other);
@@ -239,7 +240,8 @@ public:
     }
 
     // overload - operator to subtract a tensor from the tensor elementwise
-    TensorND operator-(const TensorND &other) const
+    template <my_size_t... Dims1>
+    TensorND operator-(const TensorND<T, Dims1...> &other) const
     {
         // check for dimensions mismatch
         checkDimensionsMismatch(other);
@@ -286,7 +288,8 @@ public:
     }
 
     // overload an operator to multiply a tensor with a tensor elementwise
-    TensorND operator*(const TensorND &other) const
+    template <my_size_t... Dims1>
+    TensorND operator*(const TensorND<T, Dims1...> &other) const
     {
         // check for dimensions mismatch
         checkDimensionsMismatch(other);
@@ -342,7 +345,8 @@ public:
     }
 
     // overload / operator to divide the tensor by a tensor elementwise, check for division by zero
-    TensorND operator/(const TensorND &other) const
+    template <my_size_t... Dims1>
+    TensorND operator/(const TensorND<T, Dims1...> &other) const
     {
         // check for dimensions mismatch
         checkDimensionsMismatch(other);
