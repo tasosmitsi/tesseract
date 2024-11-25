@@ -126,4 +126,18 @@ std::string toFormattedNumpyArray(const Matrix<T, Rows, Cols> &mat)
     return oss.str();
 }
 
+std::vector<std::string> splitStringByComma(const std::string &input)
+{
+    std::vector<std::string> result;
+    std::stringstream ss(input);
+    std::string token;
+
+    while (std::getline(ss, token, ','))
+    {
+        result.push_back(token);
+    }
+
+    return result;
+}
+
 #endif

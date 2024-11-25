@@ -391,22 +391,21 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Matrix inverse")
     {
-        // TODO: test + benchmark
-
         // init the matrix
-        double initValues[2][2] = {
-            {2.0, -1},
-            {4, 5.0}};
-        Matrix<double, 2, 2> matrix3 = initValues;
-        // matrix3.transpose();
+        double initValues[4][4] = {
+            {2.0, -1, 2.0, -1},
+            {4, 5.0, 2.5, -17},
+            {2.0, -1, 2.43, -30},
+            {4, 5.0, 245, -10}};
+        Matrix<double, 4, 4> matrix3 = initValues;
 
+        // using tessaract
         tick();
         auto inv = matrix3.inverse();
-        // inv.print();
         tock("C++ Inverse");
 
+        // using python numpy
         std::string numpy_string = toNumpyArray(matrix3);
-
         std::string python_code = R"(
 import numpy as np
 import sys
@@ -426,7 +425,7 @@ start = time.time()
 inv = np.linalg.inv(a)
 end = time.time()
 print(inv)
-# print('Time taken by numpy inverse:', (end - start) * 1000000, 'microseconds')
+print(',Numpy inverse:', (end - start) * 1000000, 'microseconds')
 
 # Capture the output
 sys.stdout = sys.__stdout__
@@ -434,17 +433,14 @@ output_string = output.getvalue()
         )";
 
         // Execute the Python code
-        tick();
         std::string result = executePythonAndGetString(python_code);
-        tock("Python inverse");
         removeNewlines(result);
-        // Print the result
-        // std::cout << "Python output: " << std::endl
-        //           << result << std::endl;
-        // std::cout << "C++ output: " << std::endl
-        //           << toFormattedNumpyArray(inv) << std::endl;
+        std::vector<std::string> results = splitStringByComma(result);
+
+        // Print the result the time taken by numpy
+        std::cout << results[1] << std::endl;
 
         // Check if the output is the same
-        CHECK(result == toFormattedNumpyArray(inv));
+        CHECK(results[0] == toFormattedNumpyArray(inv));
     }
 }
