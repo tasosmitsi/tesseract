@@ -411,6 +411,8 @@ import numpy as np
 import sys
 import io
 import time
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
 # Redirect output to a string
 output = io.StringIO()  # Initialize output before redirection
