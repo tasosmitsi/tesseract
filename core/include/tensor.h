@@ -440,32 +440,56 @@ public:
         return true;        
     }
 
-    TensorND& transpose(const my_size_t order[sizeof...(Dims)])
+    TensorND transpose(const my_size_t order[sizeof...(Dims)], bool inplace = false)
     {
-        for (my_size_t i = 0; i < getNumDims(); ++i)
-        {
-            transposeOrder_[i] = order[i];
+        if (!inplace) {
+            TensorND outp = *this;
+            for (my_size_t i = 0; i < getNumDims(); ++i)
+            {
+                outp.transposeOrder_[i] = order[i];
+            }
+            return outp;
+        } else {
+            for (my_size_t i = 0; i < getNumDims(); ++i)
+            {
+                this->transposeOrder_[i] = order[i];
+            }
+            return *this;
         }
-        return *this;
     }
 
-    TensorND& transpose(void)
+    TensorND transpose(bool inplace = false)
     {
         // check if the tensor is 2D
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-        
-        // reverse the transpose order
-        if (transposeOrder_[0] == 0)
-        {
-            transposeOrder_[0] = 1;
-            transposeOrder_[1] = 0;
-        }
-        else
-        {   
-            transposeOrder_[0] = 0;
-            transposeOrder_[1] = 1;
-        }
-        return *this;
+        if (!inplace) {
+            TensorND outp = *this;
+            // reverse the transpose order
+            if (outp.transposeOrder_[0] == 0)
+            {
+                outp.transposeOrder_[0] = 1;
+                outp.transposeOrder_[1] = 0;
+            }
+            else
+            {   
+                outp.transposeOrder_[0] = 0;
+                outp.transposeOrder_[1] = 1;
+            }
+            return outp;
+        } else {
+            // reverse the transpose order
+            if (this->transposeOrder_[0] == 0)
+            {
+                this->transposeOrder_[0] = 1;
+                this->transposeOrder_[1] = 0;
+            }
+            else
+            {   
+                this->transposeOrder_[0] = 0;
+                this->transposeOrder_[1] = 1;
+            }
+            return *this;
+        }   
     }
 
     // Utility function to retrieve total number of elements

@@ -69,7 +69,10 @@ TensorND<float, 2, 3> matrix;
 
 // Initialize matrix values
 
-matrix.transpose(); // Only for 2D tensors
+matrix.transpose(True); // Only for 2D tensors, true for in-place transpose
+// or
+auto transposed = matrix.transpose(); // Transpose and return a new tensor (not in-place)
+
 std::cout << "Shape: " << matrix.getShape();  // Get tensor shape
 ```
 
@@ -77,7 +80,14 @@ For a higher-dimensional tensor, you can permute the axes:
 
 ```cpp
 TensorND<float, 2, 3, 4> tensor;
-tensor.transpose([1, 2, 0]); // Permute axes
+
+// Initialize tensor values
+
+tensor.transpose([1, 2, 0], true); // Permute axes, true for in-place transpose
+// or
+auto permuted_tensor = tensor.transpose([1, 2, 0]); // Permute axes and return a new tensor (not in-place)
+
+std::cout << "Shape: " << tensor.getShape();  // Get tensor shape
 ```
 
 ### Setting the Tensor to an Identity Matrix

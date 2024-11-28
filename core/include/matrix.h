@@ -180,12 +180,17 @@ public:
     }
 
     // Override transpose to return a Matrix
-    Matrix& transpose() {
+    Matrix transpose(bool inplace = false) {
         // Call the base class transpose to perform the transpose operation
-        TensorND<T, Rows, Cols>::transpose(); // Modifies transposeOrder_, not data_
+        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::transpose(inplace); // Modifies transposeOrder_, not data_
 
-        // Cast the base class (TensorND) to Matrix to return the derived type
-        return *this;
+        // If inplace is false, return the resultTensor casted to Matrix
+        // If inplace is true, return the modified matrix itself
+        if (!inplace) {
+            return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        } else {
+            return *this;
+        }
     }
 
     // Override setToZero to return a Matrix
@@ -301,7 +306,6 @@ public:
         // and see if it's equal to the original matrix
 
         Matrix transpose = this->transpose();
-        this->transpose();  // transpose back to original state TODO: it should not modify the matrix itself
 
         return (*this == transpose);
     }

@@ -134,7 +134,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_FALSE(mat1 == mat2);
 
         // now check in case of transpose
-        mat1.transpose();
+        mat1.transpose(true);
         mat2(1, 2) = 3.0;
         CHECK_FALSE(mat1 == mat2);
     }
@@ -149,7 +149,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_THROWS(matrix1 == matrix2);
         CHECK_THROWS(matrix1 != matrix2);
 
-        matrix2.transpose();
+        matrix2.transpose(true);
         CHECK_NOTHROW(matrix1 == matrix2);
         CHECK_FALSE(matrix1 != matrix2);
     }
@@ -247,7 +247,7 @@ TEST_CASE("Matrix class", "[matrix]")
 
         mat1.setHomogen(5);
         // transpose mat1
-        mat1.transpose();
+        mat1.transpose(true);
         // perform upper triangular on the transposed matrix
         mat1.upperTriangular(true);
         // mat1 should stil be upper triangular
@@ -372,7 +372,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_THROWS(matrix1 * matrix2);
         CHECK_THROWS(matrix1 / matrix2);
 
-        matrix1.transpose();
+        matrix1.transpose(true);
         CHECK_NOTHROW(matrix1 + matrix2);
         CHECK_NOTHROW(matrix1 - matrix2);
         CHECK_NOTHROW(matrix1 * matrix2);
@@ -381,7 +381,48 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Matrix transpose")
     {
-        // TODO: test + benchmark
+        mat1.setRandom(-10, 10);
+        mat2 = mat1;
+
+        // check inplace transpose first
+        mat1.transpose(true);
+
+        for (size_t i = 0; i < mat1.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < mat1.getDim(1); ++j)
+            {
+                CHECK(mat1(i, j) == mat2(j, i));
+            }
+        }
+
+        // check non-inplace transpose
+        mat1.setRandom(-10, 10);
+        mat2 = mat1.transpose();
+
+        for (size_t i = 0; i < mat1.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < mat1.getDim(1); ++j)
+            {
+                CHECK(mat1(i, j) == mat2(j, i));
+            }
+        }
+
+        // now check a long oppeartion by adding a zero matrix to the 
+        // transposed (not in place) matrix. The mat1 should not change.
+        mat1.setIdentity();
+        mat1(0, 1) = 10;
+        mat2.setToZero();
+
+        auto mat3 = mat1.transpose() + mat2;
+        auto mat4 = mat1 + mat2;
+
+        // In both cases, mat2 is a zero matrix (should not change the result)
+        // mat3 should not be equal to mat1 because of the transpose
+        CHECK(mat3 != mat1);
+        CHECK(mat3(1, 0) == 10);
+        
+        // mat4 should be equal to mat1
+        CHECK(mat4 == mat1);
     }
 
     SECTION("Matrix matmul")
