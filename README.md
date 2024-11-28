@@ -149,12 +149,18 @@ mat2.setIdentity();
 if (mat1 == mat2) {
     std::cout << "Tensors are equal!" << std::endl;
 }
+
+// or
+
+if (mat1 != mat2) {
+    std::cout << "Tensors are not equal!" << std::endl;
+}
 ```
 
 Assign One Tensor to Another:
 
 ```cpp
-mat2 = mat1; // Copy mat1 to mat2
+mat2 = mat1; // Assign mat1 to mat2
 ```
 
 ### Tensor Contraction (Einsum-style)
