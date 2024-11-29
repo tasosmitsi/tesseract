@@ -108,6 +108,9 @@ run_test: $(TEST_TARGET)
 
 # Clean target
 clean:
+	find $(BUILD_DIR) -type f ! -name 'catch_amalgamated.d' ! -name 'catch_amalgamated.o' -exec rm -f {} +
+
+clean_all:
 	rm -rf $(BUILD_DIR)
 
 # Separate build targets
