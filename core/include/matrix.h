@@ -485,6 +485,32 @@ public:
         }
         return _outp;
     }
+    bool isOrthogonal(void)
+    {
+        Matrix<T, Rows, Cols> ident;
+        
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
+        // Check if the matrix is orthogonal
+        Matrix transposed = this->transpose();
+        
+        ident = Matrix<T, Rows, Cols>::matmul(*this, transposed);
+        if (!ident.isIdentity())
+        {
+            return false;
+        }
+
+        ident = Matrix<T, Rows, Cols>::matmul(transposed, *this);
+        if (!ident.isIdentity())
+        {
+            return false;
+        }
+        return true;
+    }
 };
 
 #endif // MATRIX_H

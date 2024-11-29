@@ -556,4 +556,20 @@ output_string = output.getvalue()
         // Check if the output is the same
         CHECK(results[0] == toFormattedNumpyArray(inv));
     }
+    SECTION("Is matrix orthogonal")
+    {
+        // init the matrix
+        double initValues[4][4] = {
+            {1, 0, 0, 0},
+            {0, 0, -1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 1}};
+
+        Matrix<double, 4, 4> matrix3 = initValues;
+
+        CHECK(matrix3.isOrthogonal());
+
+        matrix3(0, 0) = 2;
+        CHECK_FALSE(matrix3.isOrthogonal());
+    }
 }
