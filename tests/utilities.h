@@ -69,24 +69,25 @@ void removeNewlines(std::string &str)
 template <class T, long unsigned int Rows, long unsigned int Cols>
 std::string toNumpyArray(const Matrix<T, Rows, Cols> &mat)
 {
-    my_size_t matrix_size = mat.getDim(0); // Assuming the matrix is square the number of rows and columns are equal
+    my_size_t rows = mat.getDim(0);
+    my_size_t cols = mat.getDim(1);
     std::ostringstream oss;
     oss << "[";
 
-    for (my_size_t i = 0; i < matrix_size; ++i)
+    for (my_size_t i = 0; i < rows; ++i)
     {
         oss << "[";
-        for (my_size_t j = 0; j < matrix_size; ++j)
+        for (my_size_t j = 0; j < cols; ++j)
         {
             // Print each element with 3 decimal places
             oss << std::fixed << std::setprecision(3) << mat(i, j);
-            if (j < matrix_size - 1)
+            if (j < cols - 1)
             {
                 oss << ", "; // Comma between elements in a row
             }
         }
         oss << "]";
-        if (i < matrix_size - 1)
+        if (i < rows - 1)
         {
             oss << ", "; // Comma between rows
         }
@@ -99,24 +100,25 @@ std::string toNumpyArray(const Matrix<T, Rows, Cols> &mat)
 template <class T, long unsigned int Rows, long unsigned int Cols>
 std::string toFormattedNumpyArray(const Matrix<T, Rows, Cols> &mat)
 {
-    my_size_t matrix_size = mat.getDim(0); // Assuming the matrix is square the number of rows and columns are equal
+    my_size_t rows = mat.getDim(0);
+    my_size_t cols = mat.getDim(1);
     std::ostringstream oss;
     oss << "[";
 
-    for (my_size_t i = 0; i < matrix_size; ++i)
+    for (my_size_t i = 0; i < rows; ++i)
     {
         oss << "[";
-        for (my_size_t j = 0; j < matrix_size; ++j)
+        for (my_size_t j = 0; j < cols; ++j)
         {
             // Print each element with 3 decimal places
             oss << std::fixed << std::setprecision(3) << mat(i, j);
-            if (j < matrix_size - 1)
+            if (j < cols - 1)
             {
                 oss << " "; // Space between elements in a row
             }
         }
         oss << "]";
-        if (i < matrix_size - 1)
+        if (i < rows - 1)
         {
             oss << " "; // Space between rows
         }
