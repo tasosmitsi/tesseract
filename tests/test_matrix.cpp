@@ -420,14 +420,84 @@ TEST_CASE("Matrix class", "[matrix]")
         // mat3 should not be equal to mat1 because of the transpose
         CHECK(mat3 != mat1);
         CHECK(mat3(1, 0) == 10);
-        
+
         // mat4 should be equal to mat1
         CHECK(mat4 == mat1);
     }
 
     SECTION("Matrix matmul")
     {
-        // TODO: test + benchmark
+        Matrix<double, 2, 3> matrix1(2);
+        Matrix<double, 3, 2> matrix2(2);
+
+        matrix1.setHomogen(10);
+        matrix2.setHomogen(33);
+
+        tick();
+        auto res = Matrix<double, 2, 2>::matmul(matrix1, matrix2);
+        tock("C++ matmul");
+
+        // check the dimensions of the res matrix
+        CHECK(res.getDim(0) == 2);
+        CHECK(res.getDim(1) == 2);
+
+        // check the values of the res matrix
+        for (size_t i = 0; i < res.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < res.getDim(1); ++j)
+            {
+                double sum = 0;
+                for (size_t k = 0; k < matrix1.getDim(1); ++k)
+                {
+                    sum += matrix1(i, k) * matrix2(k, j);
+                }
+                CHECK(res(i, j) == sum);
+            }
+        }
+
+        // using python numpy
+        std::string numpy_string1 = toNumpyArray(matrix1);
+        std::string numpy_string2 = toNumpyArray(matrix2);
+        std::string python_code = R"(
+import numpy as np
+import sys
+import io
+import time
+import os
+os.environ["OPENBLAS_NUM_THREADS"] = "1"
+
+# Redirect output to a string
+output = io.StringIO()  # Initialize output before redirection
+sys.stdout = output
+np.set_printoptions(formatter={'float_kind': lambda x: f'{x:.3f}'})
+a = np.array()" + numpy_string1 + R"()
+b = np.array()" + numpy_string2 + R"()
+# print('Matrix 1:')
+# print(a)
+# print('Matrix 2:')
+# print(b)
+# print('Result:')
+start = time.time()
+result = np.matmul(a, b)
+end = time.time()
+print(result)
+print(',Numpy matmul:', (end - start) * 1000000, 'microseconds')
+
+# Capture the output
+sys.stdout = sys.__stdout__
+output_string = output.getvalue()
+        )";
+
+        // Execute the Python code
+        std::string result = executePythonAndGetString(python_code);
+        removeNewlines(result);
+        std::vector<std::string> results = splitStringByComma(result);
+
+        // Print the result the time taken by numpy
+        std::cout << results[1] << std::endl;
+
+        // Check if the output is the same
+        CHECK(results[0] == toFormattedNumpyArray(res));
     }
 
     SECTION("Matrix inverse")
