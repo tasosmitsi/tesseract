@@ -9,15 +9,16 @@ std::string executePythonAndGetString(const std::string &python_code)
 {
     std::string result;
 
-    // Initialize Python
-    if (!Py_IsInitialized())
+    // Initialize Python only once
+    static bool isPythonInitialized = false;
+    if (!isPythonInitialized)
     {
         Py_Initialize();
-    }
-
-    if (!Py_IsInitialized())
-    {
-        throw std::runtime_error("Failed to initialize Python interpreter.");
+        if (!Py_IsInitialized())
+        {
+            throw std::runtime_error("Failed to initialize Python interpreter.");
+        }
+        isPythonInitialized = true;
     }
 
     try
@@ -48,12 +49,9 @@ std::string executePythonAndGetString(const std::string &python_code)
     }
     catch (const std::exception &e)
     {
-        Py_Finalize(); // Ensure Python is finalized on error
-        throw;
+        PyErr_Print();
+        throw; // Re-throw the exception
     }
-
-    // Finalize the Python interpreter
-    Py_Finalize();
 
     return result;
 }
