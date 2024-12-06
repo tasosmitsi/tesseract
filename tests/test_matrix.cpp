@@ -254,6 +254,33 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK(mat1.isUpperTriangular());
     }
 
+    SECTION("Make matrix lower triangular")
+    {
+        mat1.setHomogen(5);
+
+        // check if is not lower triangular
+        CHECK_FALSE(mat1.isLowerTriangular());
+
+        // assign the lower triangular matrix to mat2 without
+        // inplace modification, check if mat1 is still not lower
+        // triangular and mat2 is lower triangular
+        mat2 = mat1.lowerTriangular();
+        CHECK_FALSE(mat1.isLowerTriangular());
+        CHECK(mat2.isLowerTriangular());
+
+        // make mat1 lower triangular in place
+        mat1.lowerTriangular(true);
+        CHECK(mat1.isLowerTriangular());
+
+        mat1.setHomogen(5);
+        // transpose mat1
+        mat1.transpose(true);
+        // perform lower triangular on the transposed matrix
+        mat1.lowerTriangular(true);
+        // mat1 should stil be lower triangular
+        CHECK(mat1.isLowerTriangular());
+    }
+
     SECTION("Matrix elementary operations")
     {
         // TODO: Split this section into smaller sections

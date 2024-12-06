@@ -390,6 +390,42 @@ public:
         }
     }
 
+    Matrix lowerTriangular(bool inplace = false) 
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            throw std::runtime_error("Matrix is not square");
+        }
+
+        my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
+
+        if (!inplace) {
+            // Create a copy and modify it
+            // std::cout << "Setting matrix to lower triangular" << std::endl;
+            Matrix result = *this;
+            for (my_size_t i = 0; i < matrix_size; i++)
+            {
+                for (my_size_t j = i + 1; j < matrix_size; j++)
+                {
+                    result(i, j) = T(0);
+                }
+            }
+            return result;
+        } else {
+            // std::cout << "Setting matrix to lower triangular in place" << std::endl;
+            // Modify the matrix in-place
+            for (my_size_t i = 0; i < matrix_size; i++)
+            {
+                for (my_size_t j = i + 1; j < matrix_size; j++)
+                {
+                    (*this)(i, j) = T(0);
+                }
+            }
+            return *this;  // Returning the modified matrix itself
+        }
+    }
+
     /* Invers operation using Gauss-Jordan algorithm */
     Matrix inverse(void) const
     {
