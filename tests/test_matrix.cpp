@@ -3,6 +3,7 @@
 
 #include "matrix.h"
 #include "utilities.h"
+#include "matrix_algorithms.h"
 #include <chrono>
 
 using namespace std::chrono;
@@ -434,7 +435,7 @@ TEST_CASE("Matrix class", "[matrix]")
             }
         }
 
-        // now check a long oppeartion by adding a zero matrix to the 
+        // now check a long oppeartion by adding a zero matrix to the
         // transposed (not in place) matrix. The mat1 should not change.
         mat1.setIdentity();
         mat1(0, 1) = 10;
@@ -582,6 +583,29 @@ output_string = output.getvalue()
 
         // Check if the output is the same
         CHECK(results[0] == toFormattedNumpyArray(inv));
+    }
+
+    SECTION("Test Cholesky Decomposition")
+    {
+        // init the matrix
+        double initValues[3][3] = {
+            {4, 12, -16},
+            {12, 37, -43},
+            {-16, -43, 98}};
+        Matrix<double, 3, 3> matrix3 = initValues;
+
+        double cholesky_values[3][3] = {
+            {2, 0, 0},
+            {6, 1, 0},
+            {-8, 5, 3}};
+        Matrix<double, 3, 3> cholesky_matrix = cholesky_values;
+
+        // using tessaract
+        tick();
+        auto cholesky = matrix_algorithms::choleskyDecomposition(matrix3);
+        tock("C++ Cholesky Decomposition");
+
+        CHECK(cholesky == cholesky_matrix);
     }
     SECTION("Is matrix orthogonal")
     {
