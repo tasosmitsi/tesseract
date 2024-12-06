@@ -293,7 +293,7 @@ public:
         return true;
     }
 
-    bool isSymmetric(void)
+    bool isSymmetric(void) // TODO: this function should be const
     {
         // Check if the matrix is square
         if (!this->areDimsEqual())
