@@ -1,20 +1,16 @@
 #ifndef MATRIX_ALGORITHMS_H
 #define MATRIX_ALGORITHMS_H
 
-#include "matrix.h"
+// Forward declaration of Matrix class
+template <typename T, my_size_t Rows, my_size_t Cols>
+class Matrix;
 
 namespace matrix_algorithms
 {
     template <typename T, my_size_t Rows, my_size_t Cols>
     Matrix<T, Rows, Cols> choleskyDecomposition(Matrix<T, Rows, Cols> &matrix) // TODO: the matrix should be const
     {
-        // Check if the matrix is square
-        if (!matrix.areDimsEqual())
-        {
-            throw std::runtime_error("Matrix is not square");
-        }
-
-        // Check if the matrix is symmetric
+        // Check if the matrix is symmetric, checking if it's square has been done in the isSymmetric function
         if (!matrix.isSymmetric())
         {
             throw std::runtime_error("Matrix is not symmetric");
@@ -37,7 +33,7 @@ namespace matrix_algorithms
                 if (i == j) // Diagonal element
                 {
                     T diag = matrix(i, i) - sum;
-                    if (diag <= T(0))
+                    if (diag <= T(PRECISION_TOLERANCE))
                     {
                         throw std::runtime_error("Matrix is not positive definite");
                     }
