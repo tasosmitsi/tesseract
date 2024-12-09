@@ -3,6 +3,17 @@
 
 #include "tensor.h"
 #include <iostream>
+#include "matrix_algorithms.h"
+
+namespace matrix_traits
+{
+    enum class Definiteness
+    {
+        NotPositiveDefinite = 0,  // Matrix is neither positive definite nor semi-definite
+        PositiveSemiDefinite = 1, // Matrix is positive semi-definite
+        PositiveDefinite = 2,      // Matrix is positive definite
+    };
+}
 
 // Derived class: Matrix
 template <typename T, my_size_t Rows, my_size_t Cols>
@@ -546,6 +557,40 @@ public:
             return false;
         }
         return true;
+    }
+
+    matrix_traits::Definiteness isPositiveDefinite(bool verbose = false)
+    {
+        // since the choleskyDecomposition checks if the matrix is symmetric
+        // and isSymmetric checks if the matrix is square, we don't need to check
+        // if the matrix is square or symmetric here
+        try
+        {
+            // Attempt to perform the Cholesky decomposition
+            Matrix<T, Rows, Cols> L = matrix_algorithms::choleskyDecomposition(*this);
+            
+            // Check the diagonal of the decomposition
+            bool hasZeroDiagonal = false;
+            for (my_size_t i = 0; i < this->getDim(0); i++)
+            {
+                if (std::abs(L(i, i)) < T(PRECISION_TOLERANCE))
+                {
+                    return matrix_traits::Definiteness::PositiveSemiDefinite; // Matrix is positive semi-definite
+                }
+            }
+
+            // Return positive definite if the matrix is positive definite
+            return matrix_traits::Definiteness::PositiveDefinite;
+        }
+        catch (const std::runtime_error& e)
+        {
+            // If an exception is thrown, the matrix is neither positive definite nor semi-definite
+            if (verbose)
+            {
+                std::cerr << "Error: " << e.what() << std::endl;
+            }
+            return matrix_traits::Definiteness::NotPositiveDefinite; // Matrix is not positive definite
+        }
     }
 };
 

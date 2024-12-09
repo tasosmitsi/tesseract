@@ -607,6 +607,37 @@ output_string = output.getvalue()
 
         CHECK(cholesky == cholesky_matrix);
     }
+
+    SECTION("Is matrix positive definite or semi-definite")
+    {
+        // init the matrix
+        double initValues[3][3] = {
+            {4, 12, -16},
+            {12, 37, -43},
+            {-16, -43, 98}};
+        Matrix<double, 3, 3> matrix = initValues;
+        auto result = matrix.isPositiveDefinite();
+        CHECK(result == matrix_traits::Definiteness::PositiveDefinite);
+
+        // TODO: test semi definite matrix
+        // double initValues1[2][2] = {
+        //     {3, 4},
+        //     {4, 16/3}};
+
+        // Matrix<double, 2, 2> matrix1 = initValues1;
+        // auto result = matrix1.isPositiveDefinite(true);
+        // CHECK(result == matrix_traits::Definiteness::PositiveSemiDefinite);
+
+        // Not positive definite matrix
+        double initValues2[3][3] = {
+            {1, 0, 0},
+            {0, 0, 1},
+            {0, 1, 0}};
+        matrix = initValues2;
+        result = matrix.isPositiveDefinite();
+        CHECK(result == matrix_traits::Definiteness::NotPositiveDefinite);
+    }
+
     SECTION("Is matrix orthogonal")
     {
         // init the matrix
