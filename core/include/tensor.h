@@ -803,7 +803,10 @@ public:
     void print() const {
         static_assert(sizeof...(Dims) <= 4, "Printing not supported for tensors with more than 4 dimensions");
         
-        if constexpr (sizeof...(Dims) == 2) {
+        if constexpr (sizeof...(Dims) == 1) {
+            print1D();
+        }
+        else if constexpr (sizeof...(Dims) == 2) {
             print2D();
         }
         else if constexpr (sizeof...(Dims) == 3) {
@@ -911,6 +914,15 @@ private:
         {
             transposeOrder_[i] = i;
         }
+    }
+
+    // 1D print function
+    void print1D() const {
+        for (my_size_t i = 0; i < getDim(0); ++i)
+        {
+            std::cout << (*this)(i) << " ";
+        }
+        std::cout << std::endl;
     }
 
     // 2D print function
