@@ -32,6 +32,14 @@ public:
     // Move constructor
     Matrix(Matrix &&other) noexcept : TensorND<T, Rows, Cols>(std::move(other)) {}
 
+    Matrix(TensorND<T, Rows, Cols>&& baseTensor) noexcept
+        : TensorND<T, Rows, Cols>(std::move(baseTensor)) {}
+
+    static Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor) 
+    {
+        return Matrix(std::move(tensor));
+    }
+
     Matrix(T (&initList)[Rows][Cols]) : TensorND<T, Rows, Cols>() 
     {
         // loop trough the input and use (i,j) to store them
@@ -75,20 +83,20 @@ public:
     Matrix operator+(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator+ to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator+(other);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator+(other);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override operator+ to add a scalar to the matrix
     Matrix operator+(const T scalar) const
     {
         // Call the base class operator+ to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator+(scalar);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator+(scalar);
 
         // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // overide operator+ to add a matrix to a scalar
@@ -102,37 +110,36 @@ public:
     Matrix operator-(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator- to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator-(other);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator-(other);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override operator- to subtract a scalar from the matrix
     Matrix operator-(const T scalar) const
     {
         // Call the base class operator- to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator-(scalar);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator-(scalar);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // overide operator- to subtract a matrix from a scalar
     friend Matrix operator-(const T scalar, const Matrix &matrix)
     {
-        TensorND<T, Rows, Cols> resultTensor = scalar - static_cast<const TensorND<T, Rows, Cols> &>(matrix);
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        return -matrix + scalar; // scalar - matrix = -matrix + scalar
     }
 
     // Override operator- to get the negative of the matrix
     Matrix operator-(void) const
     {
         // Call the base class operator- to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator-();
+        auto resultTensor = TensorND<T, Rows, Cols>::operator-();
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override operator* to return a Matrix
@@ -140,20 +147,20 @@ public:
     Matrix operator*(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator* to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator*(other);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator*(other);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override operator* to multiply a scalar with the matrix
     Matrix operator*(const T scalar) const
     {
         // Call the base class operator* to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator*(scalar);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator*(scalar);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // overide operator* to multiply a matrix with a scalar
@@ -167,39 +174,41 @@ public:
     Matrix operator/(const Matrix<T, Rows1, Cols1> &other) const
     {
         // Call the base class operator/ to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator/(other);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator/(other);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override operator/ to divide the matrix by a scalar
     Matrix operator/(const T scalar) const
     {
         // Call the base class operator/ to get a TensorND result
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::operator/(scalar);
+        auto resultTensor = TensorND<T, Rows, Cols>::operator/(scalar);
 
-        // Cast the result to Matrix and return
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // overide operator/ to divide a scalar by the matrix
     friend Matrix operator/(const T scalar, const Matrix &matrix)
     {
-        TensorND<T, Rows, Cols> resultTensor = scalar / static_cast<const TensorND<T, Rows, Cols> &>(matrix);
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        auto resultTensor = scalar / static_cast<const TensorND<T, Rows, Cols> &>(matrix);
+        
+        // Use fromTensor to convert the resultTensor to a Matrix
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     // Override transpose to return a Matrix
     Matrix transpose(bool inplace = false) {
         // Call the base class transpose to perform the transpose operation
-        TensorND<T, Rows, Cols> resultTensor = TensorND<T, Rows, Cols>::transpose(inplace); // Modifies transposeOrder_, not data_
+        auto resultTensor = TensorND<T, Rows, Cols>::transpose(inplace); // Modifies transposeOrder_, not data_
 
-        // If inplace is false, return the resultTensor casted to Matrix
-        // If inplace is true, return the modified matrix itself
         if (!inplace) {
-            return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+            // If inplace is false, return the resultTensor as Matrix
+            return Matrix::fromTensor(std::move(resultTensor));
         } else {
+            // If inplace is true, return the modified matrix itself
             return *this;
         }
     }
@@ -269,7 +278,7 @@ public:
     static Matrix<T, Rows, Cols> matmul(const Matrix<T, mat1_rows, Common> &mat1, const Matrix<T, Common, mat2_cols> &mat2)
     {
         auto resultTensor = TensorND<T, Rows, Cols>::einsum(mat1, mat2, 1, 0);
-        return static_cast<Matrix<T, Rows, Cols> &>(resultTensor);
+        return Matrix::fromTensor(std::move(resultTensor));
     }
 
     bool isIdentity(void) const
