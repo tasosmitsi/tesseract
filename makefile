@@ -13,7 +13,7 @@ PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
 
 # Flags
 DEPFLAGS = -MMD -MP
-OPT = -O3
+OPT = -O3 -Wall -Wextra
 CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
