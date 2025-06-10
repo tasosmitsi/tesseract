@@ -394,7 +394,8 @@ public:
 
     bool isIdentity() const
     {
-        // check if the tensor is square (hypercube)
+        // Check if the tensor is "square" (hypercube). If the tensor 
+        // is not square, it cannot be identity -> return false
         if (!areDimsEqual())
         {
             return false;
@@ -410,19 +411,20 @@ public:
         {
             // itterate over all dimensions
             // if all indices are the same, then it's a diagonal element
-            bool isDiagonal = true;
+            bool isElementDiagonal = true;
             for (my_size_t j = 0; j < getNumDims(); ++j)
             {
                 if (combinations[i][j] != combinations[i][0])
                 {
-                    isDiagonal = false;
+                    isElementDiagonal = false;
                     break;
                 }
             }
 
-            if (isDiagonal)
+            if (isElementDiagonal)
             {
-                // take into account the tolerance for floating point numbers
+                // if the element is diagonal, check if it is equal to 1.
+                // element - 1 must be greater than the precision tolerance
                 if (std::abs((*this)(combinations[i]) - 1) > PRECISION_TOLERANCE)
                 {
                     return false;
@@ -430,8 +432,8 @@ public:
             }
             else
             {
-                // take into account the tolerance for floating point numbers
-                if (!std::abs((*this)(combinations[i])) < PRECISION_TOLERANCE)
+                // if the element is not diagonal, check if it is equal to 0.
+                // element must be less than the precision tolerance
                 if (!(std::abs((*this)(combinations[i])) < PRECISION_TOLERANCE))
                 {
                     return false;
