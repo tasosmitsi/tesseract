@@ -432,6 +432,7 @@ public:
             {
                 // take into account the tolerance for floating point numbers
                 if (!std::abs((*this)(combinations[i])) < PRECISION_TOLERANCE)
+                if (!(std::abs((*this)(combinations[i])) < PRECISION_TOLERANCE))
                 {
                     return false;
                 }
