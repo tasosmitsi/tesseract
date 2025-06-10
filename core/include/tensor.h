@@ -547,6 +547,8 @@ public:
     // for all dimensions
     TensorND& setDiagonal(T _val)
     {
+        static_assert(sizeof...(Dims) >= 2, "setDiagonal requires at least 2 dimensions.");
+
         // set the entire matrix to zeros
         setToZero();
 
@@ -598,6 +600,7 @@ public:
     template<my_size_t DiagonalSize>
     void getDiagonalEntries(TensorND<T, DiagonalSize, 1>& diagonalEntries) const
     {
+        static_assert(sizeof...(Dims) >= 2, "Getting diagonal entries requires at least 2 dimensions.");
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
         my_size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
