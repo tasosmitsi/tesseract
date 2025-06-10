@@ -616,6 +616,9 @@ public:
     template <my_size_t... Dims1, my_size_t... Dims2>
     static TensorND einsum(const TensorND<T, Dims1...>& _tensor1, const TensorND<T, Dims2...>& _tensor2, my_size_t a, my_size_t b)
     {
+        static_assert(sizeof...(Dims1) >= 2 , "Tensor 1 must have at least 2 dimension");
+        static_assert(sizeof...(Dims2) >= 2 , "Tensor 2 must have at least 2 dimension");
+        
         // check if a and b are valid dimensions
         if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
         {
