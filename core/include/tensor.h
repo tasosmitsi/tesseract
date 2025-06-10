@@ -569,6 +569,8 @@ public:
 
     TensorND& setIdentity(void)
     {
+        static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
+        static_assert(((Dims == dims[0]) && ...), "All dimensions must be equal for an identity tensor");
         this->setDiagonal(1);
         return *this;
     }
