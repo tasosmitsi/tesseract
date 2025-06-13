@@ -11,7 +11,7 @@
 - **Utility Functions**: Generate identity tensors, set diagonal elements, initialize tensors to zero or random values.
 - **Einsum-style Tensor Contraction**: Efficient contraction for performing complex tensor multiplications.
 - **Memory Efficiency**: Supports copy and move constructors for efficient memory management.
-  
+
 ## Installation
 To use `TensorND`, simply include the `TensorND.h` header in your project and ensure that your compiler supports C++17 or later.
 
@@ -175,5 +175,5 @@ Perform tensor contraction using the `einsum` function:
 It is recommended to run the tests to ensure that the library is working correctly. To run the tests, simply run:
 
 ```bash
-make -j 20 run_test 
+make -j 20 run_test
 ```

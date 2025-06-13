@@ -35,12 +35,12 @@ public:
     Matrix(TensorND<T, Rows, Cols>&& baseTensor) noexcept
         : TensorND<T, Rows, Cols>(std::move(baseTensor)) {}
 
-    static Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor) 
+    static Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor)
     {
         return Matrix(std::move(tensor));
     }
 
-    Matrix(T (&initList)[Rows][Cols]) : TensorND<T, Rows, Cols>() 
+    Matrix(T (&initList)[Rows][Cols]) : TensorND<T, Rows, Cols>()
     {
         // loop trough the input and use (i,j) to store them
         for (my_size_t i = 0; i < Rows; ++i)
@@ -73,7 +73,7 @@ public:
                 (*this)(i, j) = initList[i][j];
             }
         }
-        
+
         // Return the derived type
         return *this;
     }
@@ -194,7 +194,7 @@ public:
     friend Matrix operator/(const T scalar, const Matrix &matrix)
     {
         auto resultTensor = scalar / static_cast<const TensorND<T, Rows, Cols> &>(matrix);
-        
+
         // Use fromTensor to convert the resultTensor to a Matrix
         return Matrix::fromTensor(std::move(resultTensor));
     }
@@ -374,7 +374,7 @@ public:
         return true;
     }
 
-    Matrix upperTriangular(bool inplace = false) 
+    Matrix upperTriangular(bool inplace = false)
     {
         // Check if the matrix is square
         if (!this->areDimsEqual())
@@ -410,7 +410,7 @@ public:
         }
     }
 
-    Matrix lowerTriangular(bool inplace = false) 
+    Matrix lowerTriangular(bool inplace = false)
     {
         // Check if the matrix is square
         if (!this->areDimsEqual())
@@ -544,7 +544,7 @@ public:
     bool isOrthogonal(void)
     {
         Matrix<T, Rows, Cols> ident;
-        
+
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
@@ -553,7 +553,7 @@ public:
 
         // Check if the matrix is orthogonal
         Matrix transposed = this->transpose();
-        
+
         ident = Matrix<T, Rows, Cols>::matmul(*this, transposed);
         if (!ident.isIdentity())
         {
@@ -577,7 +577,7 @@ public:
         {
             // Attempt to perform the Cholesky decomposition
             Matrix<T, Rows, Cols> L = matrix_algorithms::choleskyDecomposition(*this);
-            
+
             // Check the diagonal of the decomposition
             bool hasZeroDiagonal = false;
             for (my_size_t i = 0; i < this->getDim(0); i++)

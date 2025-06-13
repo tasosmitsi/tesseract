@@ -147,7 +147,7 @@ public:
         {
             return *this;
         }
-        
+
         // copy the transpose order
         std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
         transposeOrderSet_ = true;
@@ -394,7 +394,7 @@ public:
 
     bool isIdentity() const
     {
-        // Check if the tensor is "square" (hypercube). If the tensor 
+        // Check if the tensor is "square" (hypercube). If the tensor
         // is not square, it cannot be identity -> return false
         if (!areDimsEqual())
         {
@@ -440,7 +440,7 @@ public:
                 }
             }
         }
-        return true;        
+        return true;
     }
 
     TensorND transpose(const my_size_t order[sizeof...(Dims)], bool inplace = false)
@@ -474,7 +474,7 @@ public:
                 outp.transposeOrder_[1] = 0;
             }
             else
-            {   
+            {
                 outp.transposeOrder_[0] = 0;
                 outp.transposeOrder_[1] = 1;
             }
@@ -487,12 +487,12 @@ public:
                 this->transposeOrder_[1] = 0;
             }
             else
-            {   
+            {
                 this->transposeOrder_[0] = 0;
                 this->transposeOrder_[1] = 1;
             }
             return *this;
-        }   
+        }
     }
 
     // Utility function to retrieve total number of elements
@@ -555,7 +555,7 @@ public:
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
         my_size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
-        
+
         for (my_size_t i = 0; i < minDim; ++i)
         {
             // Set the current diagonal index for all dimensions
@@ -623,7 +623,7 @@ public:
     {
         static_assert(sizeof...(Dims1) >= 2 , "Tensor 1 must have at least 2 dimension");
         static_assert(sizeof...(Dims2) >= 2 , "Tensor 2 must have at least 2 dimension");
-        
+
         // check if a and b are valid dimensions
         if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
         {
@@ -685,7 +685,7 @@ public:
 
         // print_combinations(combinations);
 
-        // calculate the contraction        
+        // calculate the contraction
         for (my_size_t comb = 0; comb < total_combinations; ++comb)
         {
             T sum = 0;
@@ -697,7 +697,7 @@ public:
             //     std::cout << combinations[comb][i] << (i < n_newDims - 1 ? ", " : "");
             // }
             // std::cout << ") = " << "sum" << ";" << std::endl << std::endl;
-            
+
             my_size_t K = _tensor1.getDim(a); // or _tensor2.getDim(b) since they are equal
             for (my_size_t k = 0; k < K; ++k)
             {
@@ -716,7 +716,7 @@ public:
                         indices1[i] = k;
                     }
                 }
-                
+
                 l = sizeof...(Dims1) - 1;
                 for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
                 {
@@ -813,7 +813,7 @@ public:
     // Function to print the contents of the tensor
     void print() const {
         static_assert(sizeof...(Dims) <= 4, "Printing not supported for tensors with more than 4 dimensions");
-        
+
         if constexpr (sizeof...(Dims) == 1) {
             print1D();
         }
@@ -841,7 +841,7 @@ private:
 
     // These vars are being set in runtime
     my_size_t transposeOrder_[sizeof...(Dims)];
-    bool transposeOrderSet_ = false;    
+    bool transposeOrderSet_ = false;
     T data_[totalSize]; // Contiguous storage of elements in a flat array
 
     template <my_size_t... Dims1>
@@ -885,11 +885,11 @@ private:
                 combinations[row][i] = combination[i];
             }
 
-            // print the combination 
+            // print the combination
             // here you can calculate the contraction of the tensor
             // if you don't want to store all the combinations
             // you can calculate the contraction here
-            // for now comment this print statement 
+            // for now comment this print statement
             // for (my_size_t i = 0; i < N; ++i)
             // {
             //     std::cout << combination[i] << ", ";

@@ -18,7 +18,7 @@ CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_D
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
 # ------------- test files -------------
-CXX_SRC_TEST_FILES = $(wildcard $(TEST_DIR)/*.cpp) $(wildcard $(CATCH2_DIR)/*.cpp) 
+CXX_SRC_TEST_FILES = $(wildcard $(TEST_DIR)/*.cpp) $(wildcard $(CATCH2_DIR)/*.cpp)
 C_SRC_TEST_FILES = $(wildcard $(TEST_DIR)/*.c)
 
 CXX_OBJ_TEST_FILES = $(patsubst %.cpp, $(BUILD_DIR)/%.o, $(notdir $(CXX_SRC_TEST_FILES)))
