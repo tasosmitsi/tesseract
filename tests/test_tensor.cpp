@@ -92,4 +92,24 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK_NOTHROW(tensor1 * tensor2);
         CHECK_NOTHROW(tensor1 / tensor2);
     }
+
+    SECTION("Test TensorND einsum operation")
+    {
+        TensorND<double, 2, 3> tensor1(2), tensor2(2);
+        TensorND<double, 3, 2> tensor3(2);
+
+        auto result = TensorND<double, 2, 2>::einsum(tensor1, tensor2, 1, 1);
+
+        CHECK(result.getNumDims() == 2);
+        CHECK(result.getShape() == "(2,2)");
+        CHECK(result.getDim(0) == 2);
+        CHECK(result.getDim(1) == 2);
+
+        auto result1 = TensorND<double, 3, 3>::einsum(tensor1, tensor3, 0, 1);
+
+        CHECK(result1.getNumDims() == 2);
+        CHECK(result1.getShape() == "(3,3)");
+        CHECK(result1.getDim(0) == 3);
+        CHECK(result1.getDim(1) == 3);
+    }
 }
