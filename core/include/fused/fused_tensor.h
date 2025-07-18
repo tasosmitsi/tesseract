@@ -6,17 +6,7 @@
 #include <utility>   // for std::move
 #include <iostream>  // for std::cout
 
-// #define DEBUG_FUSED_TENSOR
-
-/* Define this to enable matrix number of indices checking */
-#define MATRIX_USE_NUMBER_OF_INDICES_CHECKING
-
-/* Define this to enable matrix bound checking */
-#define MATRIX_USE_BOUNDS_CHECKING
-
-#define PRECISION_TOLERANCE 1e-9
-
-#define my_size_t size_t // can be uint32_t or uint64_t
+#include "config.h"
 
 #include "BaseExpr.h"
 #include "Operators.h"
