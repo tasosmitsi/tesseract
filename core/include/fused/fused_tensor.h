@@ -11,6 +11,8 @@
 #include "BaseExpr.h"
 #include "Operators.h"
 #include "call_at_dispatch.h"
+#include "static_storage.h"
+#include "dynamic_storage.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
@@ -27,7 +29,7 @@ public:
     FusedTensorND(T initValue)
     {
         initTransposeOrder();
-        std::fill_n(data_, totalSize, initValue);
+        std::fill_n(data_.data(), totalSize, initValue);
     }
 
     // Copy constructor
@@ -48,7 +50,7 @@ public:
         transposeOrderSet_ = true;
         initTransposeOrder();
 
-        std::copy(other.data_, other.data_ + totalSize, data_);
+        std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
     }
 
     // Move constructor
@@ -69,10 +71,10 @@ public:
         transposeOrderSet_ = true;
         initTransposeOrder();
 
-        std::move(other.data_, other.data_ + totalSize, data_);
+        std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
 
         // Reset the other tensor's data
-        std::fill_n(other.data_, totalSize, T{});
+        std::fill_n(other.data_.data(), totalSize, T{});
     }
 
     template <typename Expr>
@@ -110,7 +112,7 @@ public:
         transposeOrderSet_ = true;
 
         // Copy the data
-        std::copy(other.data_, other.data_ + totalSize, data_);
+        std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
         return *this;
     }
 
@@ -132,10 +134,10 @@ public:
         transposeOrderSet_ = true;
 
         // Move the data
-        std::move(other.data_, other.data_ + totalSize, data_);
+        std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
 
         // Reset the other tensor's data
-        std::fill_n(other.data_, totalSize, T{});
+        std::fill_n(other.data_.data(), totalSize, T{});
 
         return *this;
     }
@@ -442,13 +444,13 @@ public:
 
     FusedTensorND &setToZero(void)
     {
-        std::fill_n(data_, totalSize, 0);
+        std::fill_n(data_.data(), totalSize, 0);
         return *this;
     }
 
     FusedTensorND &setHomogen(T _val)
     {
-        std::fill_n(data_, totalSize, _val);
+        std::fill_n(data_.data(), totalSize, _val);
         return *this;
     }
 
@@ -771,7 +773,8 @@ private:
     // These vars are being set in runtime
     my_size_t transposeOrder_[sizeof...(Dims)];
     bool transposeOrderSet_ = false;
-    T data_[totalSize]; // Contiguous storage of elements in a flat array
+
+    StaticStorage<T, totalSize> data_; // Static storage for the tensor data
 
     template <my_size_t... Dims1>
     inline void checkDimensionsMismatch(const FusedTensorND<T, Dims1...> &other) const
