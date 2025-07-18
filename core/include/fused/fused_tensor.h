@@ -539,198 +539,138 @@ public:
         }
     }
 
-    // // contract two tensors along a specific dimension (axis) and return the result
-    // template <my_size_t... Dims1, my_size_t... Dims2>
-    // static FusedTensorND einsum(const FusedTensorND<T, Dims1...>& _tensor1, const FusedTensorND<T, Dims2...>& _tensor2, my_size_t a, my_size_t b)
-    // {
-    //     static_assert(sizeof...(Dims1) >= 2 , "Tensor 1 must have at least 2 dimension");
-    //     static_assert(sizeof...(Dims2) >= 2 , "Tensor 2 must have at least 2 dimension");
+    // contract two tensors along a specific dimension (axis) and return the result
+    template <my_size_t... Dims1, my_size_t... Dims2>
+    static FusedTensorND einsum(const FusedTensorND<T, Dims1...> &_tensor1, const FusedTensorND<T, Dims2...> &_tensor2, my_size_t a, my_size_t b)
+    {
+        static_assert(sizeof...(Dims1) >= 2, "Tensor 1 must have at least 2 dimension");
+        static_assert(sizeof...(Dims2) >= 2, "Tensor 2 must have at least 2 dimension");
 
-    //     // check if a and b are valid dimensions
-    //     if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
-    //     {
-    //         throw std::runtime_error("Invalid dimensions");
-    //     }
+        // check if a and b are valid dimensions
+        if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
+        {
+            throw std::runtime_error("Invalid dimensions");
+        }
 
-    //     // check if the a axis of tensor1 is equal to the b axis of tensor2
-    //     if (_tensor1.getDim(a) != _tensor2.getDim(b))
-    //     {
-    //         throw std::runtime_error("Dimensions mismatch");
-    //     }
+        // check if the a axis of tensor1 is equal to the b axis of tensor2
+        if (_tensor1.getDim(a) != _tensor2.getDim(b))
+        {
+            throw std::runtime_error("Dimensions mismatch");
+        }
 
-    //     // calculate the new dimensions
-    //     constexpr my_size_t n_newDims = sizeof...(Dims1) + sizeof...(Dims2) - 2;
-    //     my_size_t newDims[n_newDims];
-    //     my_size_t k = 0;
-    //     for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
-    //     {
-    //         if (i != a)
-    //         {
-    //             newDims[k++] = _tensor1.getDim(i);
-    //         }
-    //     }
+        // calculate the new dimensions
+        constexpr my_size_t n_newDims = sizeof...(Dims1) + sizeof...(Dims2) - 2;
+        my_size_t newDims[n_newDims];
+        my_size_t k = 0;
+        for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+        {
+            if (i != a)
+            {
+                newDims[k++] = _tensor1.getDim(i);
+            }
+        }
 
-    //     for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
-    //     {
-    //         if (i != b)
-    //         {
-    //             newDims[k++] = _tensor2.getDim(i);
-    //         }
-    //     }
+        for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+        {
+            if (i != b)
+            {
+                newDims[k++] = _tensor2.getDim(i);
+            }
+        }
 
-    //     // print the new dimensions
-    //     // std::cout << "New dimensions: ";
-    //     // for (my_size_t i = 0; i < n_newDims; ++i)
-    //     // {
-    //     //     std::cout << newDims[i] << " ";
-    //     // }
-    //     // std::cout << std::endl;
+        // print the new dimensions
+        // std::cout << "New dimensions: ";
+        // for (my_size_t i = 0; i < n_newDims; ++i)
+        // {
+        //     std::cout << newDims[i] << " ";
+        // }
+        // std::cout << std::endl;
 
-    //     // create a new tensor with the new dimensions
-    //     FusedTensorND<T, Dims...> _outp;
+        // create a new tensor with the new dimensions
+        FusedTensorND<T, Dims...> _outp;
 
-    //     //  check if the new dimensions one by one are the same as the dimensions of the new tensor
-    //     for (my_size_t i = 0; i < n_newDims; ++i)
-    //     {
-    //         if (newDims[i] != _outp.getDim(i))
-    //         {
-    //             throw std::runtime_error("Dimensions mismatch");
-    //         }
-    //     }
+        //  check if the new dimensions one by one are the same as the dimensions of the new tensor
+        for (my_size_t i = 0; i < n_newDims; ++i)
+        {
+            if (newDims[i] != _outp.getDim(i))
+            {
+                throw std::runtime_error("Dimensions mismatch");
+            }
+        }
 
-    //     // calculate the total number of combinations and create a 2D array to store them
-    //     constexpr my_size_t total_combinations = (1 * ... * Dims);
-    //     my_size_t combinations[total_combinations][n_newDims];
+        // calculate the total number of combinations and create a 2D array to store them
+        constexpr my_size_t total_combinations = (1 * ... * Dims);
+        my_size_t combinations[total_combinations][n_newDims];
 
-    //     // generate all the combinations
-    //     generate_combinations(newDims, combinations);
+        // generate all the combinations
+        generate_combinations(newDims, combinations);
 
-    //     // print_combinations(combinations);
+        // print_combinations(combinations);
 
-    //     // calculate the contraction
-    //     for (my_size_t comb = 0; comb < total_combinations; ++comb)
-    //     {
-    //         T sum = 0;
+        // calculate the contraction
+        for (my_size_t comb = 0; comb < total_combinations; ++comb)
+        {
+            T sum = 0;
 
-    //         // // print the sum with the output tensor
-    //         // std::cout << std::endl << "---------------" << std::endl << "_outp(";
-    //         // for (my_size_t i = 0; i < n_newDims; ++i)
-    //         // {
-    //         //     std::cout << combinations[comb][i] << (i < n_newDims - 1 ? ", " : "");
-    //         // }
-    //         // std::cout << ") = " << "sum" << ";" << std::endl << std::endl;
+            // // print the sum with the output tensor
+            // std::cout << std::endl << "---------------" << std::endl << "_outp(";
+            // for (my_size_t i = 0; i < n_newDims; ++i)
+            // {
+            //     std::cout << combinations[comb][i] << (i < n_newDims - 1 ? ", " : "");
+            // }
+            // std::cout << ") = " << "sum" << ";" << std::endl << std::endl;
 
-    //         my_size_t K = _tensor1.getDim(a); // or _tensor2.getDim(b) since they are equal
-    //         for (my_size_t k = 0; k < K; ++k)
-    //         {
-    //             my_size_t indices1[sizeof...(Dims1)] = {0};
-    //             my_size_t indices2[sizeof...(Dims2)] = {0};
+            my_size_t K = _tensor1.getDim(a); // or _tensor2.getDim(b) since they are equal
+            for (my_size_t k = 0; k < K; ++k)
+            {
+                my_size_t indices1[sizeof...(Dims1)] = {0};
+                my_size_t indices2[sizeof...(Dims2)] = {0};
 
-    //             my_size_t l = 0;
-    //             for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
-    //             {
-    //                 if (i != a)
-    //                 {
-    //                     indices1[i] = combinations[comb][l++];
-    //                 }
-    //                 else
-    //                 {
-    //                     indices1[i] = k;
-    //                 }
-    //             }
+                my_size_t l = 0;
+                for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+                {
+                    if (i != a)
+                    {
+                        indices1[i] = combinations[comb][l++];
+                    }
+                    else
+                    {
+                        indices1[i] = k;
+                    }
+                }
 
-    //             l = sizeof...(Dims1) - 1;
-    //             for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
-    //             {
-    //                 if (i != b)
-    //                 {
-    //                     indices2[i] = combinations[comb][l++];
-    //                 }
-    //                 else
-    //                 {
-    //                     indices2[i] = k;
-    //                 }
-    //             }
+                l = sizeof...(Dims1) - 1;
+                for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+                {
+                    if (i != b)
+                    {
+                        indices2[i] = combinations[comb][l++];
+                    }
+                    else
+                    {
+                        indices2[i] = k;
+                    }
+                }
 
-    //             // // print the sumation operation with the indices of the tensors
-    //             // std::cout << "Sum += _tensor1(";
-    //             // for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
-    //             // {
-    //             //     std::cout << indices1[i] << (i < sizeof...(Dims1) - 1 ? ", " : "");
-    //             // }
-    //             // std::cout << ") * _tensor2(";
-    //             // for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
-    //             // {
-    //             //     std::cout << indices2[i] << (i < sizeof...(Dims2) - 1 ? ", " : "");
-    //             // }
-    //             // std::cout << ");" << std::endl;
+                // // print the sumation operation with the indices of the tensors
+                // std::cout << "Sum += _tensor1(";
+                // for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+                // {
+                //     std::cout << indices1[i] << (i < sizeof...(Dims1) - 1 ? ", " : "");
+                // }
+                // std::cout << ") * _tensor2(";
+                // for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+                // {
+                //     std::cout << indices2[i] << (i < sizeof...(Dims2) - 1 ? ", " : "");
+                // }
+                // std::cout << ");" << std::endl;
 
-    //             sum += _tensor1(indices1) * _tensor2(indices2);
-    //         }
-    //         _outp(combinations[comb]) = sum;
-    //     }
-    //     return _outp;
-    // }
-
-    /* Insert submatrix into matrix at _posRow & _posCol position
-     * Example: A = Matrix 4x4, B = Matrix 2x3
-     *
-     *  C = A.InsertSubMatrix(B, 1, 1);
-     *
-     *  A = [A00  A01  A02  A03]    B = [B00  B01  B02]
-     *      [A10  A11  A12  A13]        [B10  B11  B12]
-     *      [A20  A21  A22  A23]
-     *      [A30  A31  A32  A33]
-     *
-     *
-     *  C = [A00  A01  A02  A03]
-     *      [A10  B00  B01  B02]
-     *      [A20  B10  B11  B12]
-     *      [A30  A31  A32  A33]
-     */
-    // template<my_size_t... DimsB>
-    // template<typename... insertion_coordinates>
-    // FusedTensorND& InsertSubMatrix(const FusedTensorND<T, DimsB...>& _subMatrix, insertion_coordinates... _insertion_coordinates)
-    // {
-    //     // check if the tensor is 2D
-    //     static_assert(sizeof...(Dims) > 3, "InsertSubMatrix is only supported for MAX 3D tensors");
-    //     static_assert(sizeof...(DimsB) > 3, "InsertSubMatrix is only supported for MAX 3D tensors");
-
-    //     // check if the submatrix fits into the matrix
-    //     if ((_subMatrix.dims[0] + _insertion_coordinates... > dims[0]) || (_subMatrix.dims[1] + _insertion_coordinates... > dims[1]))
-    //     {
-    //         throw std::runtime_error("Submatrix does not fit into the matrix");
-    //     }
-
-    //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
-    //     {
-    //         for (my_size_t j = 0; j < _subMatrix.dims[1]; ++j)
-    //         {
-    //             (*this)(_insertion_coordinates... + i, _insertion_coordinates... + j) = _subMatrix(i, j);
-    //         }
-    //     }
-    //     return *this;
-    // }
-    // {
-    //     // check if the tensor is 2D
-    //     static_assert(sizeof...(Dims) == 2, "InsertSubMatrix is only supported for 2D tensors");
-    //     static_assert(sizeof...(DimsB) == 2, "InsertSubMatrix is only supported for 2D tensors");
-
-    //     // check if the submatrix fits into the matrix
-    //     if ((_subMatrix.dims[0] + _posRow > dims[0]) || (_subMatrix.dims[1] + _posCol > dims[1]))
-    //     {
-    //         throw std::runtime_error("Submatrix does not fit into the matrix");
-    //     }
-
-    //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
-    //     {
-    //         for (my_size_t j = 0; j < _subMatrix.dims[1]; ++j)
-    //         {
-    //             (*this)(_posRow + i, _posCol + j) = _subMatrix(i, j);
-    //         }
-    //     }
-    //     return *this;
-    // }
+                sum += _tensor1(indices1) * _tensor2(indices2);
+            }
+            _outp(combinations[comb]) = sum;
+        }
+        return _outp;
+    }
 
     // Function to print the contents of the tensor
     void print() const

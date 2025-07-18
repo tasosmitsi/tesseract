@@ -472,4 +472,24 @@ TEST_CASE("FusedTensorND class", "[tensor]")
         // ten4 should be equal to ten1
         CHECK(ten4 == ten1);
     }
+
+    SECTION("Test FusedTensorND einsum operation")
+    {
+        FusedTensorND<double, 2, 3> tensor1(2), tensor2(2);
+        FusedTensorND<double, 3, 2> tensor3(2);
+
+        auto result = FusedTensorND<double, 2, 2>::einsum(tensor1, tensor2, 1, 1);
+
+        CHECK(result.getNumDims() == 2);
+        CHECK(result.getShape() == "(2,2)");
+        CHECK(result.getDim(0) == 2);
+        CHECK(result.getDim(1) == 2);
+
+        auto result1 = FusedTensorND<double, 3, 3>::einsum(tensor1, tensor3, 0, 1);
+
+        CHECK(result1.getNumDims() == 2);
+        CHECK(result1.getShape() == "(3,3)");
+        CHECK(result1.getDim(0) == 3);
+        CHECK(result1.getDim(1) == 3);
+    }
 }
