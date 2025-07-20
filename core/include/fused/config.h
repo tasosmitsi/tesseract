@@ -11,14 +11,33 @@
 #define FORCE_INLINE inline
 #endif
 
-// Uncomment the following line to enable debug output for FusedTensorND
+#if __cplusplus >= 201103L
+#define DEFINE_TYPE_ALIAS(type, name) using name = type
+#else
+#define DEFINE_TYPE_ALIAS(type, name) typedef type name
+#endif
+
+/*  Uncomment this line to enable debug output for FusedMatrix
+    Commenting this out will disable debug output for FusedMatrix but
+    will help compiler optimize the code */
+
+// #define DEBUG_FUSED_MATRIX
+
+/*  Uncomment the following line to enable debug output for FusedTensorND
+    Commenting this out will disable debug output for FusedMatrix but
+    will help compiler optimize the code */
+
 // #define DEBUG_FUSED_TENSOR
 
 /* Define this to enable matrix number of indices checking */
-#define MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+#define STATIC_CHECK_NUMBER_OF_INDICES
+
+#define RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH
+
+#define RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH
 
 /* Define this to enable matrix bound checking */
-#define MATRIX_USE_BOUNDS_CHECKING
+#define RUNTIME_USE_BOUNDS_CHECKING
 
 // Define the precision tolerance for floating point comparisons
 #define PRECISION_TOLERANCE 1e-9

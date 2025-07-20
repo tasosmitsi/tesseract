@@ -6,15 +6,7 @@
 #include <utility>   // for std::move
 #include <iostream>
 
-/* Define this to enable matrix number of indices checking */
-#define MATRIX_USE_NUMBER_OF_INDICES_CHECKING
-
-/* Define this to enable matrix bound checking */
-#define MATRIX_USE_BOUNDS_CHECKING
-
-#define PRECISION_TOLERANCE 1e-9
-
-#define my_size_t size_t // can be uint32_t or uint64_t
+#include "fused/config.h"
 
 // Base class: TensorND
 template <typename T, my_size_t... Dims>
@@ -58,7 +50,7 @@ public:
     template <typename... Indices>
     T &operator()(Indices... indices)
     {
-        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
@@ -70,7 +62,7 @@ public:
     template <typename... Indices>
     const T &operator()(Indices... indices) const
     {
-        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
@@ -82,7 +74,7 @@ public:
     template<my_size_t length>
     T& operator()(my_size_t (&indices)[length])
     {
-        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
             static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
         #endif
 
@@ -92,7 +84,7 @@ public:
     template<my_size_t length>
     const T& operator()(my_size_t (&indices)[length]) const
     {
-        #ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
             static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
         #endif
 
@@ -880,7 +872,7 @@ private:
     template <my_size_t N, my_size_t M>
     static void generate_combinations(const my_size_t (&max_values)[N], my_size_t (&combinations)[M][N])
     {
-        int combination[N] = {0}; // Initialize the first combination with all 0s
+        my_size_t combination[N] = {0}; // Initialize the first combination with all 0s
 
         // Fill each row in `combinations` with the next combination
         for (my_size_t row = 0; row < M; ++row)
@@ -902,7 +894,7 @@ private:
             // std::cout << std::endl;
 
             // Increment combination like a counter with custom max values
-            int position = N - 1;
+            my_size_t position = N - 1;
             while (position >= 0)
             {
                 ++combination[position];
@@ -996,7 +988,7 @@ private:
         for (my_size_t i = getNumDims(); i-- > 0; ) {
             my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
 
-            #ifdef MATRIX_USE_BOUNDS_CHECKING
+            #ifdef RUNTIME_USE_BOUNDS_CHECKING
                 if (indices[dimIndex] >= dims[i]) {
                     throw std::out_of_range("Index out of range");
                 }
