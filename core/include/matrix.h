@@ -12,22 +12,34 @@ template <typename T, my_size_t Rows, my_size_t Cols>
 class Matrix : public TensorND<T, Rows, Cols>
 {
 public:
+    // TODO: add Transfomation funtions like FusedMatrix
+    DEFINE_TYPE_ALIAS(T, value_type);
+
     // Default constructor initializes a 2D matrix with default values
-    Matrix() : TensorND<T, Rows, Cols>() {}
+    Matrix()
+        : TensorND<T, Rows, Cols>() {}
 
     // Constructor to initialize all elements to a specific value
-    Matrix(T initValue) : TensorND<T, Rows, Cols>(initValue) {}
+    Matrix(T initValue)
+        : TensorND<T, Rows, Cols>(initValue) {}
 
-    // Copy constructor
-    Matrix(const Matrix &other) : TensorND<T, Rows, Cols>(other) {}
+        // Copy constructor from another Matrix
+    Matrix(const Matrix &other)
+        : TensorND<T, Rows, Cols>(other) {}
 
-    // Move constructor
-    Matrix(Matrix &&other) noexcept : TensorND<T, Rows, Cols>(std::move(other)) {}
+    // Copy constructor from base class
+    Matrix(const TensorND<T, Rows, Cols> &baseTensor)
+        : TensorND<T, Rows, Cols>(baseTensor) {}
 
+    // Move constructor from another FusedMatrix
+    Matrix(Matrix &&other) noexcept
+        : TensorND<T, Rows, Cols>(std::move(other)) {}
+
+    // Move constructor from base class
     Matrix(TensorND<T, Rows, Cols>&& baseTensor) noexcept
         : TensorND<T, Rows, Cols>(std::move(baseTensor)) {}
 
-    static Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor)
+    static constexpr Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor)
     {
         return Matrix(std::move(tensor));
     }
@@ -42,6 +54,13 @@ public:
                 (*this)(i, j) = initList[i][j];
             }
         }
+    }
+
+    // method to return this as a TensorND
+    TensorND<T, Rows, Cols> toTensor(void) const
+    {
+        // Cast to base class to ensure correct type
+        return static_cast<const TensorND<T, Rows, Cols> &>(*this);
     }
 
     // Override operator= to assign a matrix to another matrix
