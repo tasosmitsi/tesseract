@@ -2,8 +2,8 @@
 #define FUSEDMATRIX_H
 
 #include "fused_tensor.h"
-#include "matrix_algorithms.h"
-#include "matrix_traits.h"
+#include "../matrix_algorithms.h"
+#include "../matrix_traits.h"
 
 #include <iostream>
 
