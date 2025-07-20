@@ -2,18 +2,10 @@
 #define MATRIX_H
 
 #include "tensor.h"
-#include <iostream>
 #include "matrix_algorithms.h"
+#include "matrix_traits.h"
 
-namespace matrix_traits
-{
-    enum class Definiteness
-    {
-        NotPositiveDefinite = 0,  // Matrix is neither positive definite nor semi-definite
-        PositiveSemiDefinite = 1, // Matrix is positive semi-definite
-        PositiveDefinite = 2,      // Matrix is positive definite
-    };
-}
+#include <iostream>
 
 // Derived class: Matrix
 template <typename T, my_size_t Rows, my_size_t Cols>
