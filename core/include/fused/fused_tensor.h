@@ -295,28 +295,7 @@ public:
         return true;
     }
 
-    // FusedTensorND transpose(const my_size_t order[sizeof...(Dims)], bool inplace = false)
-    // {
-    //     if (!inplace)
-    //     {
-    //         FusedTensorND outp = *this;
-    //         for (my_size_t i = 0; i < getNumDims(); ++i)
-    //         {
-    //             outp.transposeOrder_[i] = order[i];
-    //         }
-    //         return outp;
-    //     }
-    //     else
-    //     {
-    //         for (my_size_t i = 0; i < getNumDims(); ++i)
-    //         {
-    //             this->transposeOrder_[i] = order[i];
-    //         }
-    //         return *this;
-    //     }
-    // }
-
-    FusedTensorND transposed(const my_size_t order[sizeof...(Dims)])
+    FusedTensorND transposed(const my_size_t order[sizeof...(Dims)]) const
     {
         FusedTensorND outp = *this;
         for (my_size_t i = 0; i < getNumDims(); ++i)
@@ -327,7 +306,6 @@ public:
     }
 
     // Non-inplace transpose function
-
     void inplace_transpose(const my_size_t order[sizeof...(Dims)])
     {
         for (my_size_t i = 0; i < getNumDims(); ++i)
@@ -336,7 +314,7 @@ public:
         }
     }
 
-    FusedTensorND transposed()
+    FusedTensorND transposed(void) const
     {
         // check if the tensor is 2D
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
@@ -358,7 +336,7 @@ public:
         return outp;
     }
 
-    void inplace_transpose()
+    void inplace_transpose(void)
     {
 #ifdef DEBUG_FUSED_TENSOR
         std::cout << "Inplace transpose called" << std::endl;
@@ -375,45 +353,6 @@ public:
             this->transposeOrder_[1] = 1;
         }
     }
-
-    // FusedTensorND transpose(bool inplace = false)
-    // {
-    //     // check if the tensor is 2D
-    //     static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-    //     if (!inplace)
-    //     {
-    //         FusedTensorND outp = *this;
-    //         // reverse the transpose order
-    //         if (outp.transposeOrder_[0] == 0)
-    //         {
-    //             outp.transposeOrder_[0] = 1;
-    //             outp.transposeOrder_[1] = 0;
-    //         }
-    //         else
-    //         {
-    //             outp.transposeOrder_[0] = 0;
-    //             outp.transposeOrder_[1] = 1;
-    //         }
-    //         return outp;
-    //     }
-    //     else
-    //     {
-    //         // in inplace mode, we return a reference to the current object and copy constructor is called
-    //         std::cout << "Inplace transpose called" << std::endl;
-    //         // reverse the transpose order
-    //         if (this->transposeOrder_[0] == 0)
-    //         {
-    //             this->transposeOrder_[0] = 1;
-    //             this->transposeOrder_[1] = 0;
-    //         }
-    //         else
-    //         {
-    //             this->transposeOrder_[0] = 0;
-    //             this->transposeOrder_[1] = 1;
-    //         }
-    //         return *this;
-    //     }
-    // }
 
     // Utility function to retrieve total number of elements
     constexpr my_size_t getTotalSize() const
