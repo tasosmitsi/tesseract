@@ -815,7 +815,7 @@ private:
         {
             my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
 
-#ifdef MATRIX_USE_BOUNDS_CHECKING
+#ifdef RUNTIME_USE_BOUNDS_CHECKING
             if (indices[dimIndex] >= dims[i])
             {
                 throw std::out_of_range("Index out of range");
