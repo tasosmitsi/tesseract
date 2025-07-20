@@ -144,9 +144,9 @@ public:
 
     // Variadic access operator for accessing tensor elements with separate indices
     template <typename... Indices>
-    T &operator()(Indices... indices)
+    inline T &operator()(Indices... indices) noexcept
     {
-#ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+#ifdef STATIC_CHECK_NUMBER_OF_INDICES
         // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
         static_assert(correct, "Number of indices must match tensor dimensions");
@@ -158,9 +158,9 @@ public:
 
     // Const version of the access operator
     template <typename... Indices>
-    const T &operator()(Indices... indices) const
+    inline const T &operator()(Indices... indices) const noexcept
     {
-#ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+#ifdef STATIC_CHECK_NUMBER_OF_INDICES
         // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
         static_assert(correct, "Number of indices must match tensor dimensions");
@@ -172,9 +172,9 @@ public:
 
     // version of passing a array of indices eg _tensor1(indices1), indices1 is an array of known size use template
     template <my_size_t length>
-    T &operator()(my_size_t (&indices)[length])
+    inline T &operator()(my_size_t (&indices)[length]) noexcept
     {
-#ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+#ifdef STATIC_CHECK_NUMBER_OF_INDICES
         static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
 #endif
 
@@ -182,9 +182,9 @@ public:
     }
 
     template <my_size_t length>
-    const T &operator()(my_size_t (&indices)[length]) const
+    inline const T &operator()(my_size_t (&indices)[length]) const noexcept
     {
-#ifdef MATRIX_USE_NUMBER_OF_INDICES_CHECKING
+#ifdef STATIC_CHECK_NUMBER_OF_INDICES
         static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
 #endif
 
