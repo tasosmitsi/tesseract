@@ -5,11 +5,11 @@ repos:
       - id: trailing-whitespace
       - id: end-of-file-fixer
 
-  # # Local hook to build using Makefile
-  # - repo: local
-  #   hooks:
-  #     - id: make-build
-  #       name: Build and run tests
-  #       entry: make -j 20 run_test
-  #       language: system
-  #       pass_filenames: false
+  # Local hook to build using Makefile
+  - repo: local
+    hooks:
+      - id: make-build
+        name: Build and run tests
+        entry: make -j 20 run_test
+        language: system
+        pass_filenames: false
