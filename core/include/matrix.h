@@ -191,18 +191,18 @@ public:
         return Matrix::fromTensor(std::move(resultTensor));
     }
 
-    // Override transpose to return a Matrix
-    Matrix transpose(bool inplace = false) {
-        // Call the base class transpose to perform the transpose operation
-        auto resultTensor = TensorND<T, Rows, Cols>::transpose(inplace); // Modifies transposeOrder_, not data_
+    Matrix transposed(void) const
+    {
+        // Call base class transposed(), which returns a TensorND
+        TensorND<T, Rows, Cols> transposedTensor = TensorND<T, Rows, Cols>::transposed();
 
-        if (!inplace) {
-            // If inplace is false, return the resultTensor as Matrix
-            return Matrix::fromTensor(std::move(resultTensor));
-        } else {
-            // If inplace is true, return the modified matrix itself
-            return *this;
-        }
+        // Convert the transposed tensor into a Matrix
+        return Matrix(transposedTensor);
+    }
+
+    void inplace_transpose(void)
+    {
+        TensorND<T, Rows, Cols>::inplace_transpose();
     }
 
     // Override setToZero to return a Matrix
@@ -305,7 +305,7 @@ public:
         return true;
     }
 
-    bool isSymmetric(void) // TODO: this function should be const
+    bool isSymmetric(void) const
     {
         // Check if the matrix is square
         if (!this->areDimsEqual())
@@ -317,9 +317,9 @@ public:
         // use transpose() to get the transpose of the matrix
         // and see if it's equal to the original matrix
 
-        Matrix transpose = this->transpose();
+        Matrix transposed = this->transposed();
 
-        return (*this == transpose);
+        return (*this == transposed);
     }
 
     bool isUpperTriangular(void) const
@@ -388,7 +388,9 @@ public:
                 }
             }
             return result;
-        } else {
+        }
+        else
+        {
             // std::cout << "Setting matrix to upper triangular in place" << std::endl;
             // Modify the matrix in-place
             for (my_size_t i = 1; i < matrix_size; i++)
@@ -424,7 +426,9 @@ public:
                 }
             }
             return result;
-        } else {
+        }
+        else
+        {
             // std::cout << "Setting matrix to lower triangular in place" << std::endl;
             // Modify the matrix in-place
             for (my_size_t i = 0; i < matrix_size; i++)
@@ -544,7 +548,7 @@ public:
         }
 
         // Check if the matrix is orthogonal
-        Matrix transposed = this->transpose();
+        Matrix transposed = this->transposed();
 
         ident = Matrix<T, Rows, Cols>::matmul(*this, transposed);
         if (!ident.isIdentity())
@@ -571,7 +575,6 @@ public:
             Matrix<T, Rows, Cols> L = matrix_algorithms::choleskyDecomposition(*this);
 
             // Check the diagonal of the decomposition
-            bool hasZeroDiagonal = false;
             for (my_size_t i = 0; i < this->getDim(0); i++)
             {
                 if (std::abs(L(i, i)) < T(PRECISION_TOLERANCE))

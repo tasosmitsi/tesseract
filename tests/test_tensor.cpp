@@ -7,7 +7,7 @@ TEST_CASE("TensorND class", "[tensor]")
     SECTION("TensorND testing dimentions after transpose")
     {
         TensorND<double, 2, 3> tensor;
-        auto transposed = tensor.transpose();
+        auto transposed = tensor.transposed();
 
         // Check tensor, it should not be transposed
         CHECK(tensor.getNumDims() == 2);
@@ -22,7 +22,7 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK(transposed.getDim(1) == 2);
 
         // Now lets transpose the tensor in place
-        tensor.transpose(true);
+        tensor.inplace_transpose();
         // Check tensor, it should be transposed
         CHECK(tensor.getNumDims() == 2);
         CHECK(tensor.getShape() == "(3,2)");
@@ -33,7 +33,7 @@ TEST_CASE("TensorND class", "[tensor]")
         TensorND<double, 2, 3, 4> tensor1;
         size_t order[] = {2, 1, 0};
 
-        auto transposed1 = tensor1.transpose(order);
+        auto transposed1 = tensor1.transposed(order);
 
         // Check tensor, it should not be transposed
         CHECK(tensor1.getNumDims() == 3);
@@ -50,7 +50,7 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK(transposed1.getDim(2) == 2);
 
         // Now lets transpose the tensor1 in place
-        tensor1.transpose(order, true);
+        tensor1.inplace_transpose(order);
         // Check tensor1, it should be transposed
         CHECK(tensor1.getNumDims() == 3);
         CHECK(tensor1.getShape() == "(4,3,2)");
@@ -69,7 +69,7 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK_THROWS(tensor1 == tensor2);
         CHECK_THROWS(tensor1 != tensor2);
 
-        tensor2.transpose(true);
+        tensor2.inplace_transpose();
         CHECK_NOTHROW(tensor1 == tensor2);
         CHECK_FALSE(tensor1 != tensor2);
     }
@@ -86,7 +86,7 @@ TEST_CASE("TensorND class", "[tensor]")
         CHECK_THROWS(tensor1 * tensor2);
         CHECK_THROWS(tensor1 / tensor2);
 
-        tensor2.transpose(true);
+        tensor2.inplace_transpose();
         CHECK_NOTHROW(tensor1 + tensor2);
         CHECK_NOTHROW(tensor1 - tensor2);
         CHECK_NOTHROW(tensor1 * tensor2);

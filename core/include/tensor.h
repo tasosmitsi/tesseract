@@ -443,55 +443,60 @@ public:
         return true;
     }
 
-    TensorND transpose(const my_size_t order[sizeof...(Dims)], bool inplace = false)
+    // non-inplace transpose function
+    TensorND transposed(const my_size_t order[sizeof...(Dims)]) const
     {
-        if (!inplace) {
-            TensorND outp = *this;
-            for (my_size_t i = 0; i < getNumDims(); ++i)
-            {
-                outp.transposeOrder_[i] = order[i];
-            }
-            return outp;
-        } else {
-            for (my_size_t i = 0; i < getNumDims(); ++i)
-            {
-                this->transposeOrder_[i] = order[i];
-            }
-            return *this;
+        TensorND outp = *this;
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+        {
+            outp.transposeOrder_[i] = order[i];
+        }
+        return outp;
+    }
+
+    // inplace transpose function
+    void inplace_transpose(const my_size_t order[sizeof...(Dims)])
+    {
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+        {
+            this->transposeOrder_[i] = order[i];
         }
     }
 
-    TensorND transpose(bool inplace = false)
+    // non-inplace transpose function
+    TensorND transposed(void) const
     {
         // check if the tensor is 2D
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-        if (!inplace) {
-            TensorND outp = *this;
-            // reverse the transpose order
-            if (outp.transposeOrder_[0] == 0)
-            {
-                outp.transposeOrder_[0] = 1;
-                outp.transposeOrder_[1] = 0;
-            }
-            else
-            {
-                outp.transposeOrder_[0] = 0;
-                outp.transposeOrder_[1] = 1;
-            }
-            return outp;
-        } else {
-            // reverse the transpose order
-            if (this->transposeOrder_[0] == 0)
-            {
-                this->transposeOrder_[0] = 1;
-                this->transposeOrder_[1] = 0;
-            }
-            else
-            {
-                this->transposeOrder_[0] = 0;
-                this->transposeOrder_[1] = 1;
-            }
-            return *this;
+
+        TensorND outp = *this;
+        // reverse the transpose order
+        if (outp.transposeOrder_[0] == 0)
+        {
+            outp.transposeOrder_[0] = 1;
+            outp.transposeOrder_[1] = 0;
+        }
+        else
+        {
+            outp.transposeOrder_[0] = 0;
+            outp.transposeOrder_[1] = 1;
+        }
+        return outp;
+    }
+
+    // inplace transpose function
+    void inplace_transpose(void)
+    {
+        // reverse the transpose order
+        if (this->transposeOrder_[0] == 0)
+        {
+            this->transposeOrder_[0] = 1;
+            this->transposeOrder_[1] = 0;
+        }
+        else
+        {
+            this->transposeOrder_[0] = 0;
+            this->transposeOrder_[1] = 1;
         }
     }
 

@@ -135,7 +135,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_FALSE(mat1 == mat2);
 
         // now check in case of transpose
-        mat1.transpose(true);
+        mat1.inplace_transpose();
         mat2(1, 2) = 3.0;
         CHECK_FALSE(mat1 == mat2);
     }
@@ -150,7 +150,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_THROWS(matrix1 == matrix2);
         CHECK_THROWS(matrix1 != matrix2);
 
-        matrix2.transpose(true);
+        matrix2.inplace_transpose();
         CHECK_NOTHROW(matrix1 == matrix2);
         CHECK_FALSE(matrix1 != matrix2);
     }
@@ -248,7 +248,7 @@ TEST_CASE("Matrix class", "[matrix]")
 
         mat1.setHomogen(5);
         // transpose mat1
-        mat1.transpose(true);
+        mat1.inplace_transpose();
         // perform upper triangular on the transposed matrix
         mat1.upperTriangular(true);
         // mat1 should stil be upper triangular
@@ -275,7 +275,7 @@ TEST_CASE("Matrix class", "[matrix]")
 
         mat1.setHomogen(5);
         // transpose mat1
-        mat1.transpose(true);
+        mat1.inplace_transpose();
         // perform lower triangular on the transposed matrix
         mat1.lowerTriangular(true);
         // mat1 should stil be lower triangular
@@ -400,7 +400,7 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK_THROWS(matrix1 * matrix2);
         CHECK_THROWS(matrix1 / matrix2);
 
-        matrix1.transpose(true);
+        matrix1.inplace_transpose();
         CHECK_NOTHROW(matrix1 + matrix2);
         CHECK_NOTHROW(matrix1 - matrix2);
         CHECK_NOTHROW(matrix1 * matrix2);
@@ -413,7 +413,7 @@ TEST_CASE("Matrix class", "[matrix]")
         mat2 = mat1;
 
         // check inplace transpose first
-        mat1.transpose(true);
+        mat1.inplace_transpose();
 
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
@@ -425,7 +425,7 @@ TEST_CASE("Matrix class", "[matrix]")
 
         // check non-inplace transpose
         mat1.setRandom(-10, 10);
-        mat2 = mat1.transpose();
+        mat2 = mat1.transposed();
 
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
@@ -441,7 +441,7 @@ TEST_CASE("Matrix class", "[matrix]")
         mat1(0, 1) = 10;
         mat2.setToZero();
 
-        auto mat3 = mat1.transpose() + mat2;
+        auto mat3 = mat1.transposed() + mat2;
         auto mat4 = mat1 + mat2;
 
         // In both cases, mat2 is a zero matrix (should not change the result)
