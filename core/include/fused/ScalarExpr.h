@@ -34,6 +34,16 @@ public:
     {
         return Op<T>::apply(_expr(indices...), _scalar); // expr op scalar
     }
+
+    my_size_t getNumDims() const
+    {
+        return _expr.getNumDims();
+    }
+
+    my_size_t getDim(my_size_t i) const
+    {
+        return _expr.getDim(i);
+    }
 };
 
 template <typename EXPR, template <typename> class Op, typename T>
@@ -49,6 +59,16 @@ public:
     T operator()(Indices... indices) const
     {
         return Op<T>::apply(_scalar, _expr(indices...)); // scalar op expr
+    }
+
+    my_size_t getNumDims() const
+    {
+        return _expr.getNumDims();
+    }
+
+    my_size_t getDim(my_size_t i) const
+    {
+        return _expr.getDim(i);
     }
 };
 

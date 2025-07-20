@@ -3,13 +3,39 @@
 #include "ScalarExpr.h"
 #include "Operations.h"
 
+template <typename Expr1, typename Expr2>
+inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName)
+{
+#ifdef RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH
+    if (lhs.getNumDims() != rhs.getNumDims())
+        throw std::runtime_error(opName + ": dimension count mismatch");
+#endif
+
+#ifdef RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH
+    for (my_size_t i = 0; i < lhs.getNumDims(); ++i)
+    {
+        if (lhs.getDim(i) != rhs.getDim(i))
+            throw std::runtime_error(opName + ": dimension size mismatch at dimension " + std::to_string(i));
+    }
+#endif
+}
+
 // ===============================
 // Operator Overloads
 // ===============================
 template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Add, T> operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
+#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    const auto &lhsDerived = lhs.derived();
+    const auto &rhsDerived = rhs.derived();
+
+    checkDimsMatch(lhsDerived, rhsDerived, "operator+");
+
+    return BinaryExpr<LHS, RHS, Add, T>(lhsDerived, rhsDerived);
+#else
     return BinaryExpr<LHS, RHS, Add, T>(lhs.derived(), rhs.derived());
+#endif
 }
 
 // // template<typename LHS, typename RHS, typename T>
@@ -43,24 +69,50 @@ BinaryExpr<LHS, RHS, Add, T> operator+(const BaseExpr<LHS, T> &lhs, const BaseEx
 template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Sub, T> operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
+#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+
+    const auto &lhsDerived = lhs.derived();
+    const auto &rhsDerived = rhs.derived();
+
+    checkDimsMatch(lhsDerived, rhsDerived, "operator-");
+
+    return BinaryExpr<LHS, RHS, Sub, T>(lhsDerived, rhsDerived);
+#else
     return BinaryExpr<LHS, RHS, Sub, T>(lhs.derived(), rhs.derived());
+#endif
 }
 
 template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Mul, T> operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
+#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    const auto &lhsDerived = lhs.derived();
+    const auto &rhsDerived = rhs.derived();
+
+    checkDimsMatch(lhsDerived, rhsDerived, "operator*");
+    return BinaryExpr<LHS, RHS, Mul, T>(lhsDerived, rhsDerived);
+#else
     return BinaryExpr<LHS, RHS, Mul, T>(lhs.derived(), rhs.derived());
+#endif
 }
 
 template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Div, T> operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
+#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+
+    const auto &lhsDerived = lhs.derived();
+    const auto &rhsDerived = rhs.derived();
+
+    checkDimsMatch(lhsDerived, rhsDerived, "operator/");
+
+    return BinaryExpr<LHS, RHS, Div, T>(lhsDerived, rhsDerived);
+#else
     return BinaryExpr<LHS, RHS, Div, T>(lhs.derived(), rhs.derived());
+#endif
 }
 
 // Scalar overloads
-
-
 
 // template <typename LHS, typename T>
 // auto operator+(const BaseExpr<LHS, T>& lhs, T scalar)

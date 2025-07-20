@@ -18,6 +18,18 @@ public:
     {
         return Op<T>::apply(_lhs(indices...), _rhs(indices...));
     }
+
+    // Forward getNumDims to _lhs
+    inline my_size_t getNumDims() const
+    {
+        return _lhs.getNumDims();
+    }
+
+    // Forward getDim(i) to _lhs
+    inline my_size_t getDim(my_size_t i) const
+    {
+        return _lhs.getDim(i);
+    }
 };
 
 // template<typename EXPR>
