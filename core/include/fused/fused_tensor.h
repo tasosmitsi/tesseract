@@ -644,6 +644,10 @@ public:
         return dims[transposeOrder_[i]];
     }
 
+// protected:
+//     T *rawData() { return data_.data(); }
+//     const T *rawData() const { return data_.data(); }
+
 private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);

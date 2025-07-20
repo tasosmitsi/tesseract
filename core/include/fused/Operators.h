@@ -38,34 +38,6 @@ BinaryExpr<LHS, RHS, Add, T> operator+(const BaseExpr<LHS, T> &lhs, const BaseEx
 #endif
 }
 
-// // template<typename LHS, typename RHS, typename T>
-// // auto operator+(const BaseExpr<LHS, T>& lhs, const BaseExpr<RHS, T>& rhs)
-// // {
-// //     using LHSExpr = std::decay_t<LHS>;
-// //     using RHSExpr = std::decay_t<RHS>;
-// //     using ResultExpr = BinaryExpr<LHSExpr, RHSExpr, Add, T>;
-
-// //     // Wrap the sub-expressions in shared_ptr to manage lifetime safely
-// //     auto lhs_ptr = std::make_shared<LHSExpr>(lhs.derived());
-// //     auto rhs_ptr = std::make_shared<RHSExpr>(rhs.derived());
-
-// //     return ResultExpr(std::move(lhs_ptr), std::move(rhs_ptr));
-// // }
-
-// template<typename LHS, typename RHS, typename T>
-// auto operator+(const BaseExpr<LHS, T>& lhs, const BaseExpr<RHS, T>& rhs)
-// {
-//     using LHSExpr = std::decay_t<LHS>;
-//     using RHSExpr = std::decay_t<RHS>;
-//     using ResultExpr = BinaryExpr<LHSExpr, RHSExpr, Add, T>;
-
-//     // Capture by reference, without taking ownership
-//     auto lhs_ptr = std::shared_ptr<const LHSExpr>(&lhs.derived(), [](const LHSExpr*) {});
-//     auto rhs_ptr = std::shared_ptr<const RHSExpr>(&rhs.derived(), [](const RHSExpr*) {});
-
-//     return ResultExpr(std::move(lhs_ptr), std::move(rhs_ptr));
-// }
-
 template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Sub, T> operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
@@ -111,20 +83,6 @@ BinaryExpr<LHS, RHS, Div, T> operator/(const BaseExpr<LHS, T> &lhs, const BaseEx
     return BinaryExpr<LHS, RHS, Div, T>(lhs.derived(), rhs.derived());
 #endif
 }
-
-// Scalar overloads
-
-// template <typename LHS, typename T>
-// auto operator+(const BaseExpr<LHS, T>& lhs, T scalar)
-// {
-//     using LHSExpr = std::decay_t<LHS>;
-//     using ResultExpr = ScalarExpr<LHSExpr, Add, T>;
-
-//     // Create a non-owning shared_ptr to lhs.derived()
-//     auto lhs_ptr = std::shared_ptr<const LHSExpr>(&lhs.derived(), [](const LHSExpr*) {});
-
-//     return ResultExpr(std::move(lhs_ptr), scalar);
-// }
 
 // matrix + scalar (scalar on RHS)
 template <typename LHS, typename T>

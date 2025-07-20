@@ -30,6 +30,17 @@ TEST_CASE("Matrix class", "[matrix]")
         CHECK(matrix1.getShape() == "(15,32)");
     }
 
+    SECTION("Matrix to tensor conversion")
+    {
+        Matrix<int, 10, 10> matrix;
+
+        matrix.setIdentity();
+        auto tensor = matrix.toTensor();
+
+        CHECK(tensor.getTotalSize() == 100);
+        CHECK(demangleTypeName(typeid(tensor)) == "TensorND<int, 10ul, 10ul>");
+    }
+
     SECTION("Is matrix identity")
     {
         mat1.setIdentity();
