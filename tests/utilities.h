@@ -1,74 +1,41 @@
-// give me a func that prints hello
 #ifndef UTILIS_H
 #define UTILIS_H
 
-#include <Python.h>
+#include <string>
+#include <vector>
+#include <iostream>
+#include <cxxabi.h>
 #include <iomanip>
+#include <algorithm>
 
-std::string executePythonAndGetString(const std::string &python_code)
+#include "../core/include/fused/config.h"
+
+void tick();
+
+uint tock(std::string message);
+
+uint tock();
+
+template <typename T>
+void print_expr_type(const T &)
 {
-    std::string result;
-
-    // Initialize Python only once
-    static bool isPythonInitialized = false;
-    if (!isPythonInitialized)
-    {
-        Py_Initialize();
-        if (!Py_IsInitialized())
-        {
-            throw std::runtime_error("Failed to initialize Python interpreter.");
-        }
-        isPythonInitialized = true;
-    }
-
-    try
-    {
-        // Run the Python code
-        PyObject *globals = PyDict_New(); // Create a new dictionary for global variables
-        PyObject *locals = PyDict_New();  // Local variables (can be shared with globals)
-        if (PyRun_String(python_code.c_str(), Py_file_input, globals, locals) == nullptr)
-        {
-            PyErr_Print(); // Print any Python errors
-            throw std::runtime_error("Error executing Python code.");
-        }
-
-        // Retrieve the output_string variable from Python
-        PyObject *pyOutputString = PyDict_GetItemString(locals, "output_string");
-        if (pyOutputString && PyUnicode_Check(pyOutputString))
-        {
-            result = PyUnicode_AsUTF8(pyOutputString);
-        }
-        else
-        {
-            throw std::runtime_error("Failed to retrieve Python output string.");
-        }
-
-        // Clean up
-        Py_DECREF(globals);
-        Py_DECREF(locals);
-    }
-    catch (const std::exception &e)
-    {
-        PyErr_Print();
-        throw; // Re-throw the exception
-    }
-
-    return result;
+    int status;
+    std::unique_ptr<char[], void (*)(void *)> demangled(
+        abi::__cxa_demangle(typeid(T).name(), 0, 0, &status), std::free);
+    std::cout << "Expression type: " << (status == 0 ? demangled.get() : typeid(T).name()) << std::endl;
 }
 
-void removeNewlines(std::string &str)
-{
-    // Remove all '\n' (newline) and '\r' (carriage return) characters
-    str.erase(std::remove_if(str.begin(), str.end(), [](char ch)
-                             { return ch == '\n' || ch == '\r'; }),
-              str.end());
-}
+std::string demangleTypeName(const std::type_info &ti);
 
-template <class T, long unsigned int Rows, long unsigned int Cols>
-std::string toNumpyArray(const Matrix<T, Rows, Cols> &mat)
+std::string executePythonAndGetString(const std::string &python_code);
+
+void removeNewlines(std::string &str);
+
+template <typename MatrixType>
+std::string toNumpyArray(const MatrixType &matrix)
 {
-    my_size_t rows = mat.getDim(0);
-    my_size_t cols = mat.getDim(1);
+    my_size_t rows = matrix.getDim(0);
+    my_size_t cols = matrix.getDim(1);
     std::ostringstream oss;
     oss << "[";
 
@@ -78,7 +45,7 @@ std::string toNumpyArray(const Matrix<T, Rows, Cols> &mat)
         for (my_size_t j = 0; j < cols; ++j)
         {
             // Print each element with 3 decimal places
-            oss << std::fixed << std::setprecision(3) << mat(i, j);
+            oss << std::fixed << std::setprecision(3) << matrix(i, j);
             if (j < cols - 1)
             {
                 oss << ", "; // Comma between elements in a row
@@ -95,11 +62,11 @@ std::string toNumpyArray(const Matrix<T, Rows, Cols> &mat)
     return oss.str();
 }
 
-template <class T, long unsigned int Rows, long unsigned int Cols>
-std::string toFormattedNumpyArray(const Matrix<T, Rows, Cols> &mat)
+template <typename MatrixType>
+std::string toFormattedNumpyArray(const MatrixType &matrix)
 {
-    my_size_t rows = mat.getDim(0);
-    my_size_t cols = mat.getDim(1);
+    my_size_t rows = matrix.getDim(0);
+    my_size_t cols = matrix.getDim(1);
     std::ostringstream oss;
     oss << "[";
 
@@ -109,7 +76,7 @@ std::string toFormattedNumpyArray(const Matrix<T, Rows, Cols> &mat)
         for (my_size_t j = 0; j < cols; ++j)
         {
             // Print each element with 3 decimal places
-            oss << std::fixed << std::setprecision(3) << mat(i, j);
+            oss << std::fixed << std::setprecision(3) << matrix(i, j);
             if (j < cols - 1)
             {
                 oss << " "; // Space between elements in a row
@@ -126,18 +93,6 @@ std::string toFormattedNumpyArray(const Matrix<T, Rows, Cols> &mat)
     return oss.str();
 }
 
-std::vector<std::string> splitStringByComma(const std::string &input)
-{
-    std::vector<std::string> result;
-    std::stringstream ss(input);
-    std::string token;
-
-    while (std::getline(ss, token, ','))
-    {
-        result.push_back(token);
-    }
-
-    return result;
-}
+std::vector<std::string> splitStringByComma(const std::string &input);
 
 #endif

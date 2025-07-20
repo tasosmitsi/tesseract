@@ -2,16 +2,7 @@
 #include "fused/fused_tensor.h"
 #include <cxxabi.h>
 
-template <typename T>
-void print_expr_type(const T &)
-{
-    int status;
-    std::unique_ptr<char[], void (*)(void *)> demangled(
-        abi::__cxa_demangle(typeid(T).name(), 0, 0, &status), std::free);
-    std::cout << "Expression type: " << (status == 0 ? demangled.get() : typeid(T).name()) << std::endl;
-}
-
-TEST_CASE("FusedTensorND class", "[tensor]")
+TEST_CASE("FusedTensorND class", "[fused_tensor]")
 {
     FusedTensorND<double, 10, 10> ten1(1), ten2(2);
 

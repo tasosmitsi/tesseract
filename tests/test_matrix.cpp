@@ -4,30 +4,6 @@
 #include "matrix.h"
 #include "utilities.h"
 #include "matrix_algorithms.h"
-#include <chrono>
-
-using namespace std::chrono;
-
-auto start = high_resolution_clock::now();
-void tick()
-{
-    start = high_resolution_clock::now();
-}
-void tock(std::string message)
-{
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << message << ": "
-              << duration.count() << " microseconds" << std::endl;
-}
-
-void tock()
-{
-    auto stop = high_resolution_clock::now();
-    auto duration = duration_cast<microseconds>(stop - start);
-    std::cout << "Time taken: "
-              << duration.count() << " microseconds" << std::endl;
-}
 
 TEST_CASE("Matrix class", "[matrix]")
 {
