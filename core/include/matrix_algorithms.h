@@ -1,8 +1,6 @@
 #ifndef MATRIX_ALGORITHMS_H
 #define MATRIX_ALGORITHMS_H
 
-#include "../../tests/utilities.h"
-
 namespace matrix_algorithms
 {
     template <typename MatrixType>
@@ -39,6 +37,7 @@ namespace matrix_algorithms
                 }
                 else // Off-diagonal element
                 {
+                    // static_assert(std::is_same_v<decltype(matrix(j, j)), double>, "result(j, j) is not double");
                     result(i, j) = (matrix(i, j) - sum) / result(j, j); //<-- this line
                 }
             }
