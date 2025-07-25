@@ -644,9 +644,33 @@ public:
         return dims[transposeOrder_[i]];
     }
 
-// protected:
-//     T *rawData() { return data_.data(); }
-//     const T *rawData() const { return data_.data(); }
+protected:
+    T *rawData() { return data_.data(); }
+    const T *rawData() const { return data_.data(); }
+
+    // Compute the flat index from multi-dimensional indices
+    my_size_t computeIndex(const my_size_t indices[getNumDims()]) const
+    {
+        my_size_t index = 0;
+        my_size_t factor = 1;
+
+        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
+        for (my_size_t i = getNumDims(); i-- > 0;)
+        {
+            my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
+
+#ifdef RUNTIME_USE_BOUNDS_CHECKING
+            if (indices[dimIndex] >= dims[i])
+            {
+                MyErrorHandler::error("Index out of range");
+            }
+#endif
+
+            index += indices[dimIndex] * factor; // Use the indices in the transpose order
+            factor *= dims[i];                   // Update the factor for the next dimension
+        }
+        return index; // Return the computed flat index
+    }
 
 private:
     // Calculate total number of elements at compile time
@@ -813,29 +837,6 @@ private:
             }
             MyErrorHandler::log("\n");
         }
-
-    // Compute the flat index from multi-dimensional indices
-    my_size_t computeIndex(const my_size_t indices[getNumDims()]) const
-    {
-        my_size_t index = 0;
-        my_size_t factor = 1;
-
-        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
-        for (my_size_t i = getNumDims(); i-- > 0;)
-        {
-            my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
-
-#ifdef RUNTIME_USE_BOUNDS_CHECKING
-            if (indices[dimIndex] >= dims[i])
-            {
-                throw std::out_of_range("Index out of range");
-            }
-#endif
-
-            index += indices[dimIndex] * factor; // Use the indices in the transpose order
-            factor *= dims[i];                   // Update the factor for the next dimension
-        }
-        return index; // Return the computed flat index
     }
 
     // Unravel a flat index into multi-dimensional indices

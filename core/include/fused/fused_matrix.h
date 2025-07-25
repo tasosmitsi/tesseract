@@ -178,17 +178,19 @@ public:
         return *this;
     }
 
-    // T &debugAccess(my_size_t i, my_size_t j)
-    // {
-    //     static_assert(std::is_same_v<T, double>, "T must be double");
-    //     return this->rawData()[i * Cols + j];
-    // }
+    T &operator()(my_size_t i, my_size_t j)
+    {
+        static_assert(std::is_same_v<T, double>, "T must be double");
+        my_size_t idxArray[2] = {i, j};
+        return this->rawData()[this->computeIndex(idxArray)];
+    }
 
-    // const T &debugAccess(my_size_t i, my_size_t j) const
-    // {
-    //     static_assert(std::is_same_v<T, double>, "T must be double");
-    //     return this->rawData()[i * Cols + j];
-    // }
+    const T &operator()(my_size_t i, my_size_t j) const
+    {
+        static_assert(std::is_same_v<T, double>, "T must be double");
+        my_size_t idxArray[2] = {i, j};
+        return this->rawData()[this->computeIndex(idxArray)];
+    }
 
     FusedMatrix transposed(void) const
     {
