@@ -8,7 +8,7 @@
 #include <iomanip>
 #include <algorithm>
 
-#include "../core/include/fused/config.h"
+#include "../core/include/config.h"
 
 void tick();
 

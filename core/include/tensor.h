@@ -4,7 +4,9 @@
 #include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
 
-#include "fused/config.h"
+#include "fill_n_optimized.h"
+#include "copy_n_optimized.h"
+
 #include "config.h"
 
 // Base class: TensorND

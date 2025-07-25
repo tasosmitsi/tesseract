@@ -2,17 +2,17 @@
 #define FUSEDTENSORND_H
 
 // #include <algorithm> // for std::fill_n and std::copy
-#include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
 
 #include "../fill_n_optimized.h"
+#include "../copy_n_optimized.h"
+
 #include "../config.h"
 
 #include "BaseExpr.h"
 #include "Operators.h"
 #include "call_at_dispatch.h"
 #include "static_storage.h"
-#include "dynamic_storage.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
@@ -29,7 +29,7 @@ public:
     FusedTensorND(T initValue)
     {
         initTransposeOrder();
-        std::fill_n(data_.data(), totalSize, initValue);
+        fill_n_optimized(data_.data(), totalSize, initValue);
     }
 
     // Copy constructor
@@ -46,11 +46,15 @@ public:
             return; // Handle self-assignment
         }
         // Copy the transpose order
-        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+
+        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
+
         transposeOrderSet_ = true;
         initTransposeOrder();
 
-        std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
+        // std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
+        copy_n_optimized(other.data_.data(), data_.data(), totalSize);
     }
 
     // Move constructor
@@ -67,14 +71,16 @@ public:
             return; // Handle self-assignment
         }
         // Copy the transpose order
-        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
+
         transposeOrderSet_ = true;
         initTransposeOrder();
 
         std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
 
         // Reset the other tensor's data
-        std::fill_n(other.data_.data(), totalSize, T{});
+        fill_n_optimized(other.data_.data(), totalSize, T{});
     }
 
     template <typename Expr>
@@ -108,11 +114,15 @@ public:
         }
 
         // Copy the transpose order
-        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
+
         transposeOrderSet_ = true;
 
         // Copy the data
-        std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
+        // std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
+        copy_n_optimized(other.data_.data(), data_.data(), totalSize);
+
         return *this;
     }
 
@@ -130,14 +140,16 @@ public:
             return *this; // Handle self-assignment
         }
         // Copy the transpose order
-        std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
+        copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
+
         transposeOrderSet_ = true;
 
         // Move the data
         std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
 
         // Reset the other tensor's data
-        std::fill_n(other.data_.data(), totalSize, T{});
+        fill_n_optimized(other.data_.data(), totalSize, T{});
 
         return *this;
     }
@@ -383,13 +395,13 @@ public:
 
     FusedTensorND &setToZero(void)
     {
-        std::fill_n(data_.data(), totalSize, 0);
+        fill_n_optimized(data_.data(), totalSize, T{});
         return *this;
     }
 
     FusedTensorND &setHomogen(T _val)
     {
-        std::fill_n(data_.data(), totalSize, _val);
+        fill_n_optimized(data_.data(), totalSize, _val);
         return *this;
     }
 
