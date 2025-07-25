@@ -9,7 +9,7 @@ namespace matrix_algorithms
         // Check if the matrix is symmetric, checking if it's square has been done in the isSymmetric function
         if (!matrix.isSymmetric())
         {
-            throw std::runtime_error("Matrix is not symmetric");
+            MyErrorHandler::error("Matrix is not symmetric");
         }
 
         // Create a new zero-initialized matrix to store the result
@@ -31,7 +31,7 @@ namespace matrix_algorithms
                     typename MatrixType::value_type diag = matrix(i, i) - sum;
                     if (diag <= typename MatrixType::value_type(PRECISION_TOLERANCE))
                     {
-                        throw std::runtime_error("Matrix is not positive definite");
+                        MyErrorHandler::error("Matrix is not positive definite");
                     }
                     result(i, j) = std::sqrt(diag);
                 }

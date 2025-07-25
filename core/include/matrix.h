@@ -5,8 +5,6 @@
 #include "matrix_algorithms.h"
 #include "matrix_traits.h"
 
-#include <iostream>
-
 // Derived class: Matrix
 template <typename T, my_size_t Rows, my_size_t Cols>
 class Matrix : public TensorND<T, Rows, Cols>
@@ -329,7 +327,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         // use the fact that A = A^T for symmetric matrices
@@ -346,7 +344,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         // Check if the matrix is upper triangular
@@ -368,7 +366,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         // Check if the matrix is lower triangular
@@ -390,7 +388,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
@@ -428,7 +426,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
@@ -466,7 +464,7 @@ public:
     {
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is non-invertible cause: not square");
+            MyErrorHandler::error("Matrix is non-invertible cause: not square");
         }
 
         // check if is identity
@@ -490,7 +488,7 @@ public:
                 if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
                 {
                     /* Matrix is non-invertible */
-                    throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
+                    MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
                 }
 
                 T tmp = _temp(i, j) / _temp(j, j);
@@ -520,7 +518,7 @@ public:
                 if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
                 {
                     /* Matrix is non-invertible */
-                    throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Jordan)");
+                    MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Jordan)");
                 }
 
                 T tmp = _temp(i, j) / _temp(j, j);
@@ -543,7 +541,7 @@ public:
             if (std::abs((_temp(i, i)) < T(PRECISION_TOLERANCE)))
             {
                 /* Matrix is non-invertible */
-                throw std::runtime_error("Matrix is non-invertible cause: diagonal element is zero (Normalization)");
+                MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Normalization)");
             }
 
             T tmp = _temp(i, i);
@@ -563,7 +561,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("Matrix is not square");
+            MyErrorHandler::error("Matrix is not square");
         }
 
         // Check if the matrix is orthogonal

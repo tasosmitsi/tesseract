@@ -1,5 +1,4 @@
 #pragma once
-#include <stdexcept>
 
 // ===============================
 // Operation Tags
@@ -28,7 +27,7 @@ struct Div
     static T apply(T a, T b)
     {
         if (b == T(0))
-            throw std::runtime_error("Division by zero");
+            MyErrorHandler::error("Division by zero");
         return a / b;
     }
 };

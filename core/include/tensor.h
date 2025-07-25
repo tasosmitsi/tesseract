@@ -1,12 +1,11 @@
 #ifndef TENSORND_H
 #define TENSORND_H
 
-#include <stdexcept>
 #include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
-#include <iostream>
 
 #include "fused/config.h"
+#include "config.h"
 
 // Base class: TensorND
 template <typename T, my_size_t... Dims>
@@ -315,7 +314,7 @@ public:
     {
         if (scalar == 0)
         {
-            throw std::runtime_error("Division by zero");
+            MyErrorHandler::error("Division by zero");
         }
 
         return *this * (1 / scalar);
@@ -329,7 +328,7 @@ public:
         {
             if (tensor.data_[i] == 0)
             {
-                throw std::runtime_error("Division by zero");
+                MyErrorHandler::error("Division by zero");
             }
             outp.data_[i] = scalar / tensor.data_[i];
         }
@@ -364,7 +363,7 @@ public:
             // use the () operator to access the elements
             if (other(indices) == 0)
             {
-                throw std::runtime_error("Division by zero");
+                MyErrorHandler::error("Division by zero");
             }
             outp(indices) /= other(indices);
         }
@@ -624,13 +623,13 @@ public:
         // check if a and b are valid dimensions
         if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
         {
-            throw std::runtime_error("Invalid dimensions");
+            MyErrorHandler::error("Invalid dimensions");
         }
 
         // check if the a axis of tensor1 is equal to the b axis of tensor2
         if (_tensor1.getDim(a) != _tensor2.getDim(b))
         {
-            throw std::runtime_error("Dimensions mismatch");
+            MyErrorHandler::error("Dimensions mismatch");
         }
 
         // calculate the new dimensions
@@ -669,7 +668,7 @@ public:
         {
             if (newDims[i] != _outp.getDim(i))
             {
-                throw std::runtime_error("Dimensions mismatch");
+                MyErrorHandler::error("Dimensions mismatch");
             }
         }
 
@@ -774,7 +773,7 @@ public:
     //     // check if the submatrix fits into the matrix
     //     if ((_subMatrix.dims[0] + _insertion_coordinates... > dims[0]) || (_subMatrix.dims[1] + _insertion_coordinates... > dims[1]))
     //     {
-    //         throw std::runtime_error("Submatrix does not fit into the matrix");
+    //         MyErrorHandler::error("Submatrix does not fit into the matrix");
     //     }
 
     //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
@@ -794,7 +793,7 @@ public:
     //     // check if the submatrix fits into the matrix
     //     if ((_subMatrix.dims[0] + _posRow > dims[0]) || (_subMatrix.dims[1] + _posCol > dims[1]))
     //     {
-    //         throw std::runtime_error("Submatrix does not fit into the matrix");
+    //         MyErrorHandler::error("Submatrix does not fit into the matrix");
     //     }
 
     //     for (my_size_t i = 0; i < _subMatrix.dims[0]; ++i)
@@ -849,7 +848,7 @@ private:
         {
             if (this->getDim(i) != other.getDim(i))
             {
-                throw std::runtime_error("Dimensions mismatch");
+                MyErrorHandler::error("Dimensions mismatch");
             }
         }
     }
@@ -859,12 +858,13 @@ private:
     {
         for (my_size_t i = 0; i < M; ++i)
         {
-            std::cout << "{ ";
+            MyErrorHandler::log("{ ");
             for (my_size_t j = 0; j < N; ++j)
             {
-                std::cout << combinations[i][j] << (j < N - 1 ? ", " : " ");
+                MyErrorHandler::log(combinations[i][j]);
+                MyErrorHandler::log(j < N - 1 ? ", " : " ");
             }
-            std::cout << "}\n";
+            MyErrorHandler::log("}\n");
         }
     }
 
@@ -928,9 +928,10 @@ private:
     void print1D() const {
         for (my_size_t i = 0; i < getDim(0); ++i)
         {
-            std::cout << (*this)(i) << " ";
+            MyErrorHandler::log((*this)(i));
+            MyErrorHandler::log(" ");
         }
-        std::cout << std::endl;
+        MyErrorHandler::log("\n");
     }
 
     // 2D print function
@@ -940,42 +941,47 @@ private:
         {
             for (my_size_t j = 0; j < getDim(1); ++j)
             {
-                // std::cout << "(" << i << "," << j << ") ";
-                std::cout << (*this)(i, j) << " ";
+                MyErrorHandler::log((*this)(i, j));
+                MyErrorHandler::log(" ");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
     }
 
     // 3D print function
     void print3D() const {
         for (my_size_t k = 0; k < getDim(2); ++k) {
-            // std::cout << "Slice " << i << ":\n";
             for (my_size_t i = 0; i < getDim(0); ++i) {
                 for (my_size_t j = 0; j < getDim(1); ++j) {
-                    std::cout << (*this)(i, j, k) << " ";
+                    MyErrorHandler::log((*this)(i, j, k));
+                    MyErrorHandler::log(" ");
                 }
-                std::cout << std::endl;
+                MyErrorHandler::log("\n");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
     }
 
     void print4D() const {
         for (my_size_t l = 0; l < getDim(3); ++l) {
-            std::cout << "Slice [" << l << "]:\n";
+            MyErrorHandler::log("Slice [");
+            MyErrorHandler::log(l);
+            MyErrorHandler::log("]:\n");
             for (my_size_t k = 0; k < getDim(2); ++k) {
-                std::cout << "  Sub-Slice [" << k << "]:\n";
+                MyErrorHandler::log("  Sub-Slice [");
+                MyErrorHandler::log(k);
+                MyErrorHandler::log("]:\n");
                 for (my_size_t i = 0; i < getDim(0); ++i) {
-                    std::cout << "    [ ";
+                    MyErrorHandler::log("    [ ");
                     for (my_size_t j = 0; j < getDim(1); ++j) {
-                        std::cout << operator()(i, j, k, l) << " ";
+                        MyErrorHandler::log(operator()(i, j, k, l));
+                        MyErrorHandler::log(" ");
                     }
-                    std::cout << "]" << std::endl;
+                    MyErrorHandler::log("]");
                 }
-                std::cout << std::endl;
+                MyErrorHandler::log("\n");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
     }
 
@@ -990,7 +996,7 @@ private:
 
             #ifdef RUNTIME_USE_BOUNDS_CHECKING
                 if (indices[dimIndex] >= dims[i]) {
-                    throw std::out_of_range("Index out of range");
+                    MyErrorHandler::error("Index out of range");
                 }
             #endif
 

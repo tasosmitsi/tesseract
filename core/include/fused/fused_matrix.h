@@ -5,8 +5,6 @@
 #include "../matrix_algorithms.h"
 #include "../matrix_traits.h"
 
-#include <iostream>
-
 template <typename T, my_size_t Rows, my_size_t Cols>
 class FusedMatrix : public FusedTensorND<T, Rows, Cols>
 {
@@ -26,7 +24,7 @@ public:
         : FusedTensorND<T, Rows, Cols>(other)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Copy constructor from another FusedMatrix" << std::endl;
+        MyErrorHandler::log("Copy constructor from another FusedMatrix", ErrorLevel::Info);
 #endif
     }
 
@@ -35,7 +33,7 @@ public:
         : FusedTensorND<T, Rows, Cols>(baseTensor)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Copy constructor from base class FusedTensorND" << std::endl;
+        MyErrorHandler::log("Copy constructor from base class FusedTensorND", ErrorLevel::Info);
 #endif
     }
 
@@ -44,7 +42,7 @@ public:
         : FusedTensorND<T, Rows, Cols>(std::move(other))
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Move constructor from another FusedMatrix" << std::endl;
+        MyErrorHandler::log("Move constructor from another FusedMatrix", ErrorLevel::Info);
 #endif
     }
 
@@ -53,7 +51,7 @@ public:
         : FusedTensorND<T, Rows, Cols>(std::move(baseTensor))
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Move constructor from base class FusedTensorND" << std::endl;
+        MyErrorHandler::log("Move constructor from base class FusedTensorND", ErrorLevel::Info);
 #endif
     }
 
@@ -61,7 +59,7 @@ public:
     FusedMatrix(T (&initList)[Rows][Cols]) : FusedTensorND<T, Rows, Cols>()
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Constructor to initialize from a 2D array" << std::endl;
+        MyErrorHandler::log("Constructor to initialize from a 2D array", ErrorLevel::Info);
 #endif
         // loop trough the input and use (i,j) to store them
         for (my_size_t i = 0; i < Rows; ++i)
@@ -78,7 +76,7 @@ public:
     static constexpr FusedMatrix moveFromTensor(FusedTensorND<T, Rows, Cols> &&tensor)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Static method to create a FusedMatrix from a FusedTensorND\n";
+        MyErrorHandler::log("Static method to create a FusedMatrix from a FusedTensorND", ErrorLevel::Info);
 #endif
         return FusedMatrix(std::move(tensor));
     }
@@ -87,7 +85,7 @@ public:
     FusedTensorND<T, Rows, Cols> copyToTensor(void) const
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Copy a FusedMatrix to FusedTensorND\n";
+        MyErrorHandler::log("Copy a FusedMatrix to FusedTensorND", ErrorLevel::Info);
 #endif
         // Cast to base class to ensure correct type
         return static_cast<const FusedTensorND<T, Rows, Cols> &>(*this);
@@ -97,7 +95,7 @@ public:
     FusedTensorND<T, Rows, Cols> moveToTensor(void)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Move a FusedMatrix to FusedTensorND\n";
+        MyErrorHandler::log("Move a FusedMatrix to FusedTensorND", ErrorLevel::Info);
 #endif
         // Cast to base class to ensure correct type
         return FusedTensorND<T, Rows, Cols>(std::move(*this));
@@ -109,7 +107,7 @@ public:
     FusedMatrix &operator=(const BaseExpr<Expr, T> &expr)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix assignment from expression\n";
+        MyErrorHandler::log("FusedMatrix assignment from expression", ErrorLevel::Info);
 #endif
         FusedTensorND<T, Rows, Cols>::operator=(expr);
         return *this;
@@ -120,7 +118,7 @@ public:
     FusedMatrix &operator=(const FusedTensorND<T, Rows, Cols> &other)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix copy assignment from FusedTensorND\n";
+        MyErrorHandler::log("FusedMatrix copy assignment from FusedTensorND", ErrorLevel::Info);
 #endif
         FusedTensorND<T, Rows, Cols>::operator=(other);
         return *this;
@@ -130,7 +128,7 @@ public:
     FusedMatrix &operator=(const FusedMatrix &other)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix copy assignment from FusedMatrix\n";
+        MyErrorHandler::log("FusedMatrix copy assignment from FusedMatrix", ErrorLevel::Info);
 #endif
         // Call the base class operator= to assign the tensor
         FusedTensorND<T, Rows, Cols>::operator=(other);
@@ -145,7 +143,7 @@ public:
     FusedMatrix &operator=(FusedTensorND<T, Rows, Cols> &&other) noexcept
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix move assignment from FusedTensorND\n";
+        MyErrorHandler::log("FusedMatrix move assignment from FusedTensorND", ErrorLevel::Info);
 #endif
         FusedTensorND<T, Rows, Cols>::operator=(std::move(other));
         return *this;
@@ -155,7 +153,7 @@ public:
     FusedMatrix &operator=(FusedMatrix<T, Rows, Cols> &&other) noexcept
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix move assignment from FusedMatrix\n";
+        MyErrorHandler::log("FusedMatrix move assignment from FusedMatrix", ErrorLevel::Info);
 #endif
         FusedTensorND<T, Rows, Cols>::operator=(std::move(other));
         return *this;
@@ -165,7 +163,7 @@ public:
     FusedMatrix &operator=(T (&initList)[Rows][Cols])
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "Assignment from a 2D array\n";
+        MyErrorHandler::log("Assignment from a 2D array", ErrorLevel::Info);
 #endif
         // loop trough the input and use (i,j) to store them
         for (my_size_t i = 0; i < Rows; ++i)
@@ -195,7 +193,7 @@ public:
     FusedMatrix transposed(void) const
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix::transposed()" << std::endl;
+        MyErrorHandler::log("FusedMatrix::transposed()", ErrorLevel::Info);
 #endif
         // Call base class transposed(), which returns a FusedTensorND
         FusedTensorND<T, Rows, Cols> transposedTensor = FusedTensorND<T, Rows, Cols>::transposed();
@@ -207,7 +205,7 @@ public:
     void inplace_transpose(void)
     {
 #ifdef DEBUG_FUSED_MATRIX
-        std::cout << "FusedMatrix::inplace_transpose()" << std::endl;
+        MyErrorHandler::log("FusedMatrix::inplace_transpose()", ErrorLevel::Info);
 #endif
         FusedTensorND<T, Rows, Cols>::inplace_transpose();
     }
@@ -316,7 +314,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         // use the fact that A = A^T for symmetric matrices
@@ -333,7 +331,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         // Check if the matrix is upper triangular
@@ -355,7 +353,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         // Check if the matrix is lower triangular
@@ -377,7 +375,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
@@ -416,7 +414,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
@@ -455,7 +453,7 @@ public:
     {
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is non-invertible cause: not square");
+            MyErrorHandler::error("FusedMatrix is non-invertible cause: not square");
         }
 
         // check if is identity
@@ -479,7 +477,7 @@ public:
                 if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
                 {
                     /* FusedMatrix is non-invertible */
-                    throw std::runtime_error("FusedMatrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
+                    MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
                 }
 
                 T tmp = _temp(i, j) / _temp(j, j);
@@ -509,7 +507,7 @@ public:
                 if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
                 {
                     /* FusedMatrix is non-invertible */
-                    throw std::runtime_error("FusedMatrix is non-invertible cause: diagonal element is zero (Jordan)");
+                    MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Jordan)");
                 }
 
                 T tmp = _temp(i, j) / _temp(j, j);
@@ -532,7 +530,7 @@ public:
             if (std::abs((_temp(i, i)) < T(PRECISION_TOLERANCE)))
             {
                 /* FusedMatrix is non-invertible */
-                throw std::runtime_error("FusedMatrix is non-invertible cause: diagonal element is zero (Normalization)");
+                MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Normalization)");
             }
 
             T tmp = _temp(i, i);
@@ -551,7 +549,7 @@ public:
         // Check if the matrix is square
         if (!this->areDimsEqual())
         {
-            throw std::runtime_error("FusedMatrix is not square");
+            MyErrorHandler::error("FusedMatrix is not square");
         }
 
         // Check if the matrix is orthogonal

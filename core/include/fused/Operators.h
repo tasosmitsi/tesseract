@@ -8,14 +8,14 @@ inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string
 {
 #ifdef RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH
     if (lhs.getNumDims() != rhs.getNumDims())
-        throw std::runtime_error(opName + ": dimension count mismatch");
+        MyErrorHandler::error(opName + ": dimension count mismatch");
 #endif
 
 #ifdef RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH
     for (my_size_t i = 0; i < lhs.getNumDims(); ++i)
     {
         if (lhs.getDim(i) != rhs.getDim(i))
-            throw std::runtime_error(opName + ": dimension size mismatch at dimension " + std::to_string(i));
+            MyErrorHandler::error(opName + ": dimension size mismatch at dimension " + std::to_string(i));
     }
 #endif
 }

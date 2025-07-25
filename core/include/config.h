@@ -17,6 +17,15 @@
 #define DEFINE_TYPE_ALIAS(type, name) typedef type name
 #endif
 
+#include "error_handler/error_handler.h"
+#ifdef ARDUINO
+#include "error_handler/arduino_serial_error_handler.h"
+using MyErrorHandler = ErrorHandler<SerialErrorHandler>;
+#else
+#include "error_handler/pc_error_handler.h"
+using MyErrorHandler = ErrorHandler<PCErrorHandler>;
+#endif
+
 /*  Uncomment this line to enable debug output for FusedMatrix
     Commenting this out will disable debug output for FusedMatrix but
     will help compiler optimize the code */

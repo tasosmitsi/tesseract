@@ -1,12 +1,12 @@
 #ifndef FUSEDTENSORND_H
 #define FUSEDTENSORND_H
 
-#include <stdexcept> // for std::runtime_error
+// #include <algorithm> // for std::fill_n and std::copy
 #include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
-#include <iostream>  // for std::cout
 
-#include "config.h"
+#include "../fill_n_optimized.h"
+#include "../config.h"
 
 #include "BaseExpr.h"
 #include "Operators.h"
@@ -36,12 +36,12 @@ public:
     FusedTensorND(const FusedTensorND &other)
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "Copy constructor called" << std::endl;
+        MyErrorHandler::log("Copy constructor called", ErrorLevel::Info);
 #endif
         if (this == &other)
         {
 #ifdef DEBUG_FUSED_TENSOR
-            std::cout << "Self-assignment detected, skipping copy." << std::endl;
+            MyErrorHandler::log("Self-assignment detected, skipping copy.", ErrorLevel::Info);
 #endif
             return; // Handle self-assignment
         }
@@ -57,12 +57,12 @@ public:
     FusedTensorND(FusedTensorND &&other) noexcept
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "Move constructor called" << std::endl;
+        MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
 #endif
         if (this == &other)
         {
 #ifdef DEBUG_FUSED_TENSOR
-            std::cout << "Self-assignment detected, skipping move." << std::endl;
+            MyErrorHandler::log("Self-assignment detected, skipping move.", ErrorLevel::Info);
 #endif
             return; // Handle self-assignment
         }
@@ -81,7 +81,7 @@ public:
     FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "FusedTensorND assignment operator called" << std::endl;
+        MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
 
@@ -97,12 +97,12 @@ public:
     FusedTensorND &operator=(const FusedTensorND &other)
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "FusedTensorND copy assignment\n";
+        MyErrorHandler::log("FusedTensorND copy assignment", ErrorLevel::Info);
 #endif
         if (this == &other)
         {
 #ifdef DEBUG_FUSED_TENSOR
-            std::cout << "Self-assignment detected, skipping copy." << std::endl;
+            MyErrorHandler::log("Self-assignment detected, skipping copy.", ErrorLevel::Info);
 #endif
             return *this; // Handle self-assignment
         }
@@ -120,12 +120,12 @@ public:
     FusedTensorND &operator=(FusedTensorND &&other) noexcept
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "FusedTensorND move assignment\n";
+        MyErrorHandler::log("FusedTensorND move assignment", ErrorLevel::Info);
 #endif
         if (this == &other)
         {
 #ifdef DEBUG_FUSED_TENSOR
-            std::cout << "Self-assignment detected, skipping move." << std::endl;
+            MyErrorHandler::log("Self-assignment detected, skipping move.", ErrorLevel::Info);
 #endif
             return *this; // Handle self-assignment
         }
@@ -319,7 +319,7 @@ public:
         // check if the tensor is 2D
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "Non Inplace transpose called" << std::endl;
+        MyErrorHandler::log("Non Inplace transpose called", ErrorLevel::Info);
 #endif
         FusedTensorND outp = *this;
         // reverse the transpose order
@@ -339,7 +339,7 @@ public:
     void inplace_transpose(void)
     {
 #ifdef DEBUG_FUSED_TENSOR
-        std::cout << "Inplace transpose called" << std::endl;
+        MyErrorHandler::log("Inplace transpose called", ErrorLevel::Info);
 #endif
         // reverse the transpose order
         if (this->transposeOrder_[0] == 0)
@@ -488,13 +488,13 @@ public:
         // check if a and b are valid dimensions
         if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
         {
-            throw std::runtime_error("Invalid dimensions");
+            MyErrorHandler::error("Invalid dimensions");
         }
 
         // check if the a axis of tensor1 is equal to the b axis of tensor2
         if (_tensor1.getDim(a) != _tensor2.getDim(b))
         {
-            throw std::runtime_error("Dimensions mismatch");
+            MyErrorHandler::error("Dimensions mismatch");
         }
 
         // calculate the new dimensions
@@ -533,7 +533,7 @@ public:
         {
             if (newDims[i] != _outp.getDim(i))
             {
-                throw std::runtime_error("Dimensions mismatch");
+                MyErrorHandler::error("Dimensions mismatch");
             }
         }
 
@@ -634,7 +634,7 @@ public:
         }
         else
         {
-            throw std::runtime_error("Printing not supported for tensors with more than 4 dimensions");
+            MyErrorHandler::error("Printing not supported for tensors with more than 4 dimensions");
         }
     }
 
@@ -667,7 +667,7 @@ private:
         {
             if (this->getDim(i) != other.getDim(i))
             {
-                throw std::runtime_error("Dimensions mismatch");
+                MyErrorHandler::error("Dimensions mismatch");
             }
         }
     }
@@ -677,12 +677,13 @@ private:
     {
         for (my_size_t i = 0; i < M; ++i)
         {
-            std::cout << "{ ";
+            MyErrorHandler::log("{ ");
             for (my_size_t j = 0; j < N; ++j)
             {
-                std::cout << combinations[i][j] << (j < N - 1 ? ", " : " ");
+                MyErrorHandler::log(combinations[i][j]);
+                MyErrorHandler::log(j < N - 1 ? ", " : " ");
             }
-            std::cout << "}\n";
+            MyErrorHandler::log("}\n");
         }
     }
 
@@ -747,9 +748,10 @@ private:
     {
         for (my_size_t i = 0; i < getDim(0); ++i)
         {
-            std::cout << (*this)(i) << " ";
+            MyErrorHandler::log((*this)(i));
+            MyErrorHandler::log(" ");
         }
-        std::cout << std::endl;
+        MyErrorHandler::log("\n");
     }
 
     // 2D print function
@@ -760,10 +762,10 @@ private:
         {
             for (my_size_t j = 0; j < getDim(1); ++j)
             {
-                // std::cout << "(" << i << "," << j << ") ";
-                std::cout << (*this)(i, j) << " ";
+                MyErrorHandler::log((*this)(i, j));
+                MyErrorHandler::log(" ");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
     }
 
@@ -772,16 +774,16 @@ private:
     {
         for (my_size_t k = 0; k < getDim(2); ++k)
         {
-            // std::cout << "Slice " << i << ":\n";
             for (my_size_t i = 0; i < getDim(0); ++i)
             {
                 for (my_size_t j = 0; j < getDim(1); ++j)
                 {
-                    std::cout << (*this)(i, j, k) << " ";
+                    MyErrorHandler::log((*this)(i, j, k));
+                    MyErrorHandler::log(" ");
                 }
-                std::cout << std::endl;
+                MyErrorHandler::log("\n");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
     }
 
@@ -789,24 +791,28 @@ private:
     {
         for (my_size_t l = 0; l < getDim(3); ++l)
         {
-            std::cout << "Slice [" << l << "]:\n";
+            MyErrorHandler::log("Slice [");
+            MyErrorHandler::log(l);
+            MyErrorHandler::log("]:\n");
             for (my_size_t k = 0; k < getDim(2); ++k)
             {
-                std::cout << "  Sub-Slice [" << k << "]:\n";
+                MyErrorHandler::log("  Sub-Slice [");
+                MyErrorHandler::log(k);
+                MyErrorHandler::log("]:\n");
                 for (my_size_t i = 0; i < getDim(0); ++i)
                 {
-                    std::cout << "    [ ";
+                    MyErrorHandler::log("    [ ");
                     for (my_size_t j = 0; j < getDim(1); ++j)
                     {
-                        std::cout << operator()(i, j, k, l) << " ";
+                        MyErrorHandler::log(operator()(i, j, k, l));
+                        MyErrorHandler::log(" ");
                     }
-                    std::cout << "]" << std::endl;
+                    MyErrorHandler::log("]");
                 }
-                std::cout << std::endl;
+                MyErrorHandler::log("\n");
             }
-            std::cout << std::endl;
+            MyErrorHandler::log("\n");
         }
-    }
 
     // Compute the flat index from multi-dimensional indices
     my_size_t computeIndex(const my_size_t indices[getNumDims()]) const
