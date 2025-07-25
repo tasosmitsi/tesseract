@@ -13,7 +13,7 @@ PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
 
 # Flags
 DEPFLAGS = -MMD -MP
-OPT = -O3 -Wall -Wextra -Winline
+OPT = -O3 -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
 CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
@@ -104,7 +104,7 @@ run_example: $(EXAMPLE_TARGET)
 
 # Run the tests
 run_test: $(TEST_TARGET)
-	./$(TEST_TARGET)
+	./$(TEST_TARGET) $(ARGS)
 
 # Clean target
 clean:
