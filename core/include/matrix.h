@@ -485,7 +485,7 @@ public:
         {
             for (my_size_t i = j + 1; i < rows; i++)
             {
-                if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
+                if (std::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
                 {
                     /* Matrix is non-invertible */
                     MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
@@ -515,7 +515,7 @@ public:
         {
             for (int i = j - 1; i >= 0; i--)
             {
-                if (std::abs((_temp(j, j)) < T(PRECISION_TOLERANCE)))
+                if (std::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
                 {
                     /* Matrix is non-invertible */
                     MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Jordan)");
@@ -538,7 +538,7 @@ public:
         /* Normalize the matrix */
         for (my_size_t i = 0; i < rows; i++)
         {
-            if (std::abs((_temp(i, i)) < T(PRECISION_TOLERANCE)))
+            if (std::abs(_temp(i, i)) < T(PRECISION_TOLERANCE))
             {
                 /* Matrix is non-invertible */
                 MyErrorHandler::error("Matrix is non-invertible cause: diagonal element is zero (Normalization)");
