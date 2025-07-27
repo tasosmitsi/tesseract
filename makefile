@@ -2,6 +2,10 @@
 CXX = g++
 CC = gcc
 
+# Check if using Clang
+CXX_IS_CLANG := $(shell $(CXX) --version | grep -i -q clang && echo 1 || echo 0)
+$(info Clang detected: $(CXX_IS_CLANG))
+
 # Directories
 CORE_SRC_DIR = core/src
 CORE_INC_DIR = core/include
@@ -13,10 +17,14 @@ PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
 
 # Flags
 DEPFLAGS = -MMD -MP
-OPT = -O3 -march=native -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
 
+# Conditional Optimization Flags
+ifeq ($(CXX_IS_CLANG),0)
+	OPT = -O3 -march=native -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
+else
 # Optimization flags for clang
-# OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 -Rpass-missed=inline
+	OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline -Rpass-missed=inline
+endif
 
 CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
