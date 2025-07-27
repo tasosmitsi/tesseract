@@ -749,7 +749,7 @@ private:
             // std::cout << std::endl;
 
             // Increment combination like a counter with custom max values
-            my_size_t position = N - 1;
+            int position = N - 1; // TODO: do not use int. Make the loop safe -> to not overflow
             while (position >= 0)
             {
                 ++combination[position];
