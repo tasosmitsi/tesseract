@@ -13,7 +13,11 @@ PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
 
 # Flags
 DEPFLAGS = -MMD -MP
-OPT = -O3 -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
+OPT = -O3 -march=native -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
+
+# Optimization flags for clang
+# OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 -Rpass-missed=inline
+
 CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
@@ -61,15 +65,15 @@ all: $(CORE_TARGET) $(TEST_TARGET) $(EXAMPLE_TARGET)
 
 # Linking the core library (C++)
 $(CORE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES)
-	$(CXX) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # Linking the test executable (C++)
 $(TEST_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_TEST_FILES) $(C_OBJ_TEST_FILES)
-	$(CXX) -o $@ $^ $(PY_FLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(PY_FLAGS)
 
 # Linking the example executable (C or C++)
 $(EXAMPLE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_EXAMPLE_FILES) $(C_OBJ_EXAMPLE_FILES)
-	$(CXX) -o $@ $^
+	$(CXX) $(CXXFLAGS) -o $@ $^
 
 # Compile C++ source files to object files in the build directory
 $(BUILD_DIR)/%.o: $(CORE_SRC_DIR)/%.cpp | $(BUILD_DIR)

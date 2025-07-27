@@ -2,12 +2,13 @@
 #define FUSEDTENSORND_H
 
 // #include <algorithm> // for std::fill_n and std::copy
-#include <utility>   // for std::move
+#include <utility> // for std::move
 
 #include "../fill_n_optimized.h"
 #include "../copy_n_optimized.h"
 
 #include "../config.h"
+#include "helper_traits.h"
 
 #include "BaseExpr.h"
 #include "Operators.h"
@@ -425,7 +426,7 @@ public:
 
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        my_size_t indices[getNumDims()] = {0};  // Initialize all indices to zero
+        my_size_t indices[numDims] = {0};  // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
         {
@@ -444,7 +445,8 @@ public:
     FusedTensorND &setIdentity(void)
     {
         static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
-        static_assert(((Dims == dims[0]) && ...), "All dimensions must be equal for an identity tensor");
+        static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
+
         this->setDiagonal(1);
         return *this;
     }
@@ -453,7 +455,7 @@ public:
     {
         static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
 
-        static_assert(((Dims == dims[0]) && ...), "All dimensions must be the same for an identity tensor");
+        static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
 
         FusedTensorND<T, Dims...> _outp;
         _outp.setDiagonal(1);
@@ -659,9 +661,10 @@ public:
 protected:
     T *rawData() { return data_.data(); }
     const T *rawData() const { return data_.data(); }
+    static constexpr my_size_t numDims = sizeof...(Dims);
 
     // Compute the flat index from multi-dimensional indices
-    my_size_t computeIndex(const my_size_t indices[getNumDims()]) const
+    my_size_t computeIndex(const my_size_t indices[numDims]) const
     {
         my_size_t index = 0;
         my_size_t factor = 1;

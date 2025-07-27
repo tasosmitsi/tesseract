@@ -8,6 +8,7 @@
 #include "copy_n_optimized.h"
 
 #include "config.h"
+#include "helper_traits.h"
 
 // Base class: TensorND
 template <typename T, my_size_t... Dims>
@@ -552,7 +553,7 @@ public:
 
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        my_size_t indices[getNumDims()] = {0}; // Initialize all indices to zero
+        my_size_t indices[numDims] = {0}; // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
         {
@@ -570,7 +571,8 @@ public:
     TensorND& setIdentity(void)
     {
         static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
-        static_assert(((Dims == dims[0]) && ...), "All dimensions must be equal for an identity tensor");
+        static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
+
         this->setDiagonal(1);
         return *this;
     }
@@ -578,8 +580,7 @@ public:
     static TensorND I(void)
     {
         static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
-
-        static_assert(((Dims == dims[0]) && ...), "All dimensions must be the same for an identity tensor");
+        static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
 
         TensorND<T, Dims...> _outp;
         _outp.setDiagonal(1);
@@ -836,6 +837,7 @@ private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);
     static constexpr my_size_t dims[] = {Dims...}; // Fixed array of dimensions
+    static constexpr my_size_t numDims = sizeof...(Dims);
 
     // These vars are being set in runtime
     my_size_t transposeOrder_[sizeof...(Dims)];
@@ -988,7 +990,7 @@ private:
     }
 
     // Compute the flat index from multi-dimensional indices
-    my_size_t computeIndex(const my_size_t indices[getNumDims()]) const {
+    my_size_t computeIndex(const my_size_t indices[numDims]) const {
         my_size_t index = 0;
         my_size_t factor = 1;
 
