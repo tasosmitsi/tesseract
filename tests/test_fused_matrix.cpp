@@ -382,6 +382,18 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
         CHECK_NOTHROW(matrix1 / matrix2);
     }
 
+    SECTION("Check operations after transpose")
+    {
+        FusedMatrix<double, 4, 4> matrix1, matrix2, res, res1;
+        matrix1.setSequencial();
+        matrix2.setSequencial();
+
+        res = matrix1.transposed() + matrix2;
+        res1 = matrix1 + matrix2;
+
+        CHECK(res != res1);
+    }
+
     SECTION("FusedMatrix transpose")
     {
         mat1.setRandom(-10, 10);
@@ -575,7 +587,6 @@ output_string = output.getvalue()
             {-8, 5, 3}};
         FusedMatrix<double, 3, 3> cholesky_matrix = cholesky_values;
         FusedMatrix<double, 3, 3> cholesky;
-
 
         // using tessaract
         tick();
