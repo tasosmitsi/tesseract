@@ -101,6 +101,125 @@ public:
         return *this;
     }
 
+    template <typename Expr>
+    FusedTensorND &eval(const BaseExpr<Expr, T> &expr)
+    {
+        const auto &e = expr.derived();
+
+        constexpr my_size_t simdWidth = 8; // assuming __m256 for floats
+        const my_size_t simdSteps = totalSize / simdWidth;
+
+        for (my_size_t i = 0; i < simdSteps; ++i)
+        {
+            // std::cout << i * simdWidth << ": ";
+
+            my_size_t indices[sizeof...(Dims)];
+            unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
+            //   ------------------
+            // for (size_t j = 0; j < sizeof...(Dims); ++j)
+            // {
+            //     std::cout << indices[j] << " ";
+            // }
+            // std::cout << "\n";
+            // --------
+            __m256 val = e.evalu(indices);               // returns __m128
+            _mm256_store_ps(&data_[i * simdWidth], val); // write 4 floats
+        }
+
+        // Handle leftover elements scalar-wise
+        for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+        {
+            // std::cout << i << ": ";
+
+            my_size_t indices[sizeof...(Dims)];
+            unravelIndex(i, indices);
+            // ------------------
+            // for (size_t j = 0; j < sizeof...(Dims); ++j)
+            // {
+            //     std::cout << indices[j] << " ";
+            // }
+            // std::cout << "\n";
+            // ------------------
+            data_[i] = callAt(e, indices);
+        }
+
+        return *this;
+    }
+
+    template <my_size_t length>
+    __m256 evalu(my_size_t (&indices)[length]) const
+    {
+        my_size_t baseIdx = computeIndex(indices);
+        // std::cout << baseIdx << ", ";
+        assert((baseIdx % 8) == 0 && "baseIdx must be multiple of 4 for aligned load!");
+        return _mm256_load_ps(&data_[baseIdx]); // load 4 floats
+    }
+
+    // template <typename Expr>
+    // FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
+    // {
+    //     const auto &e = expr.derived();
+
+    //     constexpr size_t simdWidth = 4; // assuming __m128 for floats
+    //     const my_size_t simdSteps = totalSize / simdWidth;
+    //     const my_size_t remainder = totalSize % simdWidth;
+
+    //     // SIMD loop
+    //     for (my_size_t i = 0; i < simdSteps; ++i)
+    //     {
+    //         my_size_t indices[sizeof...(Dims)];
+    //         // Compute starting indices for this simd block
+    //         unravelIndex(i * simdWidth, indices);
+
+    //         // ------------------
+    //         for (size_t i = 0; i < sizeof...(Dims); ++i)
+    //         {
+    //             std::cout << indices[i] << " ";
+    //         }
+    //         std::cout << "\n";
+    //         // ------------------
+
+    //         // callAtSIMD should return a __m128 or Vec4f or similar
+    //         // __m128 simdResult = callAtSIMD(e, indices);
+    //         // std::cout << "Type: " << typeid(simdResult).name() << std::endl;
+
+    //         // Store the SIMD results into data_ (assumed contiguous)
+    //         // _mm_store_ps(&data_[i * simdWidth], simdResult);
+    //     }
+
+    //     // Handle leftover elements scalar-wise
+    //     for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+    //     {
+    //         my_size_t indices[sizeof...(Dims)];
+    //         unravelIndex(i, indices);
+    //         data_[i] = callAt(e, indices);
+    //     }
+
+    //     return *this;
+    // }
+
+    // template <typename... Indices>
+    // inline __m128 &operator()(Indices... indices, SIMD4) noexcept
+    // {
+    //     my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
+
+    //     // Compute base index assuming last dimension is contiguous
+    //     size_t baseIndex = computeIndex(idxArray);
+
+    //     return _mm_load_ps(&data_[baseIndex]);
+    // }
+
+    // template <typename... Indices>
+    // inline const __m128 &operator()(Indices... indices, SIMD4) const noexcept
+    // {
+    //     my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
+
+    //     // Compute base index assuming last dimension is contiguous
+    //     size_t baseIndex = computeIndex(idxArray);
+
+    //     return _mm_load_ps(&data_[baseIndex]);
+    // }
+
     FusedTensorND &operator=(const FusedTensorND &other)
     {
 #ifdef DEBUG_FUSED_TENSOR
@@ -426,7 +545,7 @@ public:
 
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        my_size_t indices[numDims] = {0};  // Initialize all indices to zero
+        my_size_t indices[numDims] = {0};       // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
         {
@@ -870,6 +989,12 @@ private:
     T callAt(const Expr &expr, const my_size_t *indices) const
     {
         return CallAtDispatcher<T, sizeof...(Dims)>::callAt(expr, indices);
+    }
+
+    template <typename Expr>
+    __m128 callAtSIMD(const Expr &expr, const size_t *indices) const
+    {
+        return CallAtDispatcherSIMD<T, sizeof...(Dims)>::callAt(expr, indices);
     }
 };
 

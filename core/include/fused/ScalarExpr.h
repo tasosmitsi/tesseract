@@ -35,6 +35,12 @@ public:
         return Op<T>::apply(_expr(indices...), _scalar); // expr op scalar
     }
 
+    template <my_size_t length>
+    __m256 evalu(my_size_t (&indices)[length]) const
+    {
+        return Op<__m256>::apply(_expr.evalu(indices), _scalar);
+    }
+
     my_size_t getNumDims() const
     {
         return _expr.getNumDims();
@@ -59,6 +65,12 @@ public:
     T operator()(Indices... indices) const
     {
         return Op<T>::apply(_scalar, _expr(indices...)); // scalar op expr
+    }
+
+    template <my_size_t length>
+    __m256 evalu(my_size_t (&indices)[length]) const
+    {
+        return Op<__m256>::apply(_scalar, _expr.evalu(indices));
     }
 
     my_size_t getNumDims() const

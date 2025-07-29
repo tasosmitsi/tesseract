@@ -3,6 +3,10 @@
 
 // Configuration file for FusedTensorND
 
+#ifdef __AVX512F__
+#pragma message "[COMPILE-TIME] Use AVX512F"
+#endif
+
 #ifdef __GNUC__
 #define FORCE_INLINE inline __attribute__((always_inline))
 #elif defined(_MSC_VER)

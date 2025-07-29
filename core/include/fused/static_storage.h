@@ -4,7 +4,7 @@
 template <typename T, size_t Size>
 class StaticStorage
 {
-    T _data[Size];
+    alignas(64) T _data[Size];
 
 public:
     FORCE_INLINE constexpr T &operator[](size_t idx) noexcept { return _data[idx]; }
