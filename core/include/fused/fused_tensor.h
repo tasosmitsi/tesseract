@@ -281,7 +281,7 @@ public:
     {
 #ifdef STATIC_CHECK_NUMBER_OF_INDICES
         // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
-        constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
+        static constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
         static_assert(correct, "Number of indices must match tensor dimensions");
 #endif
 
@@ -295,7 +295,7 @@ public:
     {
 #ifdef STATIC_CHECK_NUMBER_OF_INDICES
         // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
-        constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
+        static constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
         static_assert(correct, "Number of indices must match tensor dimensions");
 #endif
 
@@ -387,9 +387,9 @@ public:
         }
 
         // Calculate all indices combinations for all dimensions
-        constexpr my_size_t total_combinations = (1 * ... * Dims);   // fold expression to calculate the total number of combinations
+        static constexpr my_size_t total_combinations = (1 * ... * Dims);   // fold expression to calculate the total number of combinations
         my_size_t combinations[total_combinations][sizeof...(Dims)]; // 2D array to store all combinations
-        my_size_t max_vals[sizeof...(Dims)] = {Dims...};             // array to store the maximum values for each dimension
+        static constexpr my_size_t max_vals[sizeof...(Dims)] = {Dims...};             // array to store the maximum values for each dimension
         generate_combinations(max_vals, combinations);               // generate all combinations
 
         for (my_size_t i = 0; i < total_combinations; ++i)
