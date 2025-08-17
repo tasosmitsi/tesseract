@@ -3,13 +3,6 @@
 #include "ScalarExpr.h"
 #include "Operations.h"
 
-template <template <typename, typename> class Op, typename Arch>
-struct BindArch
-{
-    template <typename T>
-    using type = Op<T, Arch>;
-};
-
 template <typename Expr1, typename Expr2>
 inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName)
 {
@@ -31,7 +24,8 @@ inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string
 // Operator Overloads
 // ===============================
 template <typename LHS, typename RHS, typename T>
-BinaryExpr<LHS, RHS, BindArch<Add, DefaultArch>::template type, T> operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
+BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>
+operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
 #if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     const auto &lhsDerived = lhs.derived();
@@ -39,14 +33,15 @@ BinaryExpr<LHS, RHS, BindArch<Add, DefaultArch>::template type, T> operator+(con
 
     checkDimsMatch(lhsDerived, rhsDerived, "operator+");
 
-    return BinaryExpr<LHS, RHS, BindArch<Add, DefaultArch>::template type, T>(lhsDerived, rhsDerived);
+    return BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>(lhsDerived, rhsDerived);
 #else
-    return BinaryExpr<LHS, RHS, BindArch<Add, DefaultArch>::template type, T>(lhs.derived(), rhs.derived());
+    return BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
 #endif
 }
 
 template <typename LHS, typename RHS, typename T>
-BinaryExpr<LHS, RHS, BindArch<Sub, DefaultArch>::template type, T> operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
+BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>
+operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
 #if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
 
@@ -55,28 +50,30 @@ BinaryExpr<LHS, RHS, BindArch<Sub, DefaultArch>::template type, T> operator-(con
 
     checkDimsMatch(lhsDerived, rhsDerived, "operator-");
 
-    return BinaryExpr<LHS, RHS, BindArch<Sub, DefaultArch>::template type, T>(lhsDerived, rhsDerived);
+    return BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>(lhsDerived, rhsDerived);
 #else
-    return BinaryExpr<LHS, RHS, BindArch<Sub, DefaultArch>::template type, T>(lhs.derived(), rhs.derived());
+    return BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
 #endif
 }
 
 template <typename LHS, typename RHS, typename T>
-BinaryExpr<LHS, RHS, BindArch<Mul, DefaultArch>::template type, T> operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
+BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>
+operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
 #if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     const auto &lhsDerived = lhs.derived();
     const auto &rhsDerived = rhs.derived();
 
     checkDimsMatch(lhsDerived, rhsDerived, "operator*");
-    return BinaryExpr<LHS, RHS, BindArch<Mul, DefaultArch>::template type, T>(lhsDerived, rhsDerived);
+    return BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>(lhsDerived, rhsDerived);
 #else
-    return BinaryExpr<LHS, RHS, BindArch<Mul, DefaultArch>::template type, T>(lhs.derived(), rhs.derived());
+    return BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
 #endif
 }
 
 template <typename LHS, typename RHS, typename T>
-BinaryExpr<LHS, RHS, BindArch<Div, DefaultArch>::template type, T> operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
+BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>
+operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs)
 {
 #if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
 
@@ -85,71 +82,80 @@ BinaryExpr<LHS, RHS, BindArch<Div, DefaultArch>::template type, T> operator/(con
 
     checkDimsMatch(lhsDerived, rhsDerived, "operator/");
 
-    return BinaryExpr<LHS, RHS, BindArch<Div, DefaultArch>::template type, T>(lhsDerived, rhsDerived);
+    return BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>(lhsDerived, rhsDerived);
 #else
-    return BinaryExpr<LHS, RHS, BindArch<Div, DefaultArch>::template type, T>(lhs.derived(), rhs.derived());
+    return BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
 #endif
 }
 
 // matrix + scalar (scalar on RHS)
 template <typename LHS, typename T>
-ScalarExprRHS<LHS, BindArch<Add, DefaultArch>::template type, T> operator+(const BaseExpr<LHS, T> &lhs, T scalar)
+ScalarExprRHS<LHS, Add, T, BITS, DefaultArch>
+operator+(const BaseExpr<LHS, T> &lhs, T scalar)
 {
-    return ScalarExprRHS<LHS, BindArch<Add, DefaultArch>::template type, T>(lhs.derived(), scalar);
+    return ScalarExprRHS<LHS, Add, T, BITS, DefaultArch>(lhs.derived(), scalar);
 }
 
 // scalar + matrix (scalar on LHS)
 template <typename RHS, typename T>
-ScalarExprRHS<RHS, BindArch<Add, DefaultArch>::template type, T> operator+(T scalar, const BaseExpr<RHS, T> &rhs)
+ScalarExprRHS<RHS, Add, T, BITS, DefaultArch>
+operator+(T scalar, const BaseExpr<RHS, T> &rhs)
 {
-    return ScalarExprRHS<RHS, BindArch<Add, DefaultArch>::template type, T>(rhs.derived(), scalar);
+    return ScalarExprRHS<RHS, Add, T, BITS, DefaultArch>(rhs.derived(), scalar);
 }
 
 // Override operator- to get the negative
 template <typename RHS, typename T>
-ScalarExprLHS<RHS, BindArch<Sub, DefaultArch>::template type, T> operator-(const BaseExpr<RHS, T> &expr)
+ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>
+operator-(const BaseExpr<RHS, T> &expr)
 {
-    return ScalarExprLHS<RHS, BindArch<Sub, DefaultArch>::template type, T>(expr.derived(), T(0)); // Negation is like subtracting from zero
+    return ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>(expr.derived(), T(0)); // Negation is like subtracting from zero
 }
 
 // matrix - scalar (scalar on RHS)
 template <typename LHS, typename T>
-ScalarExprRHS<LHS, BindArch<Sub, DefaultArch>::template type, T> operator-(const BaseExpr<LHS, T> &lhs, T scalar)
+ScalarExprRHS<LHS, Sub, T, BITS, DefaultArch>
+operator-(const BaseExpr<LHS, T> &lhs, T scalar)
 {
-    return ScalarExprRHS<LHS, BindArch<Sub, DefaultArch>::template type, T>(lhs.derived(), scalar);
+    return ScalarExprRHS<LHS, Sub, T, BITS, DefaultArch>(lhs.derived(), scalar);
 }
 
 // scalar - matrix (scalar on LHS)
 template <typename RHS, typename T>
-ScalarExprLHS<RHS, BindArch<Sub, DefaultArch>::template type, T> operator-(T scalar, const BaseExpr<RHS, T> &rhs)
+ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>
+operator-(T scalar, const BaseExpr<RHS, T> &rhs)
 {
-    return ScalarExprLHS<RHS, BindArch<Sub, DefaultArch>::template type, T>(rhs.derived(), scalar);
+    return ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>(rhs.derived(), scalar);
 }
 
 // matrix * scalar (scalar on RHS)
 template <typename LHS, typename T>
-ScalarExprRHS<LHS, BindArch<Mul, DefaultArch>::template type, T> operator*(const BaseExpr<LHS, T> &lhs, T scalar)
+ScalarExprRHS<LHS, Mul, T, BITS, DefaultArch>
+operator*(const BaseExpr<LHS, T> &lhs, T scalar)
 {
-    return ScalarExprRHS<LHS, BindArch<Mul, DefaultArch>::template type, T>(lhs.derived(), scalar);
+    return ScalarExprRHS<LHS, Mul, T, BITS, DefaultArch>(lhs.derived(), scalar);
 }
 
 // scalar * matrix (scalar on LHS)
 template <typename RHS, typename T>
-ScalarExprRHS<RHS, BindArch<Mul, DefaultArch>::template type, T> operator*(T scalar, const BaseExpr<RHS, T> &rhs)
+ScalarExprRHS<RHS, Mul, T, BITS, DefaultArch>
+operator*(T scalar, const BaseExpr<RHS, T> &rhs)
 {
-    return ScalarExprRHS<RHS, BindArch<Mul, DefaultArch>::template type, T>(rhs.derived(), scalar);
+    return ScalarExprRHS<RHS, Mul, T, BITS, DefaultArch>(rhs.derived(), scalar);
 }
 
 // matrix / scalar (scalar on RHS)
 template <typename LHS, typename T>
-ScalarExprRHS<LHS, BindArch<Div, DefaultArch>::template type, T> operator/(const BaseExpr<LHS, T> &lhs, T scalar)
+ScalarExprRHS<LHS, Div, T, BITS, DefaultArch>
+operator/(const BaseExpr<LHS, T> &lhs, T scalar)
 {
-    return ScalarExprRHS<LHS, BindArch<Div, DefaultArch>::template type, T>(lhs.derived(), scalar);
+    return ScalarExprRHS<LHS, Div, T, BITS, DefaultArch>(lhs.derived(), scalar);
 }
 
 // scalar / matrix (scalar on LHS)
 template <typename RHS, typename T>
-ScalarExprLHS<RHS, BindArch<Div, DefaultArch>::template type, T> operator/(T scalar, const BaseExpr<RHS, T> &rhs)
+ScalarExprLHS<RHS, Div, T, BITS, DefaultArch>
+operator/(T scalar, const BaseExpr<RHS, T> &rhs)
 {
-    return ScalarExprLHS<RHS, BindArch<Div, DefaultArch>::template type, T>(rhs.derived(), scalar);
+    return ScalarExprLHS<RHS, Div, T, BITS, DefaultArch>(rhs.derived(), scalar);
 }

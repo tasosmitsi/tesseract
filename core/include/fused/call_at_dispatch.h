@@ -55,31 +55,4 @@ struct CallAtDispatcher
     }
 };
 
-template <typename T, size_t N>
-struct CallAtDispatcherSIMD
-{
-    template <typename Expr, size_t... Is>
-    inline static __m128 callAtImpl(const Expr &expr, const size_t *indices, std::index_sequence<Is...>)
-    {
-        // We'll assume last dimension is at N-1 and load 4 consecutive elements there:
-        // Build 4 calls where last index = indices[N-1] + offset (0..3)
-
-        // Build an array of 4 __m128 floats by calling expr with adjusted last index
-        float vals[4] = {
-            expr((Is == N - 1 ? indices[Is] + 0 : indices[Is])..., SIMD4{}),
-            expr((Is == N - 1 ? indices[Is] + 1 : indices[Is])..., SIMD4{}),
-            expr((Is == N - 1 ? indices[Is] + 2 : indices[Is])..., SIMD4{}),
-            expr((Is == N - 1 ? indices[Is] + 3 : indices[Is])..., SIMD4{})};
-
-        // Load into __m128 vector
-        return _mm_load_ps(vals);
-    }
-
-    template <typename Expr>
-    inline static __m128 callAt(const Expr &expr, const size_t *indices)
-    {
-        return callAtImpl(expr, indices, std::make_index_sequence<N>{});
-    }
-};
-
 #endif // CALL_AT_DISPATCH_H

@@ -1,87 +1,203 @@
 #pragma once
 
 #include <immintrin.h>
-#include "op_traits_default.h" // to ensure generic is known
+#include "op_traits_generic.h" // to ensure generic is known
 
 struct X86_AVX
 {
 };
 
-// // Specialization for scalar float on X86_AVX just uses generic
-// template <>
-// struct OpTraits<float, X86_AVX> : OpTraits<float, GenericArch> {};
+template <typename T, my_size_t WidthBits>
+struct SimdTraits;
 
+// SimdTraits specializations
 template <>
-struct OpTraits<__m128, X86_AVX>
+struct SimdTraits<int, 256>
 {
-    FORCE_INLINE static __m128 add(__m128 a, __m128 b)
-    {
-        // std::cout << "lol";
-        return _mm_add_ps(a, b);
-    }
-    FORCE_INLINE static __m128 sub(__m128 a, __m128 b) { return _mm_sub_ps(a, b); }
-    FORCE_INLINE static __m128 mul(__m128 a, __m128 b) { return _mm_mul_ps(a, b); }
-    FORCE_INLINE static __m128 div(__m128 a, __m128 b) { return _mm_div_ps(a, b); }
+    using simd_t = __m256i;
+    static constexpr my_size_t width = 8; // 256 bits / 32 bits per int = 8
 
-    static void test() { std::cout << "Specialized __m128 for X86_AVX\n"; }
+    FORCE_INLINE static simd_t load(const int *ptr)
+    {
+        return _mm256_load_si256(reinterpret_cast<const __m256i *>(ptr));
+    }
+
+    FORCE_INLINE static simd_t loadu(const int *ptr)
+    {
+        return _mm256_loadu_si256(reinterpret_cast<const __m256i *>(ptr));
+    }
+
+    FORCE_INLINE static void store(int *ptr, simd_t val)
+    {
+        _mm256_store_si256(reinterpret_cast<__m256i *>(ptr), val);
+    }
+
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b)
+    {
+        return _mm256_add_epi32(a, b);
+    }
+
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b)
+    {
+        return _mm256_sub_epi32(a, b);
+    }
+
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b)
+    {
+        return _mm256_mullo_epi32(a, b);
+    }
+
+    // Integer division (no SIMD support) — fallback to scalar
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b)
+    {
+        alignas(32) int a_vals[8], b_vals[8], res[8];
+        _mm256_store_si256(reinterpret_cast<__m256i *>(a_vals), a);
+        _mm256_store_si256(reinterpret_cast<__m256i *>(b_vals), b);
+        for (int i = 0; i < 8; ++i)
+            res[i] = b_vals[i] != 0 ? a_vals[i] / b_vals[i] : 0; // fallback logic
+        return _mm256_load_si256(reinterpret_cast<const __m256i *>(res));
+    }
+
+    FORCE_INLINE static simd_t set1(int x)
+    {
+        return _mm256_set1_epi32(x);
+    }
 };
 
 template <>
-struct OpTraits<__m256, X86_AVX>
+struct SimdTraits<int, 128>
 {
-    FORCE_INLINE static __m256 add(__m256 a, __m256 b)
+    using simd_t = __m128i;
+    static constexpr my_size_t width = 4; // 128 bits / 32 bits per int = 4
+
+    FORCE_INLINE static simd_t load(const int *ptr) { return _mm_load_si128(reinterpret_cast<const __m128i *>(ptr)); }
+    FORCE_INLINE static simd_t loadu(const int *ptr) { return _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptr)); }
+    FORCE_INLINE static void store(int *ptr, simd_t val) { _mm_store_si128(reinterpret_cast<__m128i *>(ptr), val); }
+
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b) { return _mm_add_epi32(a, b); }
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b) { return _mm_sub_epi32(a, b); }
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b)
     {
-        // std::cout << "lol";
-        return _mm256_add_ps(a, b);
+        // SSE2 doesn't support 32-bit integer multiplication natively.
+        // This requires SSE4.1 (_mm_mullo_epi32).
+        return _mm_mullo_epi32(a, b);
     }
-    FORCE_INLINE static __m256 sub(__m256 a, __m256 b) { return _mm256_sub_ps(a, b); }
-    FORCE_INLINE static __m256 mul(__m256 a, __m256 b) { return _mm256_mul_ps(a, b); }
-    FORCE_INLINE static __m256 div(__m256 a, __m256 b) { return _mm256_div_ps(a, b); }
 
-    // Optional : Fused multiply - add(a *b + c)
-    FORCE_INLINE static __m256 mul_add(__m256 a, __m256 b, __m256 c) { return _mm256_fmadd_ps(a, b, c); }
+    // Integer division is not supported in SIMD. You'd need scalar fallback.
+    // Here is a dummy to avoid compilation errors.
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b)
+    {
+        // This will not work properly for general use
+        // Use scalar fallback or AVX512 if available
+        alignas(16) int a_vals[4], b_vals[4], res[4];
+        _mm_store_si128(reinterpret_cast<__m128i *>(a_vals), a);
+        _mm_store_si128(reinterpret_cast<__m128i *>(b_vals), b);
+        for (int i = 0; i < 4; ++i)
+            res[i] = b_vals[i] != 0 ? a_vals[i] / b_vals[i] : 0;
+        return _mm_load_si128(reinterpret_cast<const __m128i *>(res));
+    }
 
-    static void test() { std::cout << "Specialized __m256 for X86_AVX\n"; }
+    FORCE_INLINE static simd_t set1(int x) { return _mm_set1_epi32(x); }
 };
 
-// template <>
-// struct OpTraits<float, X86_AVX>
-// {
-//     static float add(float a, float b)
-//     {
-//         __m128 va = _mm_set_ss(a);
-//         __m128 vb = _mm_set_ss(b);
-//         __m128 vc = _mm_add_ss(va, vb);
-//         return _mm_cvtss_f32(vc);
-//     }
+template <>
+struct SimdTraits<float, 128>
+{
+    using simd_t = __m128;
+    static constexpr my_size_t width = 4;
 
-//     static float sub(float a, float b)
-//     {
-//         __m128 va = _mm_set_ss(a);
-//         __m128 vb = _mm_set_ss(b);
-//         __m128 vc = _mm_sub_ss(va, vb);
-//         return _mm_cvtss_f32(vc);
-//     }
+    FORCE_INLINE static simd_t load(const float *ptr) { return _mm_load_ps(ptr); }
+    FORCE_INLINE static simd_t loadu(const float *ptr) { return _mm_loadu_ps(ptr); }
+    FORCE_INLINE static void store(float *ptr, simd_t val) { _mm_store_ps(ptr, val); }
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b) { return _mm_add_ps(a, b); }
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b) { return _mm_sub_ps(a, b); }
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b) { return _mm_mul_ps(a, b); }
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b) { return _mm_div_ps(a, b); }
+    FORCE_INLINE static simd_t set1(float x) { return _mm_set1_ps(x); }
+};
 
-//     static float mul(float a, float b)
-//     {
-//         __m128 va = _mm_set_ss(a);
-//         __m128 vb = _mm_set_ss(b);
-//         __m128 vc = _mm_mul_ss(va, vb);
-//         return _mm_cvtss_f32(vc);
-//     }
+template <>
+struct SimdTraits<float, 256>
+{
+    using simd_t = __m256;
+    static constexpr my_size_t width = 8;
 
-//     static float div(float a, float b)
-//     {
-//         if (b == 0.0f)
-//         {
-//             MyErrorHandler::error("Division by zero (AVX)");
-//             return 0.0f;
-//         }
+    FORCE_INLINE static simd_t load(const float *ptr) { return _mm256_load_ps(ptr); }
+    FORCE_INLINE static simd_t loadu(const float *ptr) { return _mm256_loadu_ps(ptr); }
+    FORCE_INLINE static void store(float *ptr, simd_t val) { _mm256_store_ps(ptr, val); }
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b) { return _mm256_add_ps(a, b); }
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b) { return _mm256_sub_ps(a, b); }
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b) { return _mm256_mul_ps(a, b); }
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b) { return _mm256_div_ps(a, b); }
+    FORCE_INLINE static simd_t set1(float x) { return _mm256_set1_ps(x); }
+    FORCE_INLINE static auto fmadd(simd_t a, simd_t b, simd_t c)
+        -> decltype(_mm256_fmadd_ps(a, b, c))
+    {
+        return _mm256_fmadd_ps(a, b, c);
+    }
+};
 
-//         __m128 va = _mm_set_ss(a);
-//         __m128 vb = _mm_set_ss(b);
-//         __m128 vc = _mm_div_ss(va, vb);
-//         return _mm_cvtss_f32(vc);
-//     }
-// };
+template <>
+struct SimdTraits<double, 128>
+{
+    using simd_t = __m128d;
+    static constexpr my_size_t width = 2;
+
+    FORCE_INLINE static simd_t load(const double *ptr) { return _mm_load_pd(ptr); }
+    FORCE_INLINE static simd_t loadu(const double *ptr) { return _mm_loadu_pd(ptr); }
+    FORCE_INLINE static void store(double *ptr, simd_t val) { _mm_store_pd(ptr, val); }
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b) { return _mm_add_pd(a, b); }
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b) { return _mm_sub_pd(a, b); }
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b) { return _mm_mul_pd(a, b); }
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b) { return _mm_div_pd(a, b); }
+    FORCE_INLINE static simd_t set1(double x) { return _mm_set1_pd(x); }
+};
+
+template <>
+struct SimdTraits<double, 256>
+{
+    using simd_t = __m256d;
+    static constexpr my_size_t width = 4;
+
+    FORCE_INLINE static simd_t load(const double *ptr) { return _mm256_load_pd(ptr); }
+    FORCE_INLINE static simd_t loadu(const double *ptr) { return _mm256_loadu_pd(ptr); }
+    FORCE_INLINE static void store(double *ptr, simd_t val) { _mm256_store_pd(ptr, val); }
+    FORCE_INLINE static simd_t add(simd_t a, simd_t b) { return _mm256_add_pd(a, b); }
+    FORCE_INLINE static simd_t sub(simd_t a, simd_t b) { return _mm256_sub_pd(a, b); }
+    FORCE_INLINE static simd_t mul(simd_t a, simd_t b) { return _mm256_mul_pd(a, b); }
+    FORCE_INLINE static simd_t div(simd_t a, simd_t b) { return _mm256_div_pd(a, b); }
+    FORCE_INLINE static simd_t set1(double x) { return _mm256_set1_pd(x); }
+};
+
+// OpTraits specialization for X86_AVX
+// OpTraits delegates to SimdTraits<T, WidthBits>
+template <typename T, my_size_t WidthBits>
+struct OpTraits<T, WidthBits, X86_AVX>
+{
+    using Simd = SimdTraits<T, WidthBits>;
+    using type = typename Simd::simd_t;
+    static constexpr my_size_t width = Simd::width;
+
+    FORCE_INLINE static type add(type a, type b) { return Simd::add(a, b); }
+    FORCE_INLINE static type sub(type a, type b) { return Simd::sub(a, b); }
+    FORCE_INLINE static type mul(type a, type b) { return Simd::mul(a, b); }
+    FORCE_INLINE static type div(type a, type b) { return Simd::div(a, b); }
+
+    FORCE_INLINE static type add(type a, T s) { return Simd::add(a, Simd::set1(s)); }
+    FORCE_INLINE static type sub(type a, T s) { return Simd::sub(a, Simd::set1(s)); }
+    FORCE_INLINE static type mul(type a, T s) { return Simd::mul(a, Simd::set1(s)); }
+    FORCE_INLINE static type div(type a, T s) { return Simd::div(a, Simd::set1(s)); }
+
+    FORCE_INLINE static type sub(T s, type a) { return Simd::sub(Simd::set1(s), a); }
+    FORCE_INLINE static type div(T s, type a) { return Simd::div(Simd::set1(s), a); }
+
+    FORCE_INLINE static type load(const T *ptr) { return Simd::load(ptr); }
+    FORCE_INLINE static type loadu(const T *ptr) { return Simd::loadu(ptr); }
+    FORCE_INLINE static void store(T *ptr, type val) { Simd::store(ptr, val); }
+
+    static void test()
+    {
+        std::cout << "OpTraits: scalar:" << typeid(T).name() << ", width: " << WidthBits << ", width: "
+                  << Simd::width << ", bus_type: " << typeid(type).name() << "X86_AVX>\n";
+    }
+};

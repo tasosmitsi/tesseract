@@ -13,14 +13,14 @@ TEST_DIR = tests
 EXAMPLE_DIR = examples/src
 BUILD_DIR = build
 CATCH2_DIR = Catch2/extras
-PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8
+PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8  -I/home/tasos51/eigen/Eigen
 
 # Flags
 DEPFLAGS = -MMD -MP
 
 # Conditional Optimization Flags
 ifeq ($(CXX_IS_CLANG),0)
-	OPT = -O3 -march=native -Wall -Wextra -Winline --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized
+	OPT = -O3 -march=native -Wall -Wextra -Winline -Wpedantic --param large-function-growth=1500 --param inline-unit-growth=300 #--param large-stack-frame-growth=1000000 #-fopt-info-vec-optimized # -fsanitize=address
 else
 # Optimization flags for clang
 	OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline -Rpass-missed=inline

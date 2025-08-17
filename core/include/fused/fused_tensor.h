@@ -13,6 +13,7 @@
 #include "BaseExpr.h"
 #include "Operators.h"
 #include "call_at_dispatch.h"
+#include "ops/op_traits.h"
 #include "static_storage.h"
 
 // Base class: FusedTensorND
@@ -106,7 +107,7 @@ public:
     {
         const auto &e = expr.derived();
 
-        constexpr my_size_t simdWidth = 8; // assuming __m256 for floats
+        static constexpr my_size_t simdWidth = OpTraits<T, BITS, DefaultArch>::width; // assuming typename OpTraits<T, BITS, DefaultArch>::type for floats
         const my_size_t simdSteps = totalSize / simdWidth;
 
         for (my_size_t i = 0; i < simdSteps; ++i)
@@ -122,8 +123,8 @@ public:
             // }
             // std::cout << "\n";
             // --------
-            __m256 val = e.evalu(indices);               // returns __m128
-            _mm256_store_ps(&data_[i * simdWidth], val); // write 4 floats
+            typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
+            OpTraits<T, BITS, DefaultArch>::store(&data_[i * simdWidth], val); // write simdWidth floats
         }
 
         // Handle leftover elements scalar-wise
@@ -147,12 +148,12 @@ public:
     }
 
     template <my_size_t length>
-    __m256 evalu(my_size_t (&indices)[length]) const
+    typename OpTraits<T, BITS, DefaultArch>::type evalu(my_size_t (&indices)[length]) const
     {
         my_size_t baseIdx = computeIndex(indices);
         // std::cout << baseIdx << ", ";
-        assert((baseIdx % 8) == 0 && "baseIdx must be multiple of 4 for aligned load!");
-        return _mm256_load_ps(&data_[baseIdx]); // load 4 floats
+        assert((baseIdx % OpTraits<T, BITS, DefaultArch>::width) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
+        return OpTraits<T, BITS, DefaultArch>::load(&data_[baseIdx]); // load 4 floats
     }
 
     // template <typename Expr>
@@ -989,12 +990,6 @@ private:
     T callAt(const Expr &expr, const my_size_t *indices) const
     {
         return CallAtDispatcher<T, sizeof...(Dims)>::callAt(expr, indices);
-    }
-
-    template <typename Expr>
-    __m128 callAtSIMD(const Expr &expr, const size_t *indices) const
-    {
-        return CallAtDispatcherSIMD<T, sizeof...(Dims)>::callAt(expr, indices);
     }
 };
 
