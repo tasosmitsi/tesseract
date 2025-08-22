@@ -1,0 +1,7 @@
+#ifndef FUSEDQUATERNION_H
+#define FUSEDQUATERNION_H
+
+
+
+
+#endif // FUSEDQUATERNION_H

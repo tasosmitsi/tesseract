@@ -12,6 +12,8 @@ public:
     using Base::Base; // Inherit constructors from FusedMatrix
     using Base::operator=;
 
+    // TODO: Add transfomation funtions
+
     T &operator()(my_size_t i)
     {
         my_size_t idxArray[2];
