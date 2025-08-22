@@ -16,10 +16,16 @@ class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    template <typename... Indices>
-    T operator()(Indices... indices) const
+    // template <typename... Indices>
+    // T operator()(Indices... indices) const
+    // {
+    //     return Op<T, Bits, GenericArch>::apply(_expr(indices...), _scalar); // expr op scalar
+    // }
+
+    template <my_size_t length>
+    T operator()(my_size_t (&indices)[length]) const
     {
-        return Op<T, Bits, GenericArch>::apply(_expr(indices...), _scalar); // expr op scalar
+        return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar); // expr op scalar
     }
 
     template <my_size_t length>
@@ -49,10 +55,16 @@ class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    template <typename... Indices>
-    T operator()(Indices... indices) const
+    // template <typename... Indices>
+    // T operator()(Indices... indices) const
+    // {
+    //     return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices...)); // scalar op expr
+    // }
+
+    template <my_size_t length>
+    T operator()(my_size_t (&indices)[length]) const
     {
-        return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices...)); // scalar op expr
+        return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices)); // expr op scalar
     }
 
     template <my_size_t length>

@@ -12,7 +12,6 @@
 
 #include "BaseExpr.h"
 #include "Operators.h"
-#include "call_at_dispatch.h"
 #include "ops/op_traits.h"
 #include "static_storage.h"
 
@@ -93,7 +92,7 @@ public:
         {
             my_size_t indices[sizeof...(Dims)];
             unravelIndex(idx, indices);
-            data_[idx] = callAt(e, indices);
+            data_[idx] = e(indices);
         }
         return *this;
     }
@@ -119,8 +118,7 @@ public:
         {
             my_size_t indices[sizeof...(Dims)];
             unravelIndex(i, indices);
-            // ------------------
-            data_[i] = callAt(e, indices);
+            data_[i] = e(indices);
         }
 
         return *this;
@@ -894,12 +892,6 @@ private:
             indices[i - 1] = flatIdx % dims[i - 1];
             flatIdx /= dims[i - 1];
         }
-    }
-
-    template <typename Expr>
-    T callAt(const Expr &expr, const my_size_t *indices) const
-    {
-        return CallAtDispatcher<T, sizeof...(Dims)>::callAt(expr, indices);
     }
 };
 

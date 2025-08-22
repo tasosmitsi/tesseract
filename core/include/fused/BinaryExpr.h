@@ -15,10 +15,16 @@ class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>, T>
 public:
     BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
 
-    template <typename... Indices>
-    T operator()(Indices... indices) const
+    // template <typename... Indices>
+    // T operator()(Indices... indices) const
+    // {
+    //     return Op<T, Bits, GenericArch>::apply(_lhs(indices...), _rhs(indices...));
+    // }
+
+    template <my_size_t length>
+    T operator()(my_size_t (&indices)[length]) const
     {
-        return Op<T, Bits, GenericArch>::apply(_lhs(indices...), _rhs(indices...));
+        return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
     }
 
     template <my_size_t length>
