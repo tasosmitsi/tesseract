@@ -48,14 +48,11 @@ public:
             return; // Handle self-assignment
         }
         // Copy the transpose order
-
-        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
         copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
 
         transposeOrderSet_ = true;
         initTransposeOrder();
 
-        // std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
         copy_n_optimized(other.data_.data(), data_.data(), totalSize);
     }
 
@@ -73,7 +70,6 @@ public:
             return; // Handle self-assignment
         }
         // Copy the transpose order
-        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
         copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
 
         transposeOrderSet_ = true;
@@ -112,17 +108,8 @@ public:
 
         for (my_size_t i = 0; i < simdSteps; ++i)
         {
-            // std::cout << i * simdWidth << ": ";
-
             my_size_t indices[sizeof...(Dims)];
             unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
-            //   ------------------
-            // for (size_t j = 0; j < sizeof...(Dims); ++j)
-            // {
-            //     std::cout << indices[j] << " ";
-            // }
-            // std::cout << "\n";
-            // --------
             typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
             OpTraits<T, BITS, DefaultArch>::store(&data_[i * simdWidth], val); // write simdWidth floats
         }
@@ -130,16 +117,8 @@ public:
         // Handle leftover elements scalar-wise
         for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
         {
-            // std::cout << i << ": ";
-
             my_size_t indices[sizeof...(Dims)];
             unravelIndex(i, indices);
-            // ------------------
-            // for (size_t j = 0; j < sizeof...(Dims); ++j)
-            // {
-            //     std::cout << indices[j] << " ";
-            // }
-            // std::cout << "\n";
             // ------------------
             data_[i] = callAt(e, indices);
         }
@@ -151,75 +130,9 @@ public:
     typename OpTraits<T, BITS, DefaultArch>::type evalu(my_size_t (&indices)[length]) const
     {
         my_size_t baseIdx = computeIndex(indices);
-        // std::cout << baseIdx << ", ";
         assert((baseIdx % OpTraits<T, BITS, DefaultArch>::width) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
         return OpTraits<T, BITS, DefaultArch>::load(&data_[baseIdx]); // load 4 floats
     }
-
-    // template <typename Expr>
-    // FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
-    // {
-    //     const auto &e = expr.derived();
-
-    //     constexpr size_t simdWidth = 4; // assuming __m128 for floats
-    //     const my_size_t simdSteps = totalSize / simdWidth;
-    //     const my_size_t remainder = totalSize % simdWidth;
-
-    //     // SIMD loop
-    //     for (my_size_t i = 0; i < simdSteps; ++i)
-    //     {
-    //         my_size_t indices[sizeof...(Dims)];
-    //         // Compute starting indices for this simd block
-    //         unravelIndex(i * simdWidth, indices);
-
-    //         // ------------------
-    //         for (size_t i = 0; i < sizeof...(Dims); ++i)
-    //         {
-    //             std::cout << indices[i] << " ";
-    //         }
-    //         std::cout << "\n";
-    //         // ------------------
-
-    //         // callAtSIMD should return a __m128 or Vec4f or similar
-    //         // __m128 simdResult = callAtSIMD(e, indices);
-    //         // std::cout << "Type: " << typeid(simdResult).name() << std::endl;
-
-    //         // Store the SIMD results into data_ (assumed contiguous)
-    //         // _mm_store_ps(&data_[i * simdWidth], simdResult);
-    //     }
-
-    //     // Handle leftover elements scalar-wise
-    //     for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
-    //     {
-    //         my_size_t indices[sizeof...(Dims)];
-    //         unravelIndex(i, indices);
-    //         data_[i] = callAt(e, indices);
-    //     }
-
-    //     return *this;
-    // }
-
-    // template <typename... Indices>
-    // inline __m128 &operator()(Indices... indices, SIMD4) noexcept
-    // {
-    //     my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-
-    //     // Compute base index assuming last dimension is contiguous
-    //     size_t baseIndex = computeIndex(idxArray);
-
-    //     return _mm_load_ps(&data_[baseIndex]);
-    // }
-
-    // template <typename... Indices>
-    // inline const __m128 &operator()(Indices... indices, SIMD4) const noexcept
-    // {
-    //     my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-
-    //     // Compute base index assuming last dimension is contiguous
-    //     size_t baseIndex = computeIndex(idxArray);
-
-    //     return _mm_load_ps(&data_[baseIndex]);
-    // }
 
     FusedTensorND &operator=(const FusedTensorND &other)
     {
@@ -235,13 +148,11 @@ public:
         }
 
         // Copy the transpose order
-        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
         copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
 
         transposeOrderSet_ = true;
 
         // Copy the data
-        // std::copy(other.data_.data(), other.data_.data() + totalSize, data_.data());
         copy_n_optimized(other.data_.data(), data_.data(), totalSize);
 
         return *this;
@@ -261,7 +172,6 @@ public:
             return *this; // Handle self-assignment
         }
         // Copy the transpose order
-        // std::copy(other.transposeOrder_, other.transposeOrder_ + getNumDims(), transposeOrder_);
         copy_n_optimized(other.transposeOrder_, transposeOrder_, getNumDims());
 
         transposeOrderSet_ = true;
