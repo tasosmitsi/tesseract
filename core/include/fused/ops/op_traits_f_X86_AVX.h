@@ -1,7 +1,8 @@
 #pragma once
 
+#include "op_traits.h"
+#include "../Operations.h"
 #include <immintrin.h>
-#include "op_traits_generic.h" // to ensure generic is known
 
 struct X86_AVX
 {
@@ -199,5 +200,103 @@ struct OpTraits<T, WidthBits, X86_AVX>
     {
         std::cout << "OpTraits: scalar:" << typeid(T).name() << ", width: " << WidthBits << ", width: "
                   << Simd::width << ", bus_type: " << typeid(type).name() << "X86_AVX>\n";
+    }
+};
+
+// Specialization for BITS and X86_AVX
+template <typename T, my_size_t Bits, typename Arch>
+struct Add;
+template <typename T, my_size_t Bits, typename Arch>
+struct Sub;
+template <typename T, my_size_t Bits, typename Arch>
+struct Mul;
+template <typename T, my_size_t Bits, typename Arch>
+struct Div;
+
+template <typename T>
+struct Add<T, BITS, X86_AVX>
+{
+    using OpTrait = OpTraits<T, BITS, X86_AVX>;
+    using type = typename OpTrait::type; // alias for easier usage
+
+    FORCE_INLINE static type apply(type a, type b)
+    {
+        return OpTrait::add(a, b);
+    }
+
+    FORCE_INLINE static type apply(type a, T scalar)
+    {
+        return OpTrait::add(a, scalar);
+    }
+
+    FORCE_INLINE static type apply(T scalar, type a)
+    {
+        return OpTrait::add(a, scalar);
+    }
+};
+
+template <typename T>
+struct Sub<T, BITS, X86_AVX>
+{
+    using OpTrait = OpTraits<T, BITS, X86_AVX>;
+    using type = typename OpTrait::type; // alias for easier usage
+
+    FORCE_INLINE static type apply(type a, type b)
+    {
+        return OpTrait::sub(a, b);
+    }
+
+    FORCE_INLINE static type apply(type a, T scalar)
+    {
+        return OpTrait::sub(a, scalar);
+    }
+
+    FORCE_INLINE static type apply(T scalar, type a)
+    {
+        return OpTrait::sub(scalar, a);
+    }
+};
+
+template <typename T>
+struct Mul<T, BITS, X86_AVX>
+{
+    using OpTrait = OpTraits<T, BITS, X86_AVX>;
+    using type = typename OpTrait::type; // alias for easier usage
+
+    FORCE_INLINE static type apply(type a, type b)
+    {
+        return OpTrait::mul(a, b);
+    }
+
+    FORCE_INLINE static type apply(type a, T scalar)
+    {
+        return OpTrait::mul(a, scalar);
+    }
+
+    FORCE_INLINE static type apply(T scalar, type a)
+    {
+        return OpTrait::mul(a, scalar);
+    }
+};
+
+template <typename T>
+struct Div<T, BITS, X86_AVX>
+{
+    using OpTrait = OpTraits<T, BITS, X86_AVX>;
+    using type = typename OpTrait::type; // alias for easier usage
+
+    FORCE_INLINE static type apply(type a, type b)
+    {
+        return OpTrait::div(a, b);
+    }
+
+    FORCE_INLINE static type apply(type a, T scalar)
+    {
+        return OpTrait::div(a, scalar);
+    }
+
+    FORCE_INLINE static type apply(T scalar, type a)
+    {
+        return OpTrait::div(scalar, a);
     }
 };

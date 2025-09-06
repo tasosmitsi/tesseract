@@ -7,6 +7,7 @@ struct GenericArch
 template <typename T, my_size_t Bits, typename Arch = GenericArch>
 struct OpTraits
 {
+    static constexpr my_size_t width = 0; // no SIMD support
     using type = T;
 
     FORCE_INLINE static T add(T a, T b) { return a + b; }
