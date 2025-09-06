@@ -6,7 +6,7 @@
 template <typename T>
 inline void fill_n_optimized(T *ptr, my_size_t count, const T &value)
 {
-    if constexpr (is_pod<T>::value)
+    if constexpr (is_pod_v<T>)
     {
         if (value == T{})
         {

@@ -6,7 +6,7 @@
 template <typename T>
 inline void copy_n_optimized(const T *src, T *dst, my_size_t count)
 {
-    if constexpr (is_pod<T>::value)
+    if constexpr (is_pod_v<T>)
     {
         std::memcpy(dst, src, count * sizeof(T));
         return;
