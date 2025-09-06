@@ -9,6 +9,7 @@
 
 #include "../config.h"
 #include "helper_traits.h"
+#include "simple_type_traits.h"
 
 #include "BaseExpr.h"
 #include "Operators.h"
@@ -103,22 +104,36 @@ public:
         const auto &e = expr.derived();
 
         static constexpr my_size_t simdWidth = OpTraits<T, BITS, DefaultArch>::width; // assuming typename OpTraits<T, BITS, DefaultArch>::type for floats
-        const my_size_t simdSteps = totalSize / simdWidth;
 
-        for (my_size_t i = 0; i < simdSteps; ++i)
+        if constexpr (!is_same_v<DefaultArch, GenericArch>)
         {
-            my_size_t indices[sizeof...(Dims)];
-            unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
-            typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
-            OpTraits<T, BITS, DefaultArch>::store(&data_[i * simdWidth], val); // write simdWidth floats
+            const my_size_t simdSteps = totalSize / simdWidth;
+            for (my_size_t i = 0; i < simdSteps; ++i)
+            {
+                my_size_t indices[sizeof...(Dims)];
+                unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
+                typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
+                OpTraits<T, BITS, DefaultArch>::store(&data_[i * simdWidth], val); // write simdWidth floats
+            }
+
+            // Handle leftover elements scalar-wise
+            for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+            {
+                my_size_t indices[sizeof...(Dims)];
+                unravelIndex(i, indices);
+                data_[i] = e(indices);
+            }
         }
-
-        // Handle leftover elements scalar-wise
-        for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+        else
         {
-            my_size_t indices[sizeof...(Dims)];
-            unravelIndex(i, indices);
-            data_[i] = e(indices);
+            // Fallback to scalar evaluation if no SIMD support
+            for (my_size_t i = 0; i < totalSize; ++i)
+            {
+                my_size_t indices[sizeof...(Dims)];
+                unravelIndex(i, indices);
+                data_[i] = e(indices);
+            }
+            return *this;
         }
 
         return *this;
@@ -295,10 +310,10 @@ public:
         }
 
         // Calculate all indices combinations for all dimensions
-        static constexpr my_size_t total_combinations = (1 * ... * Dims);   // fold expression to calculate the total number of combinations
-        my_size_t combinations[total_combinations][sizeof...(Dims)]; // 2D array to store all combinations
-        static constexpr my_size_t max_vals[sizeof...(Dims)] = {Dims...};             // array to store the maximum values for each dimension
-        generate_combinations(max_vals, combinations);               // generate all combinations
+        static constexpr my_size_t total_combinations = (1 * ... * Dims); // fold expression to calculate the total number of combinations
+        my_size_t combinations[total_combinations][sizeof...(Dims)];      // 2D array to store all combinations
+        static constexpr my_size_t max_vals[sizeof...(Dims)] = {Dims...}; // array to store the maximum values for each dimension
+        generate_combinations(max_vals, combinations);                    // generate all combinations
 
         for (my_size_t i = 0; i < total_combinations; ++i)
         {
