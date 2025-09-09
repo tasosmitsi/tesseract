@@ -13,7 +13,9 @@ public:
     // Constructor: allocate memory for N elements
     DynamicStorage()
     {
-        _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+        // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+        _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
+
         if (!_data)
         {
             throw std::bad_alloc();
@@ -29,7 +31,8 @@ public:
     // Copy constructor
     DynamicStorage(const DynamicStorage &other)
     {
-        _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+        // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+        _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
         if (!_data)
             throw std::bad_alloc();
         std::memcpy(_data, other._data, N * sizeof(T));
@@ -48,7 +51,8 @@ public:
         {
             if (!_data)
             {
-                _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+                // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
+                _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
             }
             std::memcpy(_data, other._data, N * sizeof(T));
         }
@@ -73,6 +77,12 @@ public:
 
     FORCE_INLINE constexpr T *data() noexcept { return _data; }
     FORCE_INLINE constexpr const T *data() const noexcept { return _data; }
+
+    FORCE_INLINE constexpr T *begin() noexcept { return _data; }
+    FORCE_INLINE constexpr const T *begin() const noexcept { return _data; }
+
+    FORCE_INLINE constexpr T *end() noexcept { return _data + N; }
+    FORCE_INLINE constexpr const T *end() const noexcept { return _data + N; }
 
 private:
     T *_data = nullptr;

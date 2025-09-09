@@ -4,7 +4,6 @@
 // #include <algorithm> // for std::fill_n and std::copy
 #include <utility> // for std::move
 
-#include "../fill_n_optimized.h"
 #include "../copy_n_optimized.h"
 
 #include "../config.h"
@@ -14,7 +13,10 @@
 #include "BaseExpr.h"
 #include "Operators.h"
 #include "ops/op_traits.h"
-#include "static_storage.h"
+#include "storage/static_storage.h"
+#include "storage/dynamic_storage.h"
+#include "access/dense_access.h"
+#include "access/sparse_access.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
@@ -29,13 +31,14 @@ public:
 
     // Constructor to initialize all elements to a specific value
     FusedTensorND(T initValue)
+        : data_(initValue) // constructor call here
     {
         initTransposeOrder();
-        fill_n_optimized(data_.data(), totalSize, initValue);
     }
 
     // Copy constructor
     FusedTensorND(const FusedTensorND &other)
+        : data_(other.data_) // invoke copy constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Copy constructor called", ErrorLevel::Info);
@@ -52,12 +55,11 @@ public:
 
         transposeOrderSet_ = true;
         initTransposeOrder();
-
-        copy_n_optimized(other.data_.data(), data_.data(), totalSize);
     }
 
     // Move constructor
     FusedTensorND(FusedTensorND &&other) noexcept
+        : data_(std::move(other.data_)) // invoke move constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
@@ -74,11 +76,6 @@ public:
 
         transposeOrderSet_ = true;
         initTransposeOrder();
-
-        std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
-
-        // Reset the other tensor's data
-        fill_n_optimized(other.data_.data(), totalSize, T{});
     }
 
     template <typename Expr>
@@ -113,7 +110,7 @@ public:
                 my_size_t indices[sizeof...(Dims)];
                 unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
                 typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
-                OpTraits<T, BITS, DefaultArch>::store(&data_[i * simdWidth], val); // write simdWidth floats
+                OpTraits<T, BITS, DefaultArch>::store(data_.data() + i * simdWidth, val); // write simdWidth floats
             }
 
             // Handle leftover elements scalar-wise
@@ -144,7 +141,7 @@ public:
     {
         my_size_t baseIdx = computeIndex(indices);
         assert((baseIdx % OpTraits<T, BITS, DefaultArch>::width) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
-        return OpTraits<T, BITS, DefaultArch>::load(&data_[baseIdx]); // load 4 floats
+        return OpTraits<T, BITS, DefaultArch>::load(data_.data() + baseIdx); // load 4 floats
     }
 
     FusedTensorND &operator=(const FusedTensorND &other)
@@ -166,8 +163,7 @@ public:
         transposeOrderSet_ = true;
 
         // Copy the data
-        copy_n_optimized(other.data_.data(), data_.data(), totalSize);
-
+        data_ = other.data_; // calls the copy assignment of AccessPolicy
         return *this;
     }
 
@@ -190,11 +186,7 @@ public:
         transposeOrderSet_ = true;
 
         // Move the data
-        std::move(other.data_.data(), other.data_.data() + totalSize, data_.data());
-
-        // Reset the other tensor's data
-        fill_n_optimized(other.data_.data(), totalSize, T{});
-
+        data_ = std::move(other.data_); // calls the move assignment of AccessPolicy
         return *this;
     }
 
@@ -439,13 +431,19 @@ public:
 
     FusedTensorND &setToZero(void)
     {
-        fill_n_optimized(data_.data(), totalSize, T{});
+        for (my_size_t i = 0; i < totalSize; ++i)
+        {
+            data_[i] = T{};
+        }
         return *this;
     }
 
     FusedTensorND &setHomogen(T _val)
     {
-        fill_n_optimized(data_.data(), totalSize, _val);
+        for (my_size_t i = 0; i < totalSize; ++i)
+        {
+            data_[i] = _val;
+        }
         return *this;
     }
 
@@ -671,6 +669,7 @@ public:
     // Function to print the contents of the tensor
     void print() const
     {
+        // data_.print();
         static_assert(sizeof...(Dims) <= 4, "Printing not supported for tensors with more than 4 dimensions");
 
         if constexpr (sizeof...(Dims) == 1)
@@ -701,35 +700,6 @@ public:
         return dims[transposeOrder_[i]];
     }
 
-protected:
-    T *rawData() { return data_.data(); }
-    const T *rawData() const { return data_.data(); }
-    static constexpr my_size_t numDims = sizeof...(Dims);
-
-    // Compute the flat index from multi-dimensional indices
-    my_size_t computeIndex(const my_size_t indices[numDims]) const
-    {
-        my_size_t index = 0;
-        my_size_t factor = 1;
-
-        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
-        for (my_size_t i = getNumDims(); i-- > 0;)
-        {
-            my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
-
-#ifdef RUNTIME_USE_BOUNDS_CHECKING
-            if (indices[dimIndex] >= dims[i])
-            {
-                MyErrorHandler::error("Index out of range");
-            }
-#endif
-
-            index += indices[dimIndex] * factor; // Use the indices in the transpose order
-            factor *= dims[i];                   // Update the factor for the next dimension
-        }
-        return index; // Return the computed flat index
-    }
-
 private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);
@@ -739,7 +709,14 @@ private:
     my_size_t transposeOrder_[sizeof...(Dims)];
     bool transposeOrderSet_ = false;
 
-    StaticStorage<T, totalSize> data_; // Static storage for the tensor data
+    // Example of using different access and storage policies
+    // using AccessPolicy = DenseAccess<T, totalSize, StaticStorage>;
+    // using AccessPolicy = DenseAccess<T, totalSize, DynamicStorage>;
+    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t, DynamicStorage, DynamicStorage>;
+    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t, StaticStorage, StaticStorage>;
+    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t>; // default is static storage
+    using AccessPolicy = DenseAccess<T, totalSize>; // default is static storage
+    AccessPolicy data_;
 
     template <my_size_t... Dims1>
     inline void checkDimensionsMismatch(const FusedTensorND<T, Dims1...> &other) const
@@ -907,6 +884,35 @@ private:
             indices[i - 1] = flatIdx % dims[i - 1];
             flatIdx /= dims[i - 1];
         }
+    }
+
+protected:
+    AccessPolicy &rawData() { return data_; }
+    const AccessPolicy &rawData() const { return data_; }
+    static constexpr my_size_t numDims = sizeof...(Dims);
+
+    // Compute the flat index from multi-dimensional indices
+    my_size_t computeIndex(const my_size_t indices[numDims]) const
+    {
+        my_size_t index = 0;
+        my_size_t factor = 1;
+
+        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
+        for (my_size_t i = getNumDims(); i-- > 0;)
+        {
+            my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
+
+#ifdef RUNTIME_USE_BOUNDS_CHECKING
+            if (indices[dimIndex] >= dims[i])
+            {
+                MyErrorHandler::error("Index out of range");
+            }
+#endif
+
+            index += indices[dimIndex] * factor; // Use the indices in the transpose order
+            factor *= dims[i];                   // Update the factor for the next dimension
+        }
+        return index; // Return the computed flat index
     }
 };
 
