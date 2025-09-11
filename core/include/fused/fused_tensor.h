@@ -887,8 +887,8 @@ private:
     }
 
 protected:
-    AccessPolicy &rawData() { return data_; }
-    const AccessPolicy &rawData() const { return data_; }
+    AccessPolicy &rawData() { return data_; } // TODO: can be inline or FORCE_INLINE
+    const AccessPolicy &rawData() const { return data_; } // TODO: can be inline or FORCE_INLINE
     static constexpr my_size_t numDims = sizeof...(Dims);
 
     // Compute the flat index from multi-dimensional indices
@@ -897,7 +897,6 @@ protected:
         my_size_t index = 0;
         my_size_t factor = 1;
 
-        // for (my_size_t i = getNumDims() - 1; i >= 0; --i) {
         for (my_size_t i = getNumDims(); i-- > 0;)
         {
             my_size_t dimIndex = transposeOrder_[i]; // Get dimension according to transpose order
