@@ -24,18 +24,18 @@ TEST_CASE("FusedTensor & Eigen benchmarks", "[fused_eigen_benchmark]")
         tick();
         for (int i = 0; i < 10000; ++i)
         {
+            mat5 = mat1 + mat2 + mat3 - mat1 - mat2 + mat3 + mat4 + mat1 - mat2 + mat3 - mat4 + mat1 - mat2 + mat3 + mat4 + mat1 - mat2;
+        }
+        uint Matrix_time = tock("Eigen long operations");
+
+        tick();
+        for (int i = 0; i < 10000; ++i)
+        {
             // fmat5 = fmat1 + fmat2 + fmat3 - fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2 + fmat3 - fmat4 + fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2;
             fmat5.eval(fmat1 + fmat2 + fmat3 - fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2 + fmat3 - fmat4 + fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2);
         }
 
         uint FusedMatrix_time = tock("FusedMatrix long operations");
-
-        tick();
-        for (int i = 0; i < 10000; ++i)
-        {
-            mat5 = mat1 + mat2 + mat3 - mat1 - mat2 + mat3 + mat4 + mat1 - mat2 + mat3 - mat4 + mat1 - mat2 + mat3 + mat4 + mat1 - mat2;
-        }
-        uint Matrix_time = tock("Eigen long operations");
 
         // Percentage Increase
         double percentage_increase = (((double)FusedMatrix_time - (double)Matrix_time) / (double)Matrix_time) * 100.0;
