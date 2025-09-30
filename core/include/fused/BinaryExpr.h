@@ -13,7 +13,16 @@ class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>, T>
     const RHS &_rhs;
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
 public:
-    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
+    // Expose compile-time shape if LHS provides it
+    // static constexpr my_size_t NumDims = LHS::getNumDims();
+
+    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs)
+    {
+
+        // // Compile-time dimension count check
+        // static_assert(LHS::NumDims == RHS::NumDims,
+        //               "Dimension count mismatch in BinaryExpr");
+    }
 
     // template <typename... Indices>
     // T operator()(Indices... indices) const

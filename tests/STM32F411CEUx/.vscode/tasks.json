@@ -1,0 +1,69 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "power_on",
+      "command": "JLinkExe -CommandFile .vscode/jlink/power-on.jlink",
+      "problemMatcher": []
+    },
+    {
+      "type": "shell",
+      "label": "power_off",
+      "command": "JLinkExe -CommandFile .vscode/jlink/power-off.jlink",
+      "problemMatcher": []
+    },
+    {
+      "type": "shell",
+      "label": "build_app",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "command": "make -j 8",
+      "problemMatcher": "$gcc"
+    },
+    {
+      "label": "build_all",
+      "dependsOn": [
+        "build_app"
+      ]
+    },
+    {
+      "label": "flash_mcu",
+      "type": "shell",
+      "command": "${config:STM32VSCodeExtension.cubeCLT.path}/STM32CubeProgrammer/bin/STM32_Programmer_CLI",
+      "args": [
+        "-c",
+        "port=SWD",
+        "-d",
+        "./build/STM32F411CEUx.elf",
+        "-v",
+        "-rst"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "open_serial_monitor",
+      "type": "shell",
+      "command": "code",
+      "args": [
+        "--serialmonitor",
+        "/dev/ttyUSB0", // Change to your port, e.g., COM3 on Windows
+        "--baud",
+        "115200"
+      ],
+      "problemMatcher": []
+    },
+    {
+      "label": "flash_and_monitor",
+      "dependsOn": [
+        "flash_mcu",
+        "open_serial_monitor"
+      ],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    }
+  ]
+}
