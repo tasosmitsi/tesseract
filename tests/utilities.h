@@ -7,6 +7,7 @@
 #include <cxxabi.h>
 #include <iomanip>
 #include <algorithm>
+#include <memory>
 
 #include "../core/include/config.h"
 
