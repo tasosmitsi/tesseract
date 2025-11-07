@@ -12,13 +12,19 @@ TEST_CASE("FusedTensor & Eigen benchmarks", "[fused_eigen_benchmark]")
 
     SECTION("Long operations benchmark")
     {
-        OpTraits<double, BITS, DefaultArch>::test();
+        // Microkernel<float, 128, TestArch>::test();
 
         mat1.setRandom();
         mat2.setRandom();
         mat3.setRandom();
         mat4.setRandom();
         mat5.setRandom();
+
+        fmat1.setRandom(10, -10);
+        fmat2.setRandom(10, -10);
+        fmat3.setRandom(10, -10);
+        fmat4.setRandom(10, -10);
+        fmat5.setRandom(10, -10);
 
         std::cout << "Benchmarking long operations on FusedMatrix and Matrix" << std::endl;
         tick();

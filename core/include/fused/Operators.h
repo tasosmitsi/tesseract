@@ -1,7 +1,7 @@
 #pragma once
-#include "BinaryExpr.h"
-#include "ScalarExpr.h"
-#include "Operations.h"
+#include "fused/BinaryExpr.h"
+#include "fused/ScalarExpr.h"
+#include "fused/Operations.h"
 
 template <typename Expr1, typename Expr2>
 inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName)

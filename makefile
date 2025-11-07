@@ -1,6 +1,6 @@
 # Compiler
-CXX = g++
-CC = gcc
+CXX = g++-12
+CC = gcc-12
 
 # Check if using Clang
 CXX_IS_CLANG := $(shell $(CXX) --version | grep -i -q clang && echo 1 || echo 0)
@@ -13,7 +13,7 @@ TEST_DIR = tests
 EXAMPLE_DIR = examples/src
 BUILD_DIR = build
 CATCH2_DIR = Catch2/extras
-PY_FLAGS = -I/usr/include/python3.8 -I/usr/include/python3.8 -lpython3.8  -I/home/tasos51/eigen/Eigen
+PY_FLAGS = -I/usr/include/python3.12 -lpython3.12  -I/usr/local/src/eigen/Eigen
 
 # Flags
 DEPFLAGS = -MMD -MP
@@ -26,7 +26,7 @@ else
 	OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline -Rpass-missed=inline
 endif
 
-CXXFLAGS = -std=c++17 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
+CXXFLAGS = -std=c++23 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
 # ------------- test files -------------

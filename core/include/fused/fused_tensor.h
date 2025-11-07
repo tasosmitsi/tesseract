@@ -4,19 +4,19 @@
 // #include <algorithm> // for std::fill_n and std::copy
 #include <utility> // for std::move
 
-#include "../copy_n_optimized.h"
+#include "copy_n_optimized.h"
 
-#include "../config.h"
+#include "config.h"
 #include "helper_traits.h"
 #include "simple_type_traits.h"
 
-#include "BaseExpr.h"
-#include "Operators.h"
-#include "ops/op_traits.h"
-#include "storage/static_storage.h"
-#include "storage/dynamic_storage.h"
-#include "access/dense_access.h"
-#include "access/sparse_access.h"
+#include "fused/BaseExpr.h"
+#include "fused/Operators.h"
+#include "fused/microkernels/microkernel_base.h"
+#include "fused/storage/static_storage.h"
+#include "fused/storage/dynamic_storage.h"
+#include "fused/access/dense_access.h"
+#include "fused/access/sparse_access.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
@@ -100,7 +100,7 @@ public:
     {
         const auto &e = expr.derived();
 
-        static constexpr my_size_t simdWidth = OpTraits<T, BITS, DefaultArch>::width; // assuming typename OpTraits<T, BITS, DefaultArch>::type for floats
+        static constexpr my_size_t simdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth; // assuming typename OpTraits<T, BITS, DefaultArch>::type for floats
 
         if constexpr (!is_same_v<DefaultArch, GenericArch>)
         {
@@ -109,8 +109,8 @@ public:
             {
                 my_size_t indices[sizeof...(Dims)];
                 unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
-                typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
-                OpTraits<T, BITS, DefaultArch>::store(data_.data() + i * simdWidth, val); // write simdWidth floats
+                typename Microkernel<T, BITS, DefaultArch>::VecType val = e.evalu(indices);
+                Microkernel<T, BITS, DefaultArch>::store(data_.data() + i * simdWidth, val); // write simdWidth floats
             }
 
             // Handle leftover elements scalar-wise
@@ -137,11 +137,11 @@ public:
     }
 
     template <my_size_t length>
-    typename OpTraits<T, BITS, DefaultArch>::type evalu(my_size_t (&indices)[length]) const
+    typename Microkernel<T, BITS, DefaultArch>::VecType evalu(my_size_t (&indices)[length]) const
     {
         my_size_t baseIdx = computeIndex(indices);
-        assert((baseIdx % OpTraits<T, BITS, DefaultArch>::width) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
-        return OpTraits<T, BITS, DefaultArch>::load(data_.data() + baseIdx); // load 4 floats
+        assert((baseIdx % Microkernel<T, BITS, DefaultArch>::simdWidth) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
+        return Microkernel<T, BITS, DefaultArch>::load(data_.data() + baseIdx); // load 4 floats
     }
 
     FusedTensorND &operator=(const FusedTensorND &other)

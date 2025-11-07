@@ -1,7 +1,6 @@
 #pragma once
-#include "BaseExpr.h"
-#include "Operations.h"
-#include "ops/op_traits.h"
+#include "fused/BaseExpr.h"
+#include "fused/Operations.h"
 
 // ===============================
 // Binary Expression Template
