@@ -10,17 +10,11 @@ TEST_CASE("FusedMatrix & Matrix benchmarks", "[fused_benchmark]")
 
     SECTION("Long operations benchmark")
     {
-        // fmat5.eval(fmat1 + fmat2 + fmat3);
-
-        // // fmat5 = fmat1 + fmat2;
-
-        // fmat5.print();
         std::cout << "Benchmarking long operations on FusedMatrix and Matrix" << std::endl;
         tick();
         for (int i = 0; i < 10000; ++i)
         {
-            // fmat5 = fmat1 + fmat2 * fmat3 - fmat1 / fmat2 + fmat3 * fmat4 + fmat1 * fmat2 + fmat3 / fmat4 + fmat1 - fmat2 + fmat3 * fmat4 + fmat1 / fmat2;
-            fmat5.eval(fmat1 + fmat2 * fmat3 - fmat1 / fmat2 + fmat3 * fmat4 + fmat1 * fmat2 + fmat3 / fmat4 + fmat1 - fmat2 + fmat3 * fmat4 + fmat1 / fmat2);
+            fmat5 = fmat1 + fmat2 * fmat3 - fmat1 / fmat2 + fmat3 * fmat4 + fmat1 * fmat2 + fmat3 / fmat4 + fmat1 - fmat2 + fmat3 * fmat4 + fmat1 / fmat2;
         }
 
         uint FusedMatrix_time = tock("FusedMatrix long operations");
@@ -37,9 +31,5 @@ TEST_CASE("FusedMatrix & Matrix benchmarks", "[fused_benchmark]")
 
         std::cout << "Percentage decrease in time for FusedMatrix compared to Matrix: "
                   << percentage_increase << "%" << std::endl;
-
-        // fmat4.print();
-        // std::cout << std::endl;
-        // mat4.print();
     }
 }

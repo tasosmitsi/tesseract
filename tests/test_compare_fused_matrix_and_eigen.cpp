@@ -12,8 +12,8 @@ TEST_CASE("FusedTensor & Eigen benchmarks", "[fused_eigen_benchmark]")
 
     SECTION("Long operations benchmark")
     {
-        // Microkernel<float, 128, TestArch>::test();
-
+        // Microkernel<double, 256, X86_AVX>::test();
+        size_t order[] = {1,0};
         mat1.setRandom();
         mat2.setRandom();
         mat3.setRandom();
@@ -37,8 +37,7 @@ TEST_CASE("FusedTensor & Eigen benchmarks", "[fused_eigen_benchmark]")
         tick();
         for (int i = 0; i < 10000; ++i)
         {
-            // fmat5 = fmat1 + fmat2 + fmat3 - fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2 + fmat3 - fmat4 + fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2;
-            fmat5.eval(fmat1 + fmat2 + fmat3 - fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2 + fmat3 - fmat4 + fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2);
+            fmat5 = fmat1 + fmat2 + fmat3 - fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2 + fmat3 - fmat4 + fmat1 - fmat2 + fmat3 + fmat4 + fmat1 - fmat2;
         }
 
         uint FusedMatrix_time = tock("FusedMatrix long operations");

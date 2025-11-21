@@ -98,19 +98,6 @@ public:
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
-
-        // TensorKernels<T, BITS, DefaultArch, Dims...>::eval_vectorized_contiguous(
-        //     data_.data(),
-        //     e,
-        //     transposeOrder_);
-
-        return *this;
-    }
-
-    template <typename Expr>
-    FusedTensorND &eval(const BaseExpr<Expr, T> &expr)
-    {
-        const auto &e = expr.derived();
         // Evaluate using vectorized contiguous if architecture supports it
         if constexpr (!is_same_v<DefaultArch, GenericArch>)
         {
