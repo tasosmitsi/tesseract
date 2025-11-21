@@ -35,11 +35,21 @@ public:
         return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_lhs.evalu(indices), _rhs.evalu(indices));
+        return Op<T, Bits, Arch>::apply(_lhs.evalu(flat), _rhs.evalu(flat));
     }
+
+    // type evaluContiguous(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_lhs.evaluContiguous(flat), _rhs.evaluContiguous(flat));
+    // }
+
+    // type evaluGather(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_lhs.evaluGather(flat), _rhs.evaluGather(flat));
+    // }
 
     // Forward getNumDims to _lhs
     inline my_size_t getNumDims() const

@@ -27,11 +27,21 @@ public:
         return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar); // expr op scalar
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_expr.evalu(indices), _scalar);
+        return Op<T, Bits, Arch>::apply(_expr.evalu(flat), _scalar);
     }
+
+    // type evaluContiguous(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_expr.evaluContiguous(flat), _scalar);
+    // }
+
+    // type evaluGather(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_expr.evaluGather(flat), _scalar);
+    // }
 
     my_size_t getNumDims() const
     {
@@ -66,11 +76,21 @@ public:
         return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices)); // expr op scalar
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(indices));
+        return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(flat));
     }
+
+    // type evaluContiguous(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_scalar, _expr.evaluContiguous(flat));
+    // }
+
+    // type evaluGather(my_size_t flat) const
+    // {
+    //     return Op<T, Bits, Arch>::apply(_scalar, _expr.evaluGather(flat));
+    // }
 
     my_size_t getNumDims() const
     {
