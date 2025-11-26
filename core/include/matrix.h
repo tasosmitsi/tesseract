@@ -554,6 +554,78 @@ public:
         }
         return _outp;
     }
+
+    Matrix inverse_c(void) const
+    {
+        if (!this->areDimsEqual())
+        {
+            MyErrorHandler::error("Matrix is non-invertible cause: not square");
+        }
+
+        Matrix _outp = *this; // The identity matrix, which will store the inverse
+        my_size_t rows = _outp.getDim(0);
+        my_size_t cols = _outp.getDim(1);
+
+        _outp.setIdentity();
+
+        // Function to swap rows
+        auto swapRows = [&_outp, cols](my_size_t i, my_size_t j) {
+            for (my_size_t k = 0; k < cols; k++)
+            {
+                std::swap(_outp(i, k), _outp(j, k));
+            }
+        };
+
+        for (my_size_t j = 0; j < rows; j++)
+        {
+            // Check if the pivot element is too small, if so perform row swapping
+            if (std::abs(_outp(j, j)) < T(PRECISION_TOLERANCE))
+            {
+                bool swapped = false;
+                for (my_size_t i = j + 1; i < rows; i++)
+                {
+                    if (std::abs(_outp(i, j)) > std::abs(_outp(j, j)))
+                    {
+                        swapRows(i, j);  // Swap rows to ensure numerical stability
+                        swapped = true;
+                        break;
+                    }
+                }
+
+                if (!swapped)
+                {
+                    MyErrorHandler::error("Matrix is non-invertible: no valid pivot found.");
+                }
+            }
+
+            T pivot = _outp(j, j);
+            if (std::abs(pivot) < T(PRECISION_TOLERANCE)) {
+                MyErrorHandler::error("Matrix is non-invertible: pivot is zero.");
+            }
+
+            // Normalize the pivot row (making the diagonal element 1)
+            for (my_size_t k = 0; k < cols; k++)
+            {
+                _outp(j, k) /= pivot; // Normalize the pivot row
+            }
+
+            // Eliminate all other elements in the column
+            for (my_size_t i = 0; i < rows; i++)
+            {
+                if (i != j)
+                {
+                    T factor = _outp(i, j);
+                    for (my_size_t k = 0; k < cols; k++)
+                    {
+                        _outp(i, k) -= factor * _outp(j, k); // Eliminate column elements
+                    }
+                }
+            }
+        }
+
+        return _outp;
+    }
+
     bool isOrthogonal(void)
     {
         Matrix<T, Rows, Cols> ident;

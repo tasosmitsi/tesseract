@@ -1,7 +1,6 @@
 #pragma once
-#include "BaseExpr.h"
-#include "Operations.h"
-#include "ops/op_traits.h"
+#include "fused/BaseExpr.h"
+#include "fused/Operations.h"
 
 // ===============================
 // Scalar Expression Template
@@ -16,22 +15,16 @@ class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_expr(indices...), _scalar); // expr op scalar
-    // }
-
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
     {
         return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar); // expr op scalar
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_expr.evalu(indices), _scalar);
+        return Op<T, Bits, Arch>::apply(_expr.evalu(flat), _scalar);
     }
 
     my_size_t getNumDims() const
@@ -42,6 +35,11 @@ public:
     my_size_t getDim(my_size_t i) const
     {
         return _expr.getDim(i);
+    }
+
+    inline bool getIsTransposed() const noexcept
+    {
+        return _expr.getIsTransposed();
     }
 };
 
@@ -55,22 +53,16 @@ class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices...)); // scalar op expr
-    // }
-
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
     {
         return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices)); // expr op scalar
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(indices));
+        return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(flat));
     }
 
     my_size_t getNumDims() const
@@ -81,5 +73,10 @@ public:
     my_size_t getDim(my_size_t i) const
     {
         return _expr.getDim(i);
+    }
+
+    inline bool getIsTransposed() const noexcept
+    {
+        return _expr.getIsTransposed();
     }
 };

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "../config.h"
-#include "ops/op_traits.h"
+#include "config.h"
+#include "simple_type_traits.h"
+#include "fused/microkernels/microkernel_base.h"
 
 // ===============================
 // Operation Tags
@@ -10,47 +11,106 @@
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
 struct Add
 {
-    using OpTrait = OpTraits<T, Bits, Arch>;
-    using type = typename OpTrait::type; // alias for easier usage
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType; // alias for easier usage
 
-    FORCE_INLINE static T apply(T a, T b)
+    FORCE_INLINE static type apply(type a, type b) noexcept
     {
-        return OpTrait::add(a, b);
+        // print the types of a and b
+        return microkernel::add(a, b);
     }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::add(a, scalar);
+    }
+
+    // template <typename Vec = type>
+    //     requires(!is_same_v<Vec, T>)
+    // FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
+    // {
+    //     std::cout << " lol Add::apply Scalar-Vec types: " << typeid(scalar).name() << ", " << typeid(a).name() << std::endl;
+    //     return microkernel::add(scalar, a);
+    // }
 };
 
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
 struct Sub
 {
-    using OpTrait = OpTraits<T, Bits, Arch>;
-    using type = typename OpTrait::type; // alias for easier usage
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType; // alias for easier usage
 
-    FORCE_INLINE static T apply(T a, T b)
+    FORCE_INLINE static type apply(type a, type b) noexcept
     {
-        return OpTrait::sub(a, b);
+        return microkernel::sub(a, b);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::sub(a, scalar);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
+    {
+        return microkernel::sub(scalar, a);
     }
 };
 
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
 struct Mul
 {
-    using OpTrait = OpTraits<T, Bits, Arch>;
-    using type = typename OpTrait::type; // alias for easier usage
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType; // alias for easier usage
 
-    FORCE_INLINE static T apply(T a, T b)
+    FORCE_INLINE static type apply(type a, type b) noexcept
     {
-        return OpTrait::mul(a, b);
+        return microkernel::mul(a, b);
     }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::mul(a, scalar);
+    }
+
+    // template <typename Vec = type>
+    //     requires(!is_same_v<Vec, T>)
+    // FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
+    // {
+    //     std::cout << "Mul::apply Scalar-Vec types: " << typeid(scalar).name() << ", " << typeid(a).name() << std::endl;
+    //     return microkernel::mul(a, scalar);
+    // }
 };
 
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
 struct Div
 {
-    using OpTrait = OpTraits<T, Bits, Arch>;
-    using type = typename OpTrait::type; // alias for easier usage
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType; // alias for easier usage
 
-    FORCE_INLINE static T apply(T a, T b)
+    FORCE_INLINE static type apply(type a, type b) noexcept
     {
-        return OpTrait::div(a, b);
+        return microkernel::div(a, b);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::div(a, scalar);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
+    {
+        return microkernel::div(scalar, a);
     }
 };

@@ -1,0 +1,54 @@
+{
+  "configurations": [
+    {
+      "name": "ST-Link: Debug All",
+      "type": "cortex-debug",
+      "request": "launch",
+      "cwd": "${workspaceFolder}",
+      "executable": "./build/STM32F411CEUx.elf",
+      "servertype": "stlink",
+      "device": "STM32F411CEUx",
+      "interface": "swd",
+      "runToEntryPoint": "cpp_main",
+      "svdFile": "${config:STM32VSCodeExtension.cubeCLT.path}/STMicroelectronics_CMSIS_SVD/STM32F411.svd",
+      "v1": false,
+      "serverpath": "${config:STM32VSCodeExtension.cubeCLT.path}/STLink-gdb-server/bin/ST-LINK_gdbserver",
+      "stm32cubeprogrammer": "${config:STM32VSCodeExtension.cubeCLT.path}/STM32CubeProgrammer/bin",
+      "armToolchainPath": "/opt/arm-gnu-toolchain/bin",
+      "gdbPath": "/opt/arm-gnu-toolchain/bin/arm-none-eabi-gdb",
+      "serverArgs": [
+        "-m",
+        "0"
+      ],
+      "loadFiles": [
+        "./build/STM32F411CEUx.elf"
+      ],
+      "symbolFiles": [
+        "./build/STM32F411CEUx.elf"
+      ],
+      "preLaunchTask": "build_all",
+      // "showDevDebugOutput": "raw"
+    },
+    {
+      "name": "ST-Link: Attach to Application",
+      "type": "cortex-debug",
+      "request": "attach",
+      "cwd": "${workspaceFolder}",
+      "executable": "./build/STM32F411CEUx.elf",
+      "servertype": "stlink",
+      "device": "STM32F411CEUx",
+      "interface": "swd",
+      "runToEntryPoint": "cpp_main",
+      "svdFile": "${config:STM32VSCodeExtension.cubeCLT.path}/STMicroelectronics_CMSIS_SVD/STM32F411.svd",
+      "v1": false,
+      "serverpath": "${config:STM32VSCodeExtension.cubeCLT.path}/STLink-gdb-server/bin/ST-LINK_gdbserver",
+      "stm32cubeprogrammer": "${config:STM32VSCodeExtension.cubeCLT.path}/STM32CubeProgrammer/bin",
+      "armToolchainPath": "/opt/arm-gnu-toolchain/bin",
+      "gdbPath": "/opt/arm-gnu-toolchain/bin/arm-none-eabi-gdb",
+      "serverArgs": [
+        "-m",
+        "0"
+      ]
+    },
+  ]
+}

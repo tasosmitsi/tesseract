@@ -4,25 +4,38 @@
 // #include <algorithm> // for std::fill_n and std::copy
 #include <utility> // for std::move
 
-#include "../copy_n_optimized.h"
+#include "copy_n_optimized.h"
 
-#include "../config.h"
+#include "config.h"
 #include "helper_traits.h"
 #include "simple_type_traits.h"
 
-#include "BaseExpr.h"
-#include "Operators.h"
-#include "ops/op_traits.h"
-#include "storage/static_storage.h"
-#include "storage/dynamic_storage.h"
-#include "access/dense_access.h"
-#include "access/sparse_access.h"
+#include "fused/BaseExpr.h"
+#include "fused/Operators.h"
+#include "fused/microkernels/microkernel_base.h"
+#include "fused/microkernels/kernel_ops.h"
+#include "fused/storage/static_storage.h"
+#include "fused/storage/dynamic_storage.h"
+#include "fused/access/dense_access.h"
+#include "fused/access/sparse_access.h"
+#include "fused/views/permuted_view.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
 class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>, T>
 {
 public:
+    using Self = FusedTensorND<T, Dims...>;
+    static constexpr my_size_t N = sizeof...(Dims);
+    using TransposedType = PermutedView<Self, N>;
+
+    using VecType = typename Microkernel<T, BITS, DefaultArch>::VecType;
+    static constexpr my_size_t simdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth;
+
+    using microkernel = Microkernel<T, BITS, DefaultArch>;
+
+    using value_type = T;
+
     // Default constructor
     FusedTensorND()
     {
@@ -78,6 +91,17 @@ public:
         initTransposeOrder();
     }
 
+    template <typename TT, my_size_t M>
+    FusedTensorND &operator=(const PermutedView<TT, M> &view) noexcept
+    {
+#ifdef DEBUG_FUSED_TENSOR
+        MyErrorHandler::log("FusedTensorND copy assignment from view", ErrorLevel::Info);
+#endif
+        // call copyToTensor method to get a new tensor with the data copied
+        view.copyToTensor(*this); // copy into this tensor
+        return *this;
+    }
+
     template <typename Expr>
     FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
     {
@@ -85,64 +109,62 @@ public:
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
+        // check if the tensor is already transposed
+        // if (isTransposed_)
+        // {
+        //     MyErrorHandler::error("Cannot evaluate expression and assign to a transposed tensor in place. Please create a non-transposed copy first.");
+        // }
 
-        for (my_size_t idx = 0; idx < totalSize; ++idx)
-        {
-            my_size_t indices[sizeof...(Dims)];
-            unravelIndex(idx, indices);
-            data_[idx] = e(indices);
-        }
-        return *this;
-    }
+        // // check if any of the tensors in the expression is transposed
+        // if (e.getIsTransposed())
+        // {
+        //     MyErrorHandler::error("Cannot evaluate expression with transposed tensors. Please create non-transposed copies first.");
+        // }
 
-    template <typename Expr>
-    FusedTensorND &eval(const BaseExpr<Expr, T> &expr)
-    {
-        const auto &e = expr.derived();
-
-        static constexpr my_size_t simdWidth = OpTraits<T, BITS, DefaultArch>::width; // assuming typename OpTraits<T, BITS, DefaultArch>::type for floats
-
+        // Evaluate using vectorized contiguous if architecture supports it
         if constexpr (!is_same_v<DefaultArch, GenericArch>)
         {
-            const my_size_t simdSteps = totalSize / simdWidth;
-            for (my_size_t i = 0; i < simdSteps; ++i)
-            {
-                my_size_t indices[sizeof...(Dims)];
-                unravelIndex(i * simdWidth, indices); // interpret index as vector chunk index
-                typename OpTraits<T, BITS, DefaultArch>::type val = e.evalu(indices);
-                OpTraits<T, BITS, DefaultArch>::store(data_.data() + i * simdWidth, val); // write simdWidth floats
-            }
-
-            // Handle leftover elements scalar-wise
-            for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
-            {
-                my_size_t indices[sizeof...(Dims)];
-                unravelIndex(i, indices);
-                data_[i] = e(indices);
-            }
+            TensorKernels<T, BITS, DefaultArch, Dims...>::eval_vectorized_contiguous(
+                data_.data(),
+                e,
+                [this](my_size_t i, my_size_t(&indices)[sizeof...(Dims)]) constexpr noexcept
+                {
+                    this->unravelIndex(i, indices);
+                });
         }
         else
         {
-            // Fallback to scalar evaluation if no SIMD support
-            for (my_size_t i = 0; i < totalSize; ++i)
-            {
-                my_size_t indices[sizeof...(Dims)];
-                unravelIndex(i, indices);
-                data_[i] = e(indices);
-            }
-            return *this;
+            // Fallback to scalar evaluation if no SIMD support is available
+            TensorKernels<T, BITS, DefaultArch, Dims...>::eval_scalar(
+                data_.data(),
+                e,
+                [this](my_size_t i, my_size_t(&indices)[sizeof...(Dims)]) constexpr noexcept
+                {
+                    this->unravelIndex(i, indices);
+                });
         }
-
         return *this;
     }
 
-    template <my_size_t length>
-    typename OpTraits<T, BITS, DefaultArch>::type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    typename Microkernel<T, BITS, DefaultArch>::VecType evalu(my_size_t flat) const noexcept
     {
-        my_size_t baseIdx = computeIndex(indices);
-        assert((baseIdx % OpTraits<T, BITS, DefaultArch>::width) == 0 && "baseIdx must be multiple of OpTraits<T, BITS, DefaultArch>::width for aligned load!");
-        return OpTraits<T, BITS, DefaultArch>::load(data_.data() + baseIdx); // load 4 floats
+        using K = Microkernel<T, BITS, DefaultArch>;
+        // TODO: add assert to check alignment if needed
+        // assert((flat % K::simdWidth) == 0 && "baseIdx must be multiple of K::simdWidth for aligned load!");
+        return K::load(data_.data() + flat);
     }
+
+    // This algorithm means to gather which means that it reads from non-continuous memmory
+    // typename Microkernel<T, BITS, DefaultArch>::VecType evaluGather(my_size_t flat) const
+    // {
+    //     std::cout << "evaluGather" << std::endl;
+    //     using K = Microkernel<T, BITS, DefaultArch>;
+    //     my_size_t idxList[K::simdWidth];
+    //     for (int i = 0; i < K::simdWidth; ++i)
+    //         idxList[i] = remapFlatIndex(flat + i, transposeOrder_);
+    //     return K::gather(data_.data(), idxList);
+    // }
 
     FusedTensorND &operator=(const FusedTensorND &other)
     {
@@ -192,50 +214,30 @@ public:
 
     // Variadic access operator for accessing tensor elements with separate indices
     template <typename... Indices>
+        requires(sizeof...(Indices) == N)
     inline T &operator()(Indices... indices) noexcept
     {
-#ifdef STATIC_CHECK_NUMBER_OF_INDICES
-        // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
-        static constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
-        static_assert(correct, "Number of indices must match tensor dimensions");
-#endif
-
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...}; // Convert indices to an array
         return data_[computeIndex(idxArray)];
     }
 
     // Const version of the access operator
     template <typename... Indices>
+        requires(sizeof...(Indices) == N)
     inline const T &operator()(Indices... indices) const noexcept
     {
-#ifdef STATIC_CHECK_NUMBER_OF_INDICES
-        // static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
-        static constexpr bool correct = sizeof...(Indices) == sizeof...(Dims);
-        static_assert(correct, "Number of indices must match tensor dimensions");
-#endif
-
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
         return data_[computeIndex(idxArray)];
     }
 
     // version of passing a array of indices eg _tensor1(indices1), indices1 is an array of known size use template
-    template <my_size_t length>
-    inline T &operator()(my_size_t (&indices)[length]) noexcept
+    inline T &operator()(my_size_t (&indices)[N]) noexcept
     {
-#ifdef STATIC_CHECK_NUMBER_OF_INDICES
-        static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
-#endif
-
         return data_[computeIndex(indices)];
     }
 
-    template <my_size_t length>
-    inline const T &operator()(my_size_t (&indices)[length]) const noexcept
+    inline const T &operator()(my_size_t (&indices)[N]) const noexcept
     {
-#ifdef STATIC_CHECK_NUMBER_OF_INDICES
-        static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
-#endif
-
         return data_[computeIndex(indices)];
     }
 
@@ -343,46 +345,92 @@ public:
         return true;
     }
 
-    FusedTensorND transposed(const my_size_t order[sizeof...(Dims)]) const
+    inline FusedTensorND transposed(const my_size_t perm[sizeof...(Dims)]) const noexcept
     {
-        FusedTensorND outp = *this;
-        for (my_size_t i = 0; i < getNumDims(); ++i)
-        {
-            outp.transposeOrder_[i] = order[i];
-        }
-        return outp;
+        FusedTensorND out; // create output tensor
+        // make a view first and then copy the data
+        auto view = this->transpose_view(perm);
+        // call copyToTensor method to get a new tensor with the data copied
+        view.copyToTensor(out); // copy data into the output
+        out.isTransposed();
+        return out;
     }
 
-    // Non-inplace transpose function
+    inline FusedTensorND transposed(void) const noexcept
+    {
+        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
+        my_size_t perm[2] = {1, 0};
+        FusedTensorND out;
+
+        // make a view first and then copy the data
+        auto view = this->transpose_view(perm);
+        view.copyToTensor(out);
+        out.isTransposed();
+        // call copyToTensor method to get a new tensor with the data copied
+        return out;
+    }
+
+    inline TransposedType transpose_view(void) const noexcept
+    {
+        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
+        my_size_t perm[2] = {1, 0};
+
+        return this->transpose_view(perm);
+    }
+
+    inline TransposedType transpose_view(const my_size_t perm[sizeof...(Dims)]) const
+    {
+        if (isTransposed_)
+        {
+            MyErrorHandler::error("You cannot take the transposed view of an already transposed tensor. Please create a non-transposed copy first.");
+        }
+        return TransposedType(*this, perm);
+    }
+
+    // FusedTensorND transposed(const my_size_t order[sizeof...(Dims)]) const
+    // {
+    //     FusedTensorND outp = *this;
+    //     for (my_size_t i = 0; i < getNumDims(); ++i)
+    //     {
+    //         outp.transposeOrder_[i] = order[i];
+    //     }
+    //     outp.isContiguousInTranspose_ = outp.isContiguousInTranspose();
+    //     return outp;
+    // }
+
     void inplace_transpose(const my_size_t order[sizeof...(Dims)])
     {
         for (my_size_t i = 0; i < getNumDims(); ++i)
         {
             this->transposeOrder_[i] = order[i];
         }
+
+        isTransposed();
     }
 
-    FusedTensorND transposed(void) const
-    {
-        // check if the tensor is 2D
-        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-#ifdef DEBUG_FUSED_TENSOR
-        MyErrorHandler::log("Non Inplace transpose called", ErrorLevel::Info);
-#endif
-        FusedTensorND outp = *this;
-        // reverse the transpose order
-        if (outp.transposeOrder_[0] == 0)
-        {
-            outp.transposeOrder_[0] = 1;
-            outp.transposeOrder_[1] = 0;
-        }
-        else
-        {
-            outp.transposeOrder_[0] = 0;
-            outp.transposeOrder_[1] = 1;
-        }
-        return outp;
-    }
+    //     FusedTensorND transposed(void) const
+    //     {
+    //         // check if the tensor is 2D
+    //         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
+    // #ifdef DEBUG_FUSED_TENSOR
+    //         MyErrorHandler::log("Non Inplace transpose called", ErrorLevel::Info);
+    // #endif
+    //         FusedTensorND outp = *this;
+    //         // reverse the transpose order
+    //         if (outp.transposeOrder_[0] == 0)
+    //         {
+    //             outp.transposeOrder_[0] = 1;
+    //             outp.transposeOrder_[1] = 0;
+    //             outp.isContiguousInTranspose_ = outp.isContiguousInTranspose();
+    //         }
+    //         else
+    //         {
+    //             outp.transposeOrder_[0] = 0;
+    //             outp.transposeOrder_[1] = 1;
+    //             outp.isContiguousInTranspose_ = outp.isContiguousInTranspose();
+    //         }
+    //         return outp;
+    //     }
 
     void inplace_transpose(void)
     {
@@ -400,16 +448,17 @@ public:
             this->transposeOrder_[0] = 0;
             this->transposeOrder_[1] = 1;
         }
+        isTransposed();
     }
 
     // Utility function to retrieve total number of elements
-    constexpr my_size_t getTotalSize() const
+    FORCE_INLINE constexpr my_size_t getTotalSize() const noexcept
     {
         return totalSize;
     }
 
     // Utility function to retrieve the number of dimensions
-    constexpr my_size_t getNumDims() const
+    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept
     {
         return sizeof...(Dims);
     }
@@ -695,9 +744,52 @@ public:
     }
 
     // getter for dims
-    my_size_t getDim(my_size_t i) const
+    my_size_t getDim(my_size_t i) const noexcept
     {
+#ifdef RUNTIME_USE_BOUNDS_CHECKING
+        if (i >= getNumDims())
+        {
+            MyErrorHandler::error("In FusedTensorND, getDim(): index out of range!");
+        }
+#endif
         return dims[transposeOrder_[i]];
+    }
+
+    void isTransposed(void) noexcept
+    {
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+            if (transposeOrder_[i] != i)
+            {
+                isTransposed_ = true;
+                return;
+            }
+        isTransposed_ = false;
+    }
+
+    bool getIsTransposed() const noexcept
+    {
+        return isTransposed_;
+    }
+
+    void print_flat_data() const
+    {
+        for (my_size_t i = 0; i < totalSize; ++i)
+        {
+            MyErrorHandler::log(data_[i]);
+            MyErrorHandler::log(" ");
+        }
+        MyErrorHandler::log("\n");
+    }
+
+    void print_transpose_order() const
+    {
+        MyErrorHandler::log("Transpose order: ");
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+        {
+            MyErrorHandler::log(transposeOrder_[i]);
+            MyErrorHandler::log(" ");
+        }
+        MyErrorHandler::log("\n");
     }
 
 private:
@@ -708,6 +800,7 @@ private:
     // These vars are being set in runtime
     my_size_t transposeOrder_[sizeof...(Dims)];
     bool transposeOrderSet_ = false;
+    bool isTransposed_ = false;
 
     // Example of using different access and storage policies
     // using AccessPolicy = DenseAccess<T, totalSize, StaticStorage>;
@@ -876,20 +969,47 @@ private:
 
     // Unravel a flat index into multi-dimensional indices
     // This function fills the indices array with the corresponding indices for each dimension
-    void unravelIndex(my_size_t flatIdx, my_size_t *indices) const
+    // TODO: take into account the transpose order / permutations if needed
+    FORCE_INLINE void unravelIndex(my_size_t flatIdx, my_size_t (&indices)[sizeof...(Dims)]) const noexcept
     {
-        my_size_t dimCount = sizeof...(Dims);
-        for (my_size_t i = dimCount; i > 0; --i)
+        // take into account the permutations without chainging it
+        for (my_size_t i = numDims; i > 0; --i)
         {
             indices[i - 1] = flatIdx % dims[i - 1];
             flatIdx /= dims[i - 1];
         }
     }
 
+    FORCE_INLINE my_size_t remapFlatIndex(my_size_t flatIdx, const my_size_t (&permutations)[sizeof...(Dims)]) const noexcept
+    {
+        // Step 1: Unravel flat index in **view order** to multi-index
+        my_size_t idx[numDims]; // idx[i] = index along original axis i
+        for (my_size_t i = numDims; i-- > 0;)
+        {
+            const my_size_t dim = getDim(permutations[i]); // dim of permuted axis
+            idx[i] = flatIdx % dim;                        // store in original axis position
+            flatIdx /= dim;
+        };
+
+        // Step 2: Compute flat index in original tensor layout
+        my_size_t remapedFlatIdx = 0;
+        my_size_t factor = 1;
+        for (my_size_t i = numDims; i-- > 0;)
+        {
+            remapedFlatIdx += idx[permutations[i]] * factor;
+            factor *= getDim(i); // multiply by original axis size
+        }
+
+        return remapedFlatIdx;
+    }
+
 protected:
-    AccessPolicy &rawData() { return data_; } // TODO: can be inline or FORCE_INLINE
+    AccessPolicy &rawData() { return data_; }             // TODO: can be inline or FORCE_INLINE
     const AccessPolicy &rawData() const { return data_; } // TODO: can be inline or FORCE_INLINE
     static constexpr my_size_t numDims = sizeof...(Dims);
+
+    template <typename, my_size_t>
+    friend class PermutedView;
 
     // Compute the flat index from multi-dimensional indices
     my_size_t computeIndex(const my_size_t indices[numDims]) const
@@ -904,7 +1024,8 @@ protected:
 #ifdef RUNTIME_USE_BOUNDS_CHECKING
             if (indices[dimIndex] >= dims[i])
             {
-                MyErrorHandler::error("Index out of range");
+                MyErrorHandler::error("In FusedTensorND, computeIndex(): index out of bounds!");
+
             }
 #endif
 

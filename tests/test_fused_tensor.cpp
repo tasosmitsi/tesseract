@@ -433,6 +433,8 @@ TEST_CASE("FusedTensorND class", "[fused_tensor]")
                 CHECK(ten1(i, j) == ten2(j, i));
             }
         }
+        // restore the tensor
+        ten1.inplace_transpose();
 
         // check non-inplace transpose
         ten1.setRandom(-10, 10);
@@ -452,7 +454,7 @@ TEST_CASE("FusedTensorND class", "[fused_tensor]")
         ten1(0, 1) = 10;
         ten2.setToZero();
 
-        ten3 = ten1.transposed() + ten2;
+        ten3 = ten1.transpose_view() + ten2;
         ten4 = ten1 + ten2;
 
         // // In both cases, ten2 is a zero matrix (should not change the result)

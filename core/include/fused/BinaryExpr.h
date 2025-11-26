@@ -1,7 +1,6 @@
 #pragma once
-#include "BaseExpr.h"
-#include "Operations.h"
-#include "ops/op_traits.h"
+#include "fused/BaseExpr.h"
+#include "fused/Operations.h"
 
 // ===============================
 // Binary Expression Template
@@ -13,13 +12,16 @@ class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>, T>
     const RHS &_rhs;
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
 public:
-    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
+    // Expose compile-time shape if LHS provides it
+    // static constexpr my_size_t NumDims = LHS::getNumDims();
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_lhs(indices...), _rhs(indices...));
-    // }
+    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs)
+    {
+
+        // // Compile-time dimension count check
+        // static_assert(LHS::NumDims == RHS::NumDims,
+        //               "Dimension count mismatch in BinaryExpr");
+    }
 
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
@@ -27,10 +29,10 @@ public:
         return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
     }
 
-    template <my_size_t length>
-    type evalu(my_size_t (&indices)[length]) const
+    // template <my_size_t length>
+    type evalu(my_size_t flat) const
     {
-        return Op<T, Bits, Arch>::apply(_lhs.evalu(indices), _rhs.evalu(indices));
+        return Op<T, Bits, Arch>::apply(_lhs.evalu(flat), _rhs.evalu(flat));
     }
 
     // Forward getNumDims to _lhs
@@ -43,5 +45,10 @@ public:
     inline my_size_t getDim(my_size_t i) const
     {
         return _lhs.getDim(i);
+    }
+
+    inline bool getIsTransposed() const
+    {
+        return _lhs.getIsTransposed();
     }
 };

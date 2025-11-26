@@ -1,6 +1,8 @@
 #ifndef MATRIX_ALGORITHMS_H
 #define MATRIX_ALGORITHMS_H
 
+#include <cmath>
+
 namespace matrix_algorithms
 {
     template <typename MatrixType>
