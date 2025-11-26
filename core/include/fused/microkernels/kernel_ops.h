@@ -22,7 +22,6 @@ struct TensorKernels
     FORCE_INLINE static void eval_vectorized_contiguous(
         T *output,
         const Expr &expr,
-        my_size_t (&transposeOrder)[dimCount],
         auto &&unravelIndexfn) noexcept
     {
 
@@ -41,60 +40,60 @@ struct TensorKernels
         for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
         {
             my_size_t indices[dimCount];
-            std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices, transposeOrder); // TODO: get rid of std
+            std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices); // TODO: get rid of std
             // evaluate the remainder
             output[i] = expr(indices);
         }
     }
 
     // Vectorized evaluation with non-contiguous storage (aka the result tensor is transposed)
+    // In other words this algorithm uses scatter which means the result is saved in non-continuous memmory
     // TODO: not tested yet
     // TODO: not sure if this is needed at all
-    template <typename Expr>
-    FORCE_INLINE static void eval_vectorized_non_contiguous(
-        T *output,
-        const Expr &expr,
-        my_size_t (&transposeOrder)[dimCount]) noexcept
-    {
+    // template <typename Expr>
+    // FORCE_INLINE static void eval_vectorized_non_contiguous(
+    //     T *output,
+    //     const Expr &expr,
+    //     my_size_t (&transposeOrder)[dimCount]) noexcept
+    // {
 
-        const my_size_t simdSteps = totalSize / simdWidth;
+    //     const my_size_t simdSteps = totalSize / simdWidth;
 
-        // SIMD loop
-        for (my_size_t i = 0; i < simdSteps; ++i)
-        {
-            my_size_t baseIdx = i * simdWidth;
+    //     // SIMD loop
+    //     for (my_size_t i = 0; i < simdSteps; ++i)
+    //     {
+    //         my_size_t baseIdx = i * simdWidth;
 
-            auto val = expr.evalu(i * simdWidth);
+    //         auto val = expr.evalu(i * simdWidth);
 
-            // Non-contiguous (result tensor is transposed) case
-            my_size_t idxList[simdWidth];
-            for (int j = 0; j < simdWidth; ++j)
-                idxList[j] = remapFlatIndex(baseIdx + j, transposeOrder);
-            K::scatter(output, idxList, val);
-        }
+    //         // Non-contiguous (result tensor is transposed) case
+    //         my_size_t idxList[simdWidth];
+    //         for (int j = 0; j < simdWidth; ++j)
+    //             idxList[j] = remapFlatIndex(baseIdx + j, transposeOrder);
+    //         K::scatter(output, idxList, val);
+    //     }
 
-        // Scalar remainder TODO: this is wrong? — need to remap indices here as well?
-        for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
-        {
-            // std::cout << "Scalar remainder loop" << std::endl;
-            my_size_t indices[dimCount];
-            unravelIndex(i, indices, transposeOrder);
-            output[i] = expr(indices);
-        }
-    }
+    //     // Scalar remainder TODO: this is wrong? — need to remap indices here as well?
+    //     for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+    //     {
+    //         // std::cout << "Scalar remainder loop" << std::endl;
+    //         my_size_t indices[dimCount];
+    //         unravelIndex(i, indices, transposeOrder);
+    //         output[i] = expr(indices);
+    //     }
+    // }
 
     template <typename Expr>
     FORCE_INLINE static void eval_scalar(
         T *output,
         const Expr &expr,
-        my_size_t (&transposeOrder)[dimCount],
         auto &&unravelIndexfn) noexcept
     {
         // Pure scalar fallback
         for (my_size_t i = 0; i < totalSize; ++i)
         {
             my_size_t indices[dimCount];
-            std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices, transposeOrder); // TODO: get rid of std
+            std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices); // TODO: get rid of std
             output[i] = expr(indices);
         }
     }

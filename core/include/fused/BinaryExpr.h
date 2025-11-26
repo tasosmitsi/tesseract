@@ -23,12 +23,6 @@ public:
         //               "Dimension count mismatch in BinaryExpr");
     }
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_lhs(indices...), _rhs(indices...));
-    // }
-
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
     {
@@ -41,16 +35,6 @@ public:
         return Op<T, Bits, Arch>::apply(_lhs.evalu(flat), _rhs.evalu(flat));
     }
 
-    // type evaluContiguous(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_lhs.evaluContiguous(flat), _rhs.evaluContiguous(flat));
-    // }
-
-    // type evaluGather(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_lhs.evaluGather(flat), _rhs.evaluGather(flat));
-    // }
-
     // Forward getNumDims to _lhs
     inline my_size_t getNumDims() const
     {
@@ -61,5 +45,10 @@ public:
     inline my_size_t getDim(my_size_t i) const
     {
         return _lhs.getDim(i);
+    }
+
+    inline bool getIsTransposed() const
+    {
+        return _lhs.getIsTransposed();
     }
 };

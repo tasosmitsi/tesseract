@@ -15,12 +15,6 @@ class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_expr(indices...), _scalar); // expr op scalar
-    // }
-
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
     {
@@ -33,16 +27,6 @@ public:
         return Op<T, Bits, Arch>::apply(_expr.evalu(flat), _scalar);
     }
 
-    // type evaluContiguous(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_expr.evaluContiguous(flat), _scalar);
-    // }
-
-    // type evaluGather(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_expr.evaluGather(flat), _scalar);
-    // }
-
     my_size_t getNumDims() const
     {
         return _expr.getNumDims();
@@ -51,6 +35,11 @@ public:
     my_size_t getDim(my_size_t i) const
     {
         return _expr.getDim(i);
+    }
+
+    inline bool getIsTransposed() const noexcept
+    {
+        return _expr.getIsTransposed();
     }
 };
 
@@ -64,12 +53,6 @@ class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, Op, T, Bits, Arch>, T>
 public:
     ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
-    // template <typename... Indices>
-    // T operator()(Indices... indices) const
-    // {
-    //     return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices...)); // scalar op expr
-    // }
-
     template <my_size_t length>
     T operator()(my_size_t (&indices)[length]) const
     {
@@ -82,16 +65,6 @@ public:
         return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(flat));
     }
 
-    // type evaluContiguous(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_scalar, _expr.evaluContiguous(flat));
-    // }
-
-    // type evaluGather(my_size_t flat) const
-    // {
-    //     return Op<T, Bits, Arch>::apply(_scalar, _expr.evaluGather(flat));
-    // }
-
     my_size_t getNumDims() const
     {
         return _expr.getNumDims();
@@ -100,5 +73,10 @@ public:
     my_size_t getDim(my_size_t i) const
     {
         return _expr.getDim(i);
+    }
+
+    inline bool getIsTransposed() const noexcept
+    {
+        return _expr.getIsTransposed();
     }
 };
