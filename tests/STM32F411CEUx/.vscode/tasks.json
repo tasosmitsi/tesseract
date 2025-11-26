@@ -21,7 +21,7 @@
       "options": {
         "cwd": "${workspaceFolder}"
       },
-      "command": "make -j 8",
+      "command": "make -j 4",
       "problemMatcher": "$gcc"
     },
     {
@@ -33,7 +33,7 @@
     {
       "label": "flash_mcu",
       "type": "shell",
-      "command": "${config:STM32VSCodeExtension.cubeCLT.path}/STM32CubeProgrammer/bin/STM32_Programmer_CLI",
+      "command": "/opt/st/stm32cubeclt_1.19.0/STM32CubeProgrammer/bin/STM32_Programmer_CLI",
       "args": [
         "-c",
         "port=SWD",
@@ -47,18 +47,34 @@
     {
       "label": "open_serial_monitor",
       "type": "shell",
-      "command": "code",
+      "command": "bash",
       "args": [
-        "--serialmonitor",
-        "/dev/ttyUSB0", // Change to your port, e.g., COM3 on Windows
-        "--baud",
-        "115200"
+        "-c",
+        "screen -D -r stm32_serial || screen -S stm32_serial /dev/ttyUSB0 115200"
       ],
       "problemMatcher": []
     },
     {
-      "label": "flash_and_monitor",
+      "label": "kill_existing_screen",
+      "type": "shell",
+      "command": "bash",
+      "args": [
+        "-c",
+        "screen -S stm32_serial -X quit || true"
+      ],
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "presentation": {
+        "reveal": "never"
+      }
+    },
+    {
+      "label": "build_flash_serial",
       "dependsOn": [
+        "kill_existing_screen",
+        "build_app",
         "flash_mcu",
         "open_serial_monitor"
       ],

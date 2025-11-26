@@ -78,12 +78,12 @@ ASMM_SOURCES =
 PREFIX = arm-none-eabi-
 # The gcc compiler bin path can be either defined in make command via GCC_PATH variable (> make GCC_PATH=xxx)
 # either it can be added to the PATH environment variable.
-CC_C = $(PREFIX)gcc.exe       # For C files
-CC_CPP = $(PREFIX)g++.exe     # For C++ files
+CC_C = $(PREFIX)gcc      # For C files
+CC_CPP = $(PREFIX)g++    # For C++ files
 
-AS = $(PREFIX)g++.exe -x assembler-with-cpp
-CP = $(PREFIX)objcopy.exe
-SZ = $(PREFIX)size.exe 
+AS = $(PREFIX)g++ -x assembler-with-cpp
+CP = $(PREFIX)objcopy
+SZ = $(PREFIX)size
 HEX = $(CP) -O ihex
 BIN = $(CP) -O binary -S
 

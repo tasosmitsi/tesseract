@@ -12,6 +12,7 @@
     "ring-buffer.h": "c",
     "flash_common_all.h": "c",
     "cstdio": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "array": "cpp"
   },
 }
