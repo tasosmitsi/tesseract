@@ -388,7 +388,7 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
         matrix1.setSequencial();
         matrix2.setSequencial();
 
-        res = matrix1.transposed() + matrix2;
+        res = matrix1.transpose_view() + matrix2;
         res1 = matrix1 + matrix2;
 
         CHECK(res != res1);
@@ -409,6 +409,8 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
                 CHECK(mat1(i, j) == mat2(j, i));
             }
         }
+        // restore the matrix original state
+        mat1.inplace_transpose();
 
         // check non-inplace transpose
         mat1.setRandom(-10, 10);
@@ -428,7 +430,7 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
         mat1(0, 1) = 10;
         mat2.setToZero();
 
-        mat3 = mat1.transposed() + mat2;
+        mat3 = mat1.transpose_view() + mat2;
         mat4 = mat1 + mat2;
 
         // In both cases, mat2 is a zero matrix (should not change the result)
