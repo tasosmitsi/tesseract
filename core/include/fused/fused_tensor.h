@@ -110,16 +110,16 @@ public:
 #endif
         const auto &e = expr.derived();
         // check if the tensor is already transposed
-        // if (isTransposed_)
-        // {
-        //     MyErrorHandler::error("Cannot evaluate expression and assign to a transposed tensor in place. Please create a non-transposed copy first.");
-        // }
+        if (isTransposed_)
+        {
+            MyErrorHandler::error("Cannot evaluate expression and assign to a transposed tensor in place. Please create a non-transposed copy first.");
+        }
 
-        // // check if any of the tensors in the expression is transposed
-        // if (e.getIsTransposed())
-        // {
-        //     MyErrorHandler::error("Cannot evaluate expression with transposed tensors. Please create non-transposed copies first.");
-        // }
+        // check if any of the tensors in the expression is transposed
+        if (e.getIsTransposed())
+        {
+            MyErrorHandler::error("Cannot evaluate expression with transposed tensors. Please create non-transposed copies first.");
+        }
 
         // Evaluate using vectorized contiguous if architecture supports it
         if constexpr (!is_same_v<DefaultArch, GenericArch>)
