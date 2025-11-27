@@ -1,6 +1,5 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_tensor.h"
-#include <cxxabi.h>
 
 TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 {
@@ -8,10 +7,10 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 
     FusedTensorND<T, 10, 10> ten1(1), ten2(2);
 
-    SECTION("FusedTensorND elements access.")
+    SECTION("FusedTensorND elements access")
     {
-        ten1.setIdentity()(0, 9) = 45;
-        CHECK(ten1(0, 9) == 45);
+        ten1.setIdentity()(0, 9) = (T)45.0;
+        CHECK(ten1(0, 9) == (T)45.0);
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")
