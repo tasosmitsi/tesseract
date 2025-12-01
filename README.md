@@ -2,7 +2,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: light)" srcset="docs/tesseract_logo.png">
-  <img alt="tesseract logo" src="docs/tesseract_logo_reversed.png" width="50%" height="50%">
+  <img alt="tesseract logo" src="docs/tesseract_logo_reversed.png" width="85%">
 </picture>
 
 tesseract: The ultimate N-dimensional tensor library in C++, embedded systems optimized.
