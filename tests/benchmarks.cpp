@@ -5,10 +5,12 @@
 
 #define EIGEN_NO_MALLOC
 
-TEST_CASE("Benchmarks", "[benchmarks]")
+TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float)
 {
-    FusedTensorND<double, 100, 100> fmat1, fmat2, fmat3, fmat4, fmat5; // It can work with FusedMatrix amd FusedVector too
-    Eigen::Matrix<double, 100, 100> mat1, mat2, mat3, mat4, mat5;
+    using T = TestType;
+
+    FusedTensorND<T, 100, 100> fmat1, fmat2, fmat3, fmat4, fmat5; // It can work with FusedMatrix amd FusedVector too
+    Eigen::Matrix<T, 100, 100> mat1, mat2, mat3, mat4, mat5;
 
     mat1.setRandom();
     mat2.setRandom();
