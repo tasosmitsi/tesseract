@@ -61,6 +61,7 @@ struct Microkernel<float, 256, X86_AVX>
     FORCE_INLINE static VecType load(const ScalarType *ptr) noexcept { return _mm256_load_ps(ptr); }
     FORCE_INLINE static VecType loadu(const ScalarType *ptr) noexcept { return _mm256_loadu_ps(ptr); }
     FORCE_INLINE static void store(ScalarType *ptr, VecType val) noexcept { _mm256_store_ps(ptr, val); }
+    FORCE_INLINE static void storeu(ScalarType *ptr, VecType val) noexcept { _mm256_storeu_ps(ptr, val); }
     FORCE_INLINE static VecType set1(ScalarType scalar) noexcept { return _mm256_set1_ps(scalar); }
 
     FORCE_INLINE static VecType add(VecType a, VecType b) noexcept { return _mm256_add_ps(a, b); }
@@ -84,14 +85,27 @@ struct Microkernel<float, 256, X86_AVX>
     // ============================================================================
     FORCE_INLINE static VecType gather(const ScalarType *base, const my_size_t *indices) noexcept
     {
-        __m256i vindex = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(indices));
+        // _mm256_i32gather_ps requires 8 × 32-bit indices.
+        // so we convert size_t → int32_t.
+        alignas(32) int32_t idx32[simdWidth];
+        for (int i = 0; i < simdWidth; ++i)
+        {
+            idx32[i] = static_cast<int32_t>(indices[i]);
+        }
+
+        // loadu (“unaligned load”) is recommended for temporary stack buffers, even when aligned, because:
+        // it's just as fast as load on aligned addresses
+        // never invokes undefined behavior
+        // does not depend on type alignment rules
+        // TODO: verify: Intel’s documentation confirms: On aligned addresses, _mm256_loadu_si256 performs identically to _mm256_load_si256.
+        __m256i vindex = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(idx32));
         return _mm256_i32gather_ps(base, vindex, sizeof(ScalarType));
     }
 
     FORCE_INLINE static void scatter(ScalarType *base, const my_size_t *indices, VecType val) noexcept
     {
         alignas(32) ScalarType tmp[simdWidth];
-        _mm256_store_ps(tmp, val);
+        _mm256_storeu_ps(tmp, val);
         for (int i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
     }
@@ -107,6 +121,7 @@ struct Microkernel<double, 256, X86_AVX>
     FORCE_INLINE static VecType load(const ScalarType *ptr) noexcept { return _mm256_load_pd(ptr); }
     FORCE_INLINE static VecType loadu(const ScalarType *ptr) noexcept { return _mm256_loadu_pd(ptr); }
     FORCE_INLINE static void store(ScalarType *ptr, VecType val) noexcept { _mm256_store_pd(ptr, val); }
+    FORCE_INLINE static void storeu(ScalarType *ptr, VecType val) noexcept { _mm256_storeu_pd(ptr, val); }
     FORCE_INLINE static VecType set1(ScalarType scalar) noexcept { return _mm256_set1_pd(scalar); }
 
     FORCE_INLINE static VecType add(VecType a, VecType b) noexcept { return _mm256_add_pd(a, b); }
@@ -134,7 +149,7 @@ struct Microkernel<double, 256, X86_AVX>
     FORCE_INLINE static void scatter(ScalarType *base, const my_size_t *indices, VecType val) noexcept
     {
         alignas(32) ScalarType tmp[simdWidth];
-        _mm256_store_pd(tmp, val);
+        _mm256_storeu_pd(tmp, val);
         for (int i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
     }

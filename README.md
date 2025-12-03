@@ -1,7 +1,24 @@
-# tesseract++ - N-Dimensional Tensor Library in C++
+<div align="center">
+
+<picture>
+  <source media="(prefers-color-scheme: light)" srcset="docs/tesseract_logo.png">
+  <img alt="tesseract logo" src="docs/tesseract_logo_reversed.png" width="85%">
+</picture>
+
+tesseract: The ultimate N-dimensional tensor library in C++, embedded systems optimized.
+
+<h3>
+
+[Homepage](https://github.com/tasosmitsi/tesseract) | [Documentation]() | [Discord]()
+
+</h3>
+
+</div>
+
+---
 
 ## Overview
-`TensorND` is a versatile C++ library for handling N-dimensional tensors. This library is templated, allowing efficient and dynamic tensor operations for scientific computing, deep learning, and other applications requiring high-dimensional data manipulation. The `TensorND` class is optimized for mathematical operations, supports tensor arithmetic, slicing, and provides an intuitive interface for various tensor transformations.
+Tesseract is a versatile C++ library for handling N-dimensional tensors. This library is templated, allowing efficient static and dynamic tensor operations for embedded systems, scientific computing, deep learning, and other applications requiring high-dimensional data manipulation. The `TensorND` class is optimized for mathematical operations, supports tensor arithmetic, slicing, and provides an intuitive interface for various tensor transformations.
 
 ## Features
 - **N-dimensional Support**: Supports tensors with any number of dimensions specified at compile-time.
