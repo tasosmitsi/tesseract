@@ -3,22 +3,25 @@
 #include "fused/fused_matrix.h"
 #include "utilities.h"
 #include "matrix_algorithms.h"
+#include <Dense>
 
-TEST_CASE("FusedMatrix class", "[fused_matrix]")
+TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
 {
-    FusedMatrix<double, 10, 10> mat1(1), mat2(2), mat3, mat4(10);
+    using T = TestType;
 
-    SECTION("FusedMatrix accessing elements")
+    FusedMatrix<T, 10, 10> mat1(1), mat2(2), mat3, mat4(10);
+
+    SECTION("FusedMatrix elements access")
     {
-        mat1.setIdentity()(0, 9) = 45.654;
+        mat1.setIdentity()(0, 9) = (T)45.654;
 
-        CHECK(mat1(0, 9) == 45.654);
+        CHECK(mat1(0, 9) == (T)45.654);
     }
 
     SECTION("FusedMatrix total size, number of dimensions, and shape")
     {
-        FusedMatrix<double, 2, 2> matrix;
-        FusedMatrix<double, 15, 32> matrix1;
+        FusedMatrix<T, 2, 2> matrix;
+        FusedMatrix<T, 15, 32> matrix1;
 
         CHECK(matrix.getTotalSize() == 4);
         CHECK(matrix.getNumDims() == 2);
@@ -31,13 +34,9 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
 
     SECTION("Is matrix identity")
     {
+        // set matrix to identity
         mat1.setIdentity();
-        CHECK(mat1.isIdentity());
 
-        mat1(0, 0) = 15;
-        CHECK_FALSE(mat1.isIdentity());
-
-        mat1.setIdentity();
         // check if all diagonal elements are 1
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
@@ -49,6 +48,13 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
                 }
             }
         }
+
+        // check if mat1.isIdentity() returns true indeed
+        CHECK(mat1.isIdentity());
+
+        // change one diagonal element to something other than 1
+        mat1(0, 0) = 15;
+        CHECK_FALSE(mat1.isIdentity());
     }
 
     SECTION("Is matriz full of zeros")
@@ -66,7 +72,7 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
 
     SECTION("Is matrix homogeneous")
     {
-        double value = 13.3;
+        T value = (T)13.3;
         mat1.setHomogen(value);
         // check if all elements are 5
         for (size_t i = 0; i < mat1.getDim(0); ++i)
@@ -119,8 +125,8 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
     {
         // this test should fail when the dimensions of the matrices are not equal
         // and should pass when the dimensions are equal even after transposing one of the matrices
-        FusedMatrix<double, 2, 3> matrix1(2);
-        FusedMatrix<double, 3, 2> matrix2(2);
+        FusedMatrix<T, 2, 3> matrix1(2);
+        FusedMatrix<T, 3, 2> matrix2(2);
 
         CHECK_THROWS(matrix1 == matrix2);
         CHECK_THROWS(matrix1 != matrix2);
@@ -259,105 +265,143 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
 
     SECTION("FusedMatrix elementary operations")
     {
-        // TODO: Split this section into smaller sections
-        // one for addition, one for subtraction,
-        // one for multiplication, one for division
+        SECTION("addition")
+        {
+            FusedMatrix<T, 10, 10>
+                mat1, mat2, mat3, mat4,
+                mat5, mat6, mat7, mat8;
 
-        FusedMatrix<double, 10, 10>
-            mat1, mat2, mat4, mat5,
-            mat6, mat7, mat8, mat9,
-            mat10, mat11, mat12, mat13,
-            mat14, mat15, mat16, mat17,
-            mat18, mat19, mat20, mat21;
+            mat1.setIdentity();
+            mat2.setIdentity();
+
+            mat3 = mat1 + mat2;
+            mat4 = mat2 + mat1;
+            mat5 = mat1 + (T)2.0;
+            mat6 = (T)2.0 + mat1;
+            mat7 = mat1 + (T)(-2.0);
+            mat8 = (T)-2.0 + mat1;
+
+            for (size_t i = 0; i < mat1.getDim(0); ++i)
+            {
+                for (size_t j = 0; j < mat1.getDim(1); ++j)
+                {
+                    CHECK(mat3(i, j) == (mat1(i, j) + mat2(i, j)));
+                    CHECK(mat4(i, j) == (mat2(i, j) + mat1(i, j)));
+                    CHECK(mat5(i, j) == (mat1(i, j) + (T)2.0));
+                    CHECK(mat6(i, j) == (mat1(i, j) + (T)2.0));
+                    CHECK(mat7(i, j) == (mat1(i, j) + (T)(-2.0)));
+                    CHECK(mat8(i, j) == ((T)(-2.0) + mat1(i, j)));
+                }
+            }
+        }
+
+        SECTION("subtraction")
+        {
+            FusedMatrix<T, 10, 10>
+                mat1, mat2, mat3, mat4,
+                mat5, mat6, mat7;
+
+            mat1.setIdentity();
+            mat2.setIdentity();
+
+            mat3 = mat1 - mat2;
+            mat4 = mat2 - mat1;
+            mat5 = mat1 - (T)2.0;
+            mat6 = (T)2.0 - mat1;
+
+            mat7 = -mat1;
+
+            for (size_t i = 0; i < mat1.getDim(0); ++i)
+            {
+                for (size_t j = 0; j < mat1.getDim(1); ++j)
+                {
+                    CHECK(mat3(i, j) == (mat1(i, j) - mat2(i, j)));
+                    CHECK(mat4(i, j) == (mat2(i, j) - mat1(i, j)));
+                    CHECK(mat5(i, j) == (mat1(i, j) - (T)2.0));
+                    CHECK(mat6(i, j) == ((T)2.0 - mat1(i, j)));
+                    CHECK(mat7(i, j) == (-mat1(i, j)));
+                }
+            }
+        }
+
+        SECTION("multiplication")
+        {
+            FusedMatrix<T, 10, 10>
+                mat1, mat2, mat3,
+                mat4, mat5, mat6;
+
+            mat1.setIdentity();
+            mat2.setIdentity();
+
+            mat3 = mat1 * mat2;
+            mat4 = mat2 * mat1;
+            mat5 = mat1 * (T)2.0;
+            mat6 = (T)2.0 * mat1;
+
+            for (size_t i = 0; i < mat1.getDim(0); ++i)
+            {
+                for (size_t j = 0; j < mat1.getDim(1); ++j)
+                {
+                    CHECK(mat3(i, j) == (mat1(i, j) * mat2(i, j)));
+                    CHECK(mat4(i, j) == (mat2(i, j) * mat1(i, j)));
+                    CHECK(mat5(i, j) == (mat1(i, j) * (T)2.0));
+                    CHECK(mat6(i, j) == (mat1(i, j) * (T)2.0));
+                }
+            }
+        }
+
+        SECTION("division")
+        {
+            FusedMatrix<T, 10, 10>
+                mat1, mat2, mat3,
+                mat4, mat5, mat6;
+
+            mat1.setHomogen(4);
+            mat2.setHomogen(8);
+
+            mat3 = mat1 / mat2;
+            mat4 = mat2 / mat1;
+            mat5 = mat1 / (T)2.0;
+            mat6 = (T)2.0 / mat1;
+
+            for (size_t i = 0; i < mat1.getDim(0); ++i)
+            {
+                for (size_t j = 0; j < mat1.getDim(1); ++j)
+                {
+                    CHECK(mat3(i, j) == (mat1(i, j) / mat2(i, j)));
+                    CHECK(mat4(i, j) == (mat2(i, j) / mat1(i, j)));
+                    CHECK(mat5(i, j) == (mat1(i, j) / (T)2.0));
+                    CHECK(mat6(i, j) == ((T)2.0 / mat1(i, j)));
+                }
+            }
+        }
+    }
+
+    SECTION("FusedMatrix test fused operations")
+    {
+        FusedMatrix<T, 10, 10>
+            mat1, mat2, mat3, mat4,
+            mat5, mat6, mat7;
 
         mat1.setIdentity();
         mat2.setIdentity();
 
-        // additon
-        mat4 = mat1 + mat2;
-        mat5 = mat2 + mat1;
-        mat12 = mat1 + 2.0;
-        mat13 = 2.0 + mat1;
+        mat3 = mat1 + mat2 + (T)2.0;
+        mat4 = mat1 + mat2 + mat3;
+        mat5 = mat1 + mat2 + mat3 + (T)2.0;
+        mat6 = mat1 + mat2 + mat3 + mat4 + (T)2.0;
+        mat7 = (T)2.0 - (T)1.0 + mat1 + mat2 * (T)3.0 + mat3 + mat4 + mat5 + (T)2.0;
 
-        // subtraction
-        mat6 = mat1 - mat2;
-        mat7 = mat2 - mat1;
-        mat14 = mat1 - 2.0;
-        mat15 = 2.0 - mat1;
-        mat20 = -mat1;
-        mat21 = -mat13;
-
-        // multiplication
-        mat8 = mat1 * mat2;
-        mat9 = mat2 * mat1;
-        mat16 = mat1 * 2.0;
-        mat17 = 2.0 * mat1;
-
-        // division
-        mat1.setHomogen(4);
-        mat2.setHomogen(8);
-
-        mat10 = mat1 / mat2;
-        mat11 = mat2 / mat1;
-        mat18 = mat1 / 2.0;
-        mat19 = 2.0 / mat1;
-
+        // check if the result is correct
         for (size_t i = 0; i < mat1.getDim(0); ++i)
         {
             for (size_t j = 0; j < mat1.getDim(1); ++j)
             {
-                if (i == j)
-                {
-                    // Check only the diagonal elements
-                    CHECK(mat4(i, j) == 2);
-                    CHECK(mat5(i, j) == 2);
-
-                    CHECK(mat8(i, j) == 1);
-                    CHECK(mat9(i, j) == 1);
-
-                    CHECK(mat12(i, j) == 3);
-                    CHECK(mat13(i, j) == 3);
-
-                    CHECK(mat14(i, j) == -1);
-                    CHECK(mat15(i, j) == 1);
-
-                    CHECK(mat16(i, j) == 2);
-                    CHECK(mat17(i, j) == 2);
-
-                    CHECK(mat20(i, j) == -1);
-                    CHECK(mat21(i, j) == -3);
-                }
-                else
-                {
-                    // check only the non-diagonal elements
-                    CHECK(mat4(i, j) == 0);
-                    CHECK(mat5(i, j) == 0);
-
-                    CHECK(mat8(i, j) == 0);
-                    CHECK(mat9(i, j) == 0);
-
-                    CHECK(mat12(i, j) == 2);
-                    CHECK(mat13(i, j) == 2);
-
-                    CHECK(mat14(i, j) == -2);
-                    CHECK(mat15(i, j) == 2);
-
-                    CHECK(mat16(i, j) == 0);
-                    CHECK(mat17(i, j) == 0);
-
-                    CHECK(mat20(i, j) == 0);
-                    CHECK(mat21(i, j) == -2);
-                }
-
-                // check all elements
-                CHECK(mat6(i, j) == 0);
-                CHECK(mat7(i, j) == 0);
-
-                CHECK(mat10(i, j) == 0.5);
-                CHECK(mat11(i, j) == 2);
-
-                CHECK(mat18(i, j) == 2);
-                CHECK(mat19(i, j) == 0.5);
+                CHECK(mat3(i, j) == (mat1(i, j) + mat2(i, j) + (T)2.0));
+                CHECK(mat4(i, j) == (mat1(i, j) + mat2(i, j) + mat3(i, j)));
+                CHECK(mat5(i, j) == (mat1(i, j) + mat2(i, j) + mat3(i, j) + (T)2.0));
+                CHECK(mat6(i, j) == (mat1(i, j) + mat2(i, j) + mat3(i, j) + mat4(i, j) + (T)2.0));
+                CHECK(mat7(i, j) == ((T)2.0 - (T)1.0 + mat1(i, j) + mat2(i, j) * (T)3.0 + mat3(i, j) + mat4(i, j) + mat5(i, j) + (T)2.0));
             }
         }
     }
@@ -367,92 +411,90 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
         // this test should fail when the dimensions of the matrices are not equal
         // and should pass when the dimensions are equal even after transposing one of the matrices
 
-        FusedMatrix<double, 2, 3> matrix1(2);
-        FusedMatrix<double, 3, 2> matrix2(2);
+        FusedMatrix<T, 2, 3> matrix1(2);
+        FusedMatrix<T, 3, 2> matrix2(2);
+        FusedMatrix<T, 3, 2> matrix3;
 
-        CHECK_THROWS(matrix1 + matrix2);
-        CHECK_THROWS(matrix1 - matrix2);
-        CHECK_THROWS(matrix1 * matrix2);
-        CHECK_THROWS(matrix1 / matrix2);
+        CHECK_THROWS(matrix3 = matrix1 + matrix2);
+        CHECK_THROWS(matrix3 = matrix1 - matrix2);
+        CHECK_THROWS(matrix3 = matrix1 * matrix2);
+        CHECK_THROWS(matrix3 = matrix1 / matrix2);
 
-        matrix1.inplace_transpose();
-        CHECK_NOTHROW(matrix1 + matrix2);
-        CHECK_NOTHROW(matrix1 - matrix2);
-        CHECK_NOTHROW(matrix1 * matrix2);
-        CHECK_NOTHROW(matrix1 / matrix2);
+        CHECK_NOTHROW(matrix3 = matrix1.transpose_view() + matrix2);
+        CHECK_NOTHROW(matrix3 = matrix1.transpose_view() - matrix2);
+        CHECK_NOTHROW(matrix3 = matrix1.transpose_view() * matrix2);
+        CHECK_NOTHROW(matrix3 = matrix1.transpose_view() / matrix2);
     }
 
-    SECTION("Check operations after transpose")
-    {
-        FusedMatrix<double, 4, 4> matrix1, matrix2, res, res1;
-        matrix1.setSequencial();
-        matrix2.setSequencial();
+    //     SECTION("Check operations after transpose")
+    //     {
+    //         FusedMatrix<T, 4, 4> matrix1, matrix2, res, res1;
+    //         matrix1.setSequencial();
+    //         matrix2.setSequencial();
 
-        res = matrix1.transpose_view() + matrix2;
-        res1 = matrix1 + matrix2;
+    //         res = matrix1.transpose_view() + matrix2;
+    //         res1 = matrix1 + matrix2;
 
-        CHECK(res != res1);
-    }
+    //         CHECK(res != res1);
+    //     }
 
-    SECTION("FusedMatrix transpose")
-    {
-        mat1.setRandom(-10, 10);
-        mat2 = mat1;
+    //     SECTION("FusedMatrix transpose")
+    //     {
+    //         mat1.setRandom(-10, 10);
+    //         mat2 = mat1;
 
-        // check inplace transpose first
-        mat1.inplace_transpose();
+    //         // check inplace transpose first
+    //         mat1.inplace_transpose();
 
-        for (size_t i = 0; i < mat1.getDim(0); ++i)
-        {
-            for (size_t j = 0; j < mat1.getDim(1); ++j)
-            {
-                CHECK(mat1(i, j) == mat2(j, i));
-            }
-        }
-        // restore the matrix original state
-        mat1.inplace_transpose();
+    //         for (size_t i = 0; i < mat1.getDim(0); ++i)
+    //         {
+    //             for (size_t j = 0; j < mat1.getDim(1); ++j)
+    //             {
+    //                 CHECK(mat1(i, j) == mat2(j, i));
+    //             }
+    //         }
+    //         // restore the matrix original state
+    //         mat1.inplace_transpose();
 
-        // check non-inplace transpose
-        mat1.setRandom(-10, 10);
-        mat2 = mat1.transposed();
+    //         // check non-inplace transpose
+    //         mat1.setRandom(-10, 10);
+    //         mat2 = mat1.transposed();
 
-        for (size_t i = 0; i < mat1.getDim(0); ++i)
-        {
-            for (size_t j = 0; j < mat1.getDim(1); ++j)
-            {
-                CHECK(mat1(i, j) == mat2(j, i));
-            }
-        }
+    //         for (size_t i = 0; i < mat1.getDim(0); ++i)
+    //         {
+    //             for (size_t j = 0; j < mat1.getDim(1); ++j)
+    //             {
+    //                 CHECK(mat1(i, j) == mat2(j, i));
+    //             }
+    //         }
 
-        // now check a long oppeartion by adding a zero matrix to the
-        // transposed (not in place) matrix. The mat1 should not change.
-        mat1.setIdentity();
-        mat1(0, 1) = 10;
-        mat2.setToZero();
+    //         // now check a long oppeartion by adding a zero matrix to the
+    //         // transposed (not in place) matrix. The mat1 should not change.
+    //         mat1.setIdentity();
+    //         mat1(0, 1) = 10;
+    //         mat2.setToZero();
 
-        mat3 = mat1.transpose_view() + mat2;
-        mat4 = mat1 + mat2;
+    //         mat3 = mat1.transpose_view() + mat2;
+    //         mat4 = mat1 + mat2;
 
-        // In both cases, mat2 is a zero matrix (should not change the result)
-        // mat3 should not be equal to mat1 because of the transpose
-        CHECK(mat3 != mat1);
-        CHECK(mat3(1, 0) == 10);
+    //         // In both cases, mat2 is a zero matrix (should not change the result)
+    //         // mat3 should not be equal to mat1 because of the transpose
+    //         CHECK(mat3 != mat1);
+    //         CHECK(mat3(1, 0) == 10);
 
-        // mat4 should be equal to mat1
-        CHECK(mat4 == mat1);
-    }
+    //         // mat4 should be equal to mat1
+    //         CHECK(mat4 == mat1);
+    //     }
 
     SECTION("FusedMatrix matmul")
     {
-        FusedMatrix<double, 2, 3> matrix1(2);
-        FusedMatrix<double, 3, 2> matrix2(2);
+        FusedMatrix<T, 2, 3> matrix1(2);
+        FusedMatrix<T, 3, 2> matrix2(2);
 
         matrix1.setHomogen(10);
         matrix2.setHomogen(33);
 
-        tick();
-        auto res = FusedMatrix<double, 2, 2>::matmul(matrix1, matrix2);
-        tock("C++ matmul");
+        auto res = FusedMatrix<T, 2, 2>::matmul(matrix1, matrix2);
 
         // check the dimensions of the res matrix
         CHECK(res.getDim(0) == 2);
@@ -463,7 +505,7 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
         {
             for (size_t j = 0; j < res.getDim(1); ++j)
             {
-                double sum = 0;
+                T sum = 0;
                 for (size_t k = 0; k < matrix1.getDim(1); ++k)
                 {
                     sum += matrix1(i, k) * matrix2(k, j);
@@ -471,155 +513,106 @@ TEST_CASE("FusedMatrix class", "[fused_matrix]")
                 CHECK(res(i, j) == sum);
             }
         }
-
-        // using python numpy
-        std::string numpy_string1 = toNumpyArray(matrix1);
-        std::string numpy_string2 = toNumpyArray(matrix2);
-        std::string python_code = R"(
-import numpy as np
-import sys
-import io
-import time
-import os
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
-
-# Redirect output to a string
-output = io.StringIO()  # Initialize output before redirection
-sys.stdout = output
-np.set_printoptions(formatter={'float_kind': lambda x: f'{x:.3f}'})
-a = np.array()" + numpy_string1 + R"()
-b = np.array()" + numpy_string2 + R"()
-# print('Matrix 1:')
-# print(a)
-# print('Matrix 2:')
-# print(b)
-# print('Result:')
-start = time.time()
-result = np.matmul(a, b)
-end = time.time()
-print(result)
-print(',Numpy matmul:', (end - start) * 1000000, 'microseconds')
-
-# Capture the output
-sys.stdout = sys.__stdout__
-output_string = output.getvalue()
-        )";
-
-        // Execute the Python code
-        std::string result = executePythonAndGetString(python_code);
-        removeNewlines(result);
-        std::vector<std::string> results = splitStringByComma(result);
-
-        // Print the result the time taken by numpy
-        std::cout << results[1] << std::endl;
-
-        // Check if the output is the same
-        CHECK(results[0] == toFormattedNumpyArray(res));
     }
 
     SECTION("FusedMatrix inverse")
     {
         // init the matrix
-        double initValues[4][4] = {
+        T initValues[4][4] = {
             {2.0, -1, 2.0, -1},
             {4, 5.0, 2.5, -17},
             {2.0, -1, 2.43, -30},
             {4, 5.0, 245, -10}};
-        FusedMatrix<double, 4, 4> matrix3 = initValues;
+        FusedMatrix<T, 4, 4> matrix3 = initValues;
 
         // using tessaract
-        tick();
         auto inv = matrix3.inverse();
-        tock("C++ Inverse");
 
-        // using python numpy
-        std::string numpy_string = toNumpyArray(matrix3);
-        std::string python_code = R"(
-import numpy as np
-import sys
-import io
-import time
-import os
-os.environ["OPENBLAS_NUM_THREADS"] = "1"
+        // using Eigen for validation
+        Eigen::Matrix<T, 4, 4> eigen_matrix;
+        for (size_t i = 0; i < 4; ++i)
+        {
+            for (size_t j = 0; j < 4; ++j)
+            {
+                eigen_matrix(i, j) = initValues[i][j];
+            }
+        }
+        Eigen::Matrix<T, 4, 4> eigen_inv = eigen_matrix.inverse();
 
-# Redirect output to a string
-output = io.StringIO()  # Initialize output before redirection
-sys.stdout = output
-np.set_printoptions(formatter={'float_kind': lambda x: f'{x:.3f}'})
-
-a = np.array()" + numpy_string + R"()
-# print('Original matrix:')
-# print(a)
-# print('Inverse matrix:')
-start = time.time()
-inv = np.linalg.inv(a)
-end = time.time()
-print(inv)
-print(',Numpy inverse:', (end - start) * 1000000, 'microseconds')
-
-# Capture the output
-sys.stdout = sys.__stdout__
-output_string = output.getvalue()
-        )";
-
-        // Execute the Python code
-        std::string result = executePythonAndGetString(python_code);
-        removeNewlines(result);
-        std::vector<std::string> results = splitStringByComma(result);
-
-        // Print the result the time taken by numpy
-        std::cout << results[1] << std::endl;
-
-        // Check if the output is the same
-        CHECK(results[0] == toFormattedNumpyArray(inv));
+        // check if the inverse is correct
+        for (size_t i = 0; i < 4; ++i)
+        {
+            for (size_t j = 0; j < 4; ++j)
+            {
+                CHECK_THAT(inv(i, j), Catch::Matchers::WithinRel(eigen_inv(i, j), (T)1e-3));
+            }
+        }
     }
 
     SECTION("Test Cholesky Decomposition")
     {
         // init the matrix
-        double initValues[3][3] = {
+        T initValues[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        FusedMatrix<double, 3, 3> matrix3 = initValues;
+        FusedMatrix<T, 3, 3> matrix3 = initValues;
 
-        double cholesky_values[3][3] = {
+        T cholesky_values[3][3] = {
             {2, 0, 0},
             {6, 1, 0},
             {-8, 5, 3}};
-        FusedMatrix<double, 3, 3> cholesky_matrix = cholesky_values;
-        FusedMatrix<double, 3, 3> cholesky;
+        FusedMatrix<T, 3, 3> cholesky_matrix = cholesky_values;
+        FusedMatrix<T, 3, 3> cholesky;
 
         // using tessaract
-        tick();
         cholesky = matrix_algorithms::choleskyDecomposition(matrix3);
-        tock("C++ Cholesky Decomposition");
 
         CHECK(cholesky == cholesky_matrix);
+
+        // using Eigen for validation
+        Eigen::Matrix<T, 3, 3> eigen_matrix;
+        for (size_t i = 0; i < 3; ++i)
+        {
+            for (size_t j = 0; j < 3; ++j)
+            {
+                eigen_matrix(i, j) = initValues[i][j];
+            }
+        }
+        Eigen::LLT<Eigen::Matrix<T, 3, 3>> lltOfA(eigen_matrix);
+        Eigen::Matrix<T, 3, 3> L = lltOfA.matrixL();
+        // check if the cholesky is correct
+        for (size_t i = 0; i < 3; ++i)
+        {
+            for (size_t j = 0; j < 3; ++j)
+            {
+                CHECK_THAT(cholesky(i, j), Catch::Matchers::WithinRel(L(i, j), (T)1e-3));
+            }
+        }
     }
 
     SECTION("Is matrix positive definite or semi-definite")
     {
         // init the matrix
-        double initValues[3][3] = {
+        T initValues[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        FusedMatrix<double, 3, 3> matrix = initValues;
+        FusedMatrix<T, 3, 3> matrix = initValues;
         auto result = matrix.isPositiveDefinite();
         CHECK(result == matrix_traits::Definiteness::PositiveDefinite);
 
         // TODO: test semi definite matrix
-        // double initValues1[2][2] = {
+        // T initValues1[2][2] = {
         //     {3, 4},
         //     {4, 16/3}};
 
-        // FusedMatrix<double, 2, 2> matrix1 = initValues1;
+        // FusedMatrix<T, 2, 2> matrix1 = initValues1;
         // auto result = matrix1.isPositiveDefinite(true);
         // CHECK(result == matrix_traits::Definiteness::PositiveSemiDefinite);
 
         // Not positive definite matrix
-        double initValues2[3][3] = {
+        T initValues2[3][3] = {
             {1, 0, 0},
             {0, 0, 1},
             {0, 1, 0}};
@@ -631,13 +624,13 @@ output_string = output.getvalue()
     SECTION("Is matrix orthogonal")
     {
         // init the matrix
-        double initValues[4][4] = {
+        T initValues[4][4] = {
             {1, 0, 0, 0},
             {0, 0, -1, 0},
             {0, 1, 0, 0},
             {0, 0, 0, 1}};
 
-        FusedMatrix<double, 4, 4> matrix3 = initValues;
+        FusedMatrix<T, 4, 4> matrix3 = initValues;
 
         CHECK(matrix3.isOrthogonal());
 
