@@ -13,7 +13,6 @@ TEST_CASE("FusedTensor & Eigen benchmarks", "[fused_eigen_benchmark]")
     SECTION("Long operations benchmark")
     {
         // Microkernel<double, 256, X86_AVX>::test();
-        size_t order[] = {1, 0};
         mat1.setRandom();
         mat2.setRandom();
         mat3.setRandom();
