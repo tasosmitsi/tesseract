@@ -35,13 +35,18 @@ struct TensorKernels
             K::store(output + i * simdWidth, val);
         }
 
-        // Scalar remainder
-        my_size_t indices[dimCount];
-        for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+        if constexpr ((totalSize % simdWidth) != 0) // TODO: verify if constexpr works here
+        // in theory the compiler should be able to optimize out this branch if totalSize is known at compile time to be multiple of simdWidth
+        // but better be safe than sorry, whith constexpr we ensure no runtime overhead if not needed
         {
-            std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices); // TODO: get rid of std
-            // evaluate the remainder
-            output[i] = expr(indices);
+            // Scalar remainder
+            my_size_t indices[dimCount];
+            for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+            {
+                std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices); // TODO: get rid of std
+                // evaluate the remainder
+                output[i] = expr(indices);
+            }
         }
     }
 
