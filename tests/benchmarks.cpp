@@ -9,8 +9,8 @@ TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float)
 {
     using T = TestType;
 
-    FusedTensorND<T, 100, 100> fmat1, fmat2, fmat3, fmat4, fmat5, res; // It can work with FusedMatrix amd FusedVector too
-    FusedMatrix<T, 100, 100> matrix1, matrix2;
+    FusedTensorND<T, 100, 100> fmat1, fmat2, fmat3, fmat4, fmat5; // It can work with FusedMatrix amd FusedVector too
+    FusedMatrix<T, 100, 100> matrix1, matrix2, res;
     Eigen::Matrix<T, 100, 100> mat1, mat2, mat3, mat4, mat5;
 
     T init_inverse_values[4][4] = {
