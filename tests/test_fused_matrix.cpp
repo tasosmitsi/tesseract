@@ -426,65 +426,65 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         CHECK_NOTHROW(matrix3 = matrix1.transpose_view() / matrix2);
     }
 
-    //     SECTION("Check operations after transpose")
-    //     {
-    //         FusedMatrix<T, 4, 4> matrix1, matrix2, res, res1;
-    //         matrix1.setSequencial();
-    //         matrix2.setSequencial();
+    SECTION("Check operations after transpose")
+    {
+        FusedMatrix<T, 4, 4> matrix1, matrix2, res, res1;
+        matrix1.setSequencial();
+        matrix2.setSequencial();
 
-    //         res = matrix1.transpose_view() + matrix2;
-    //         res1 = matrix1 + matrix2;
+        res = matrix1.transpose_view() + matrix2;
+        res1 = matrix1 + matrix2;
 
-    //         CHECK(res != res1);
-    //     }
+        CHECK(res != res1);
+    }
 
-    //     SECTION("FusedMatrix transpose")
-    //     {
-    //         mat1.setRandom(-10, 10);
-    //         mat2 = mat1;
+    SECTION("FusedMatrix transpose")
+    {
+        mat1.setRandom(-10, 10);
+        mat2 = mat1;
 
-    //         // check inplace transpose first
-    //         mat1.inplace_transpose();
+        // check inplace transpose first
+        mat1.inplace_transpose();
 
-    //         for (size_t i = 0; i < mat1.getDim(0); ++i)
-    //         {
-    //             for (size_t j = 0; j < mat1.getDim(1); ++j)
-    //             {
-    //                 CHECK(mat1(i, j) == mat2(j, i));
-    //             }
-    //         }
-    //         // restore the matrix original state
-    //         mat1.inplace_transpose();
+        for (size_t i = 0; i < mat1.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < mat1.getDim(1); ++j)
+            {
+                CHECK(mat1(i, j) == mat2(j, i));
+            }
+        }
+        // restore the matrix original state
+        mat1.inplace_transpose();
 
-    //         // check non-inplace transpose
-    //         mat1.setRandom(-10, 10);
-    //         mat2 = mat1.transposed();
+        // check non-inplace transpose
+        mat1.setRandom(-10, 10);
+        mat2 = mat1.transposed();
 
-    //         for (size_t i = 0; i < mat1.getDim(0); ++i)
-    //         {
-    //             for (size_t j = 0; j < mat1.getDim(1); ++j)
-    //             {
-    //                 CHECK(mat1(i, j) == mat2(j, i));
-    //             }
-    //         }
+        for (size_t i = 0; i < mat1.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < mat1.getDim(1); ++j)
+            {
+                CHECK(mat1(i, j) == mat2(j, i));
+            }
+        }
 
-    //         // now check a long oppeartion by adding a zero matrix to the
-    //         // transposed (not in place) matrix. The mat1 should not change.
-    //         mat1.setIdentity();
-    //         mat1(0, 1) = 10;
-    //         mat2.setToZero();
+        // now check a long oppeartion by adding a zero matrix to the
+        // transposed (not in place) matrix. The mat1 should not change.
+        mat1.setIdentity();
+        mat1(0, 1) = (T)10;
+        mat2.setToZero();
 
-    //         mat3 = mat1.transpose_view() + mat2;
-    //         mat4 = mat1 + mat2;
+        mat3 = mat1.transpose_view() + mat2;
+        mat4 = mat1 + mat2;
 
-    //         // In both cases, mat2 is a zero matrix (should not change the result)
-    //         // mat3 should not be equal to mat1 because of the transpose
-    //         CHECK(mat3 != mat1);
-    //         CHECK(mat3(1, 0) == 10);
+        // In both cases, mat2 is a zero matrix (should not change the result)
+        // mat3 should not be equal to mat1 because of the transpose
+        CHECK(mat3 != mat1);
+        CHECK(mat3(1, 0) == 10);
 
-    //         // mat4 should be equal to mat1
-    //         CHECK(mat4 == mat1);
-    //     }
+        // mat4 should be equal to mat1
+        CHECK(mat4 == mat1);
+    }
 
     SECTION("FusedMatrix matmul")
     {
