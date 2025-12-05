@@ -88,7 +88,7 @@ struct Microkernel<float, 256, X86_AVX>
         // _mm256_i32gather_ps requires 8 × 32-bit indices.
         // so we convert size_t → int32_t.
         alignas(32) int32_t idx32[simdWidth];
-        for (int i = 0; i < simdWidth; ++i)
+        for (my_size_t i = 0; i < simdWidth; ++i)
         {
             idx32[i] = static_cast<int32_t>(indices[i]);
         }
@@ -106,7 +106,7 @@ struct Microkernel<float, 256, X86_AVX>
     {
         alignas(32) ScalarType tmp[simdWidth];
         _mm256_storeu_ps(tmp, val);
-        for (int i = 0; i < simdWidth; ++i)
+        for (my_size_t i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
     }
 };
@@ -150,7 +150,7 @@ struct Microkernel<double, 256, X86_AVX>
     {
         alignas(32) ScalarType tmp[simdWidth];
         _mm256_storeu_pd(tmp, val);
-        for (int i = 0; i < simdWidth; ++i)
+        for (my_size_t i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
     }
 };
