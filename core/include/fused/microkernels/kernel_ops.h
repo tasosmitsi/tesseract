@@ -39,7 +39,6 @@ struct TensorKernels
         my_size_t indices[dimCount];
         for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
         {
-            my_size_t indices[dimCount];
             std::forward<decltype(unravelIndexfn)>(unravelIndexfn)(i, indices); // TODO: get rid of std
             // evaluate the remainder
             output[i] = expr(indices);
