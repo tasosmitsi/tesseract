@@ -86,18 +86,29 @@ struct Microkernel
 #include "fused/microkernels/generic/generic_microkernel.h"
 // #include "fused/microkernels/generic/generic_complex_microkernel.h"
 
-#ifdef __AVX2__
+#if __AVX512F__
+#include "fused/microkernels/avx2/avx512_microkernel.h"
+// #include "fused/microkernels/avx2/avx512_complex_microkernel.h"
+#pragma message "[COMPILE-TIME] Using X86_AVX512F arch"
+constexpr my_size_t BITS = 512;
+using DefaultArch = X86_AVX512;
+
+#elif __AVX22__
 #include "fused/microkernels/avx2/avx2_microkernel.h"
 // #include "fused/microkernels/avx2/avx2_complex_microkernel.h"
 #pragma message "[COMPILE-TIME] Using X86_AVX arch"
-#define BITS 256 // 128 or 256 bits
+constexpr my_size_t BITS = 256;
 using DefaultArch = X86_AVX;
+
+#elif __SSE2__
+#include "fused/microkernels/sse2/sse2_microkernel.h"
+// #include "fused/microkernels/avx2/sse2_complex_microkernel.h"
+#pragma message "[COMPILE-TIME] Using X86_SSE2 arch"
+constexpr my_size_t BITS = 128;
+using DefaultArch = X86_SSE;
 #endif
 
-// #ifdef __AVX512F__
-// #include "avx512/avx512_microkernel.h"
-// // #include "avx512/avx512_complex_microkernel.h"
-// #endif
+constexpr my_size_t DATA_ALIGNAS = BITS / 8;
 
 // #ifdef __ARM_NEON
 // #include "neon/neon_microkernel.h"

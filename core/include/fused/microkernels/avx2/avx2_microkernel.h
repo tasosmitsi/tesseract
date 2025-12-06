@@ -5,47 +5,9 @@
 #include "config.h"
 
 // Architecture tag
-struct X86_SSE
-{
-}; // 128-bit SSE/SSE2
 struct X86_AVX
 {
 }; // 256-bit AVX/AVX2
-
-// ============================================================================
-// SSE (128-bit) specializations
-// ============================================================================
-template <>
-struct Microkernel<float, 128, X86_SSE>
-{
-    static constexpr my_size_t simdWidth = 4; // 128 bits / 32 bits per float = 4
-    using VecType = __m128;
-
-    FORCE_INLINE static VecType load(const float *ptr) noexcept { return _mm_load_ps(ptr); }
-    FORCE_INLINE static VecType loadu(const float *ptr) noexcept { return _mm_loadu_ps(ptr); }
-    FORCE_INLINE static void store(float *ptr, VecType val) noexcept { _mm_store_ps(ptr, val); }
-    FORCE_INLINE static VecType set1(float scalar) noexcept { return _mm_set1_ps(scalar); }
-    FORCE_INLINE static VecType add(VecType a, VecType b) noexcept { return _mm_add_ps(a, b); }
-    FORCE_INLINE static VecType mul(VecType a, VecType b) noexcept { return _mm_mul_ps(a, b); }
-    FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept { return _mm_sub_ps(a, b); }
-    FORCE_INLINE static VecType div(VecType a, VecType b) noexcept { return _mm_div_ps(a, b); }
-};
-
-template <>
-struct Microkernel<double, 128, X86_SSE>
-{
-    static constexpr my_size_t simdWidth = 2; // 128 bits / 64 bits per double = 2
-    using VecType = __m128d;
-
-    FORCE_INLINE static VecType load(const double *ptr) noexcept { return _mm_load_pd(ptr); }
-    FORCE_INLINE static VecType loadu(const double *ptr) noexcept { return _mm_loadu_pd(ptr); }
-    FORCE_INLINE static void store(double *ptr, VecType val) noexcept { _mm_store_pd(ptr, val); }
-    FORCE_INLINE static VecType set1(double scalar) noexcept { return _mm_set1_pd(scalar); }
-    FORCE_INLINE static VecType add(VecType a, VecType b) noexcept { return _mm_add_pd(a, b); }
-    FORCE_INLINE static VecType mul(VecType a, VecType b) noexcept { return _mm_mul_pd(a, b); }
-    FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept { return _mm_sub_pd(a, b); }
-    FORCE_INLINE static VecType div(VecType a, VecType b) noexcept { return _mm_div_pd(a, b); }
-};
 
 // ============================================================================
 // AVX2 (256-bit) specializations

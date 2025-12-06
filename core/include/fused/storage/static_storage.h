@@ -1,10 +1,12 @@
 #ifndef STATIC_STORAGE_H
 #define STATIC_STORAGE_H
 
+#include "fused/microkernels/microkernel_base.h"
+
 template <typename T, my_size_t Size>
 class StaticStorage
 {
-    alignas(64) T _data[Size];
+    alignas(DATA_ALIGNAS) T _data[Size];
 
 public:
     FORCE_INLINE constexpr T &operator[](my_size_t idx) noexcept { return _data[idx]; }
