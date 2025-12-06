@@ -93,7 +93,7 @@ struct Microkernel
 constexpr my_size_t BITS = 512;
 using DefaultArch = X86_AVX512;
 
-#elif __AVX22__
+#elif __AVX2__
 #include "fused/microkernels/avx2/avx2_microkernel.h"
 // #include "fused/microkernels/avx2/avx2_complex_microkernel.h"
 #pragma message "[COMPILE-TIME] Using X86_AVX arch"
