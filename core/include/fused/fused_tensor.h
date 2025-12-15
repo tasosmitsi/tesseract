@@ -241,42 +241,13 @@ public:
         return data_[computeIndex(indices)];
     }
 
-    // overload == operator to compare two tensors, introduce a tolerance for floating point numbers
-    template <my_size_t... Dims1>
-    bool operator==(const FusedTensorND<T, Dims1...> &other) const
+    // version of passing a array of indices eg _tensor1(indices1), indices1 is an array of known size use template
+    inline T &operator()(my_size_t (&indices)[N]) noexcept
     {
-        // check for dimensions mismatch, we don't check if they are square
-        checkDimensionsMismatch(other);
-
-        my_size_t indices[sizeof...(Dims)] = {0};
-        for (my_size_t i = 0; i < totalSize; ++i)
-        {
-            // increment the indices using for loop
-            for (my_size_t j = 0; j < sizeof...(Dims); ++j)
-            {
-                if (indices[j] < getDim(j) - 1)
-                {
-                    indices[j]++;
-                    break;
-                }
-                else
-                {
-                    indices[j] = 0;
-                }
-            }
-
-            // use the () operator to access the elements
-            if (std::abs((*this)(indices)-other(indices)) > T(PRECISION_TOLERANCE))
-            {
-                return false;
-            }
-        }
-        return true;
+        return data_[layout_.compute_flat_index(indices)];
     }
 
-    // overload != operator to compare two tensors
-    template <my_size_t... Dims1>
-    bool operator!=(const FusedTensorND<T, Dims1...> &other) const
+    inline const T &operator()(my_size_t (&indices)[N]) const noexcept
     {
         return !(*this == other);
     }
