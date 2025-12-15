@@ -16,7 +16,8 @@ public:
     static constexpr my_size_t N = total_size;
 
     explicit PermutedView(const Tensor &t, const my_size_t perm[N])
-        : t_(t), layout_(t.layout_) // copy the layout from the base tensor
+        : t_(t), layout_(t.layout_) // Bind the reference member t_ to the existing object t
+                                    // and copy the layout from the base tensor
     {
         for (std::size_t i = 0; i < N; ++i)
         {
@@ -77,8 +78,6 @@ private:
 
     using Layout = StridedLayout<N>;
     Layout layout_;
-
-    my_size_t perm_[N];
 };
 
 #endif // FUSED_PERMUTED_VIEW_H
