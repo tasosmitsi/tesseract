@@ -15,40 +15,40 @@ public:
     // Expose compile-time shape if LHS provides it
     // static constexpr my_size_t NumDims = LHS::getNumDims();
 
-    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs)
-    {
-
-        // // Compile-time dimension count check
-        // static_assert(LHS::NumDims == RHS::NumDims,
-        //               "Dimension count mismatch in BinaryExpr");
-    }
+    BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
 
     template <my_size_t length>
-    T operator()(my_size_t (&indices)[length]) const
+    inline T operator()(my_size_t (&indices)[length]) const noexcept
     {
         return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
     }
 
     // template <my_size_t length>
-    type evalu(my_size_t flat) const
+    inline type evalu(const my_size_t flat) const noexcept
     {
         return Op<T, Bits, Arch>::apply(_lhs.evalu(flat), _rhs.evalu(flat));
     }
 
     // Forward getNumDims to _lhs
-    inline my_size_t getNumDims() const
+    inline my_size_t getNumDims() const noexcept
     {
         return _lhs.getNumDims();
     }
 
     // Forward getDim(i) to _lhs
-    inline my_size_t getDim(my_size_t i) const
+    inline my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
     {
         return _lhs.getDim(i);
     }
 
-    inline bool getIsTransposed() const
+    my_size_t getTotalSize() const noexcept
     {
-        return _lhs.getIsTransposed();
+        return _lhs.getTotalSize();
+    }
+
+protected:
+    inline T operator()(const my_size_t *indices) const noexcept
+    {
+        return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
     }
 };
