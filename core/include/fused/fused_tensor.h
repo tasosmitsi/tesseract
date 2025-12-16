@@ -75,7 +75,7 @@ public:
 #endif
             return; // Handle self-assignment
         }
-        // Copy the transpose order
+        // Copy the stride information
         copy_n_optimized(other.layout_.stride, layout_.stride, getNumDims());
     }
 
@@ -315,7 +315,7 @@ public:
     //     return out;
     // }
 
-    inline TransposedType transpose_view(void) const noexcept
+    FORCE_INLINE TransposedType transpose_view(void) const noexcept
     {
         static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
         my_size_t perm[2] = {1, 0};
@@ -323,7 +323,7 @@ public:
         return this->transpose_view(perm);
     }
 
-    inline TransposedType transpose_view(const my_size_t perm[sizeof...(Dims)]) const noexcept
+    FORCE_INLINE TransposedType transpose_view(const my_size_t perm[sizeof...(Dims)]) const noexcept
     {
         return TransposedType(*this, perm);
     }
@@ -342,7 +342,6 @@ public:
 
     // Utility function to retrieve the shape of the tensor as (1,5,6) for a 3D tensor use the getNumDims
     std::string getShape() const
-    // account for the trnaspose order as well
     {
         std::string shape = "(";
         for (my_size_t i = 0; i < getNumDims(); ++i)

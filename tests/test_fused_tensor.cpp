@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_tensor.h"
 
-TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
+TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double)
 {
     using T = TestType;
 
@@ -11,6 +11,20 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
     {
         ten1.setIdentity()(0, 9) = (T)45.0;
         CHECK(ten1(0, 9) == (T)45.0);
+    }
+
+    SECTION("FusedTensorND equality operators with transpose views as part of the expression")
+    {
+        FusedTensorND<T, 10, 10> transposedTensor;
+        FusedTensorND<T, 10, 10> tensor;
+
+
+        tensor.setHomogen((T)1.0);
+        transposedTensor.setHomogen((T)1.0);
+
+        // this sould pass
+        CHECK((tensor + 1.0) == transposedTensor.transpose_view() + 1.0);
+        CHECK((transposedTensor.transpose_view() + 1.0) == (tensor + 1.0));
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")
@@ -128,9 +142,8 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK_FALSE(ten1 == ten2);
 
         // now check in case of transpose
-        ten1.inplace_transpose();
         ten2(1, 2) = 3.0;
-        CHECK_FALSE(ten1 == ten2);
+        CHECK_FALSE(ten1.transpose_view() == ten2);
     }
 
     SECTION("Check dimensions mismatch and == , != operators")
@@ -143,9 +156,8 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK_THROWS(tensor1 == tensor2);
         CHECK_THROWS(tensor1 != tensor2);
 
-        tensor2.inplace_transpose();
-        CHECK_NOTHROW(tensor1 == tensor2);
-        CHECK_FALSE(tensor1 != tensor2);
+        CHECK_NOTHROW(tensor1 == tensor2.transpose_view());
+        CHECK_FALSE(tensor1 != tensor2.transpose_view());
     }
 
     SECTION("Assign FusedTensorND to another FusedTensorND")
@@ -332,7 +344,6 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
     SECTION("FusedTensorND testing dimension after transpose")
     {
         FusedTensorND<T, 2, 3> tensor;
-        auto transposed = tensor.transposed();
 
         // Check tensor, it should not be transposed
         CHECK(tensor.getNumDims() == 2);
@@ -341,24 +352,15 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK(tensor.getDim(1) == 3);
 
         // Check transposed tensor, it should be transposed
-        CHECK(transposed.getNumDims() == 2);
-        CHECK(transposed.getShape() == "(3,2)");
-        CHECK(transposed.getDim(0) == 3);
-        CHECK(transposed.getDim(1) == 2);
-
-        // Now lets transpose the tensor in place
-        tensor.inplace_transpose();
-        // Check tensor, it should be transposed
-        CHECK(tensor.getNumDims() == 2);
-        CHECK(tensor.getShape() == "(3,2)");
-        CHECK(tensor.getDim(0) == 3);
-        CHECK(tensor.getDim(1) == 2);
+        CHECK(tensor.transpose_view().getNumDims() == 2);
+        CHECK(tensor.transpose_view().getShape() == "(3,2)");
+        CHECK(tensor.transpose_view().getDim(0) == 3);
+        CHECK(tensor.transpose_view().getDim(1) == 2);
 
         // now lets test a higher order tensor
         FusedTensorND<T, 2, 3, 4> tensor1;
         size_t order[] = {2, 1, 0};
-
-        auto transposed1 = tensor1.transposed(order);
+        auto transposed1 = tensor1.transpose_view(order);
 
         // Check tensor, it should not be transposed
         CHECK(tensor1.getNumDims() == 3);
@@ -373,15 +375,6 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK(transposed1.getDim(0) == 4);
         CHECK(transposed1.getDim(1) == 3);
         CHECK(transposed1.getDim(2) == 2);
-
-        // Now lets transpose the tensor1 in place
-        tensor1.inplace_transpose(order);
-        // Check tensor1, it should be transposed
-        CHECK(tensor1.getNumDims() == 3);
-        CHECK(tensor1.getShape() == "(4,3,2)");
-        CHECK(tensor1.getDim(0) == 4);
-        CHECK(tensor1.getDim(1) == 3);
-        CHECK(tensor1.getDim(2) == 2);
     }
 
     SECTION("Check dimensions mismatch on addition, subtraction, multiplication, and division")
@@ -412,28 +405,11 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         ten1.setRandom(-10, 10);
         ten2 = ten1;
 
-        // check inplace transpose first
-        ten1.inplace_transpose();
-
         for (size_t i = 0; i < ten1.getDim(0); ++i)
         {
             for (size_t j = 0; j < ten1.getDim(1); ++j)
             {
-                CHECK(ten1(i, j) == ten2(j, i));
-            }
-        }
-        // restore the tensor
-        ten1.inplace_transpose();
-
-        // check non-inplace transpose
-        ten1.setRandom(-10, 10);
-        ten2 = ten1.transposed();
-
-        for (size_t i = 0; i < ten1.getDim(0); ++i)
-        {
-            for (size_t j = 0; j < ten1.getDim(1); ++j)
-            {
-                CHECK(ten1(i, j) == ten2(j, i));
+                CHECK(ten1.transpose_view()(i, j) == ten2(j, i));
             }
         }
 

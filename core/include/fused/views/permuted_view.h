@@ -6,14 +6,14 @@
 #include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout.h"
 
-template <typename Tensor, my_size_t total_size>
-class PermutedView : public BaseExpr<PermutedView<Tensor, total_size>, typename Tensor::value_type>
+template <typename Tensor, my_size_t NumberOfDims>
+class PermutedView : public BaseExpr<PermutedView<Tensor, NumberOfDims>, typename Tensor::value_type>
 {
 public:
     using VecType = typename Tensor::VecType;
     using T = typename Tensor::value_type;
     static constexpr my_size_t simdWidth = Tensor::simdWidth;
-    static constexpr my_size_t N = total_size;
+    static constexpr my_size_t N = NumberOfDims;
 
     explicit PermutedView(const Tensor &t, const my_size_t perm[N])
         : t_(t), layout_(t.layout_) // Bind the reference member t_ to the existing object t
@@ -70,8 +70,28 @@ public:
         return layout_.getDim(i);
     }
 
+    FORCE_INLINE constexpr my_size_t getTotalSize() const noexcept
+    {
+        // total size is the same as the base tensor, simply return it
+        return t_.getTotalSize();
+    }
+
     // Inverse permutation — restores the base tensor
     FORCE_INLINE const Tensor &transpose() const noexcept { return t_; }
+
+    // Utility function to retrieve the shape of the tensor as (1,5,6) for a 3D tensor use the getNumDims
+    std::string getShape() const
+    {
+        std::string shape = "(";
+        for (my_size_t i = 0; i < getNumDims(); ++i)
+        {
+            shape += std::to_string(getDim(i));
+            if (i < getNumDims() - 1)
+                shape += ",";
+        }
+        shape += ")";
+        return shape;
+    }
 
 private:
     const Tensor &t_;
