@@ -41,18 +41,18 @@ public:
     FORCE_INLINE const T &operator()(Indices... indices) const noexcept
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-        return t_.rawData().data()[layout_.compute_flat_index(idxArray)];
+        return t_.data_.data()[layout_.compute_flat_index(idxArray)];
     }
 
     // Const version of the access operator with array of indices, because this is a view
     FORCE_INLINE const T &operator()(my_size_t (&indices)[N]) const noexcept
     {
-        return t_.rawData().data()[layout_.compute_flat_index(indices)];
+        return t_.data_.data()[layout_.compute_flat_index(indices)];
     }
 
     FORCE_INLINE const T &operator()(const my_size_t *indices) const noexcept
     {
-        return t_.rawData().data()[layout_.compute_flat_index(indices)];
+        return t_.data_.data()[layout_.compute_flat_index(indices)];
     }
 
     FORCE_INLINE VecType evalu(my_size_t flat) const noexcept
@@ -60,7 +60,7 @@ public:
         my_size_t idxList[simdWidth];
         for (my_size_t i = 0; i < simdWidth; ++i)
             idxList[i] = layout_.computeOffsetFromFlat(flat + i);
-        return Tensor::microkernel::gather(t_.rawData().data(), idxList);
+        return Tensor::microkernel::gather(t_.data_.data(), idxList);
     }
 
     FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return N; }

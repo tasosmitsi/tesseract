@@ -43,11 +43,11 @@ public:
 
     // Constructor to initialize all elements to a specific value
     FusedTensorND(T initValue) noexcept
-        : layout_(dims), data_(initValue) {}
+        : data_(initValue), layout_(dims) {}
 
     // Copy constructor
     FusedTensorND(const FusedTensorND &other) noexcept
-        : layout_(other.layout_), data_(other.data_) // invoke copy constructor of AccessPolicy
+        : data_(other.data_), layout_(other.layout_) // invoke copy constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Copy constructor called", ErrorLevel::Info);
@@ -63,7 +63,7 @@ public:
 
     // Move constructor
     FusedTensorND(FusedTensorND &&other) noexcept
-        : layout_(std::move(other.layout_)), data_(std::move(other.data_)) // invoke move constructor of AccessPolicy
+        : data_(std::move(other.data_)), layout_(std::move(other.layout_)) // invoke move constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
@@ -75,8 +75,6 @@ public:
 #endif
             return; // Handle self-assignment
         }
-        // Copy the stride information
-        copy_n_optimized(other.layout_.stride, layout_.stride, getNumDims());
     }
 
     //     template <typename TT, my_size_t M>
@@ -635,9 +633,7 @@ private:
     // Calculate total number of elements at compile time
     static constexpr my_size_t totalSize = (Dims * ...);
     static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions
-
-    using Layout = StridedLayout<N>;
-    Layout layout_;
+    static constexpr my_size_t numDims = sizeof...(Dims);
 
     // Example of using different access and storage policies
     // using AccessPolicy = DenseAccess<T, totalSize, StaticStorage>;
@@ -788,33 +784,9 @@ private:
         }
     }
 
-    // FORCE_INLINE my_size_t remapFlatIndex(my_size_t flatIdx, const my_size_t (&permutations)[sizeof...(Dims)]) const noexcept
-    // {
-    //     // Step 1: Unravel flat index in **view order** to multi-index
-    //     my_size_t idx[numDims]; // idx[i] = index along original axis i
-    //     for (my_size_t i = numDims; i-- > 0;)
-    //     {
-    //         const my_size_t dim = getDim(permutations[i]); // dim of permuted axis
-    //         idx[i] = flatIdx % dim;                        // store in original axis position
-    //         flatIdx /= dim;
-    //     };
-
-    //     // Step 2: Compute flat index in original tensor layout
-    //     my_size_t remapedFlatIdx = 0;
-    //     my_size_t factor = 1;
-    //     for (my_size_t i = numDims; i-- > 0;)
-    //     {
-    //         remapedFlatIdx += idx[permutations[i]] * factor;
-    //         factor *= getDim(i); // multiply by original axis size
-    //     }
-
-    //     return remapedFlatIdx;
-    // }
-
 protected:
-    AccessPolicy &rawData() { return data_; }             // TODO: can be inline or FORCE_INLINE
-    const AccessPolicy &rawData() const { return data_; } // TODO: can be inline or FORCE_INLINE
-    static constexpr my_size_t numDims = sizeof...(Dims);
+    using Layout = StridedLayout<N>;
+    Layout layout_;
 
     template <typename, my_size_t>
     friend class PermutedView;

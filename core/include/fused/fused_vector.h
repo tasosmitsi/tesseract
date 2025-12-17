@@ -7,8 +7,10 @@
 template <typename T, my_size_t Size>
 class FusedVector : public FusedMatrix<T, Size, 1>
 {
-public:
+private:
     using Base = FusedMatrix<T, Size, 1>;
+
+public:
     using Base::Base; // Inherit constructors from FusedMatrix
     using Base::operator=;
 
@@ -16,34 +18,26 @@ public:
 
     T &operator()(my_size_t i)
     {
-        my_size_t idxArray[2];
         if (this->getDim(0) == 1)
         {
-            idxArray[0] = 0;
-            idxArray[1] = i;
+            return Base::operator()(0, i);
         }
         else
         {
-            idxArray[0] = i;
-            idxArray[1] = 0;
+            return Base::operator()(i, 0);
         }
-        return this->rawData()[this->computeIndex(idxArray)];
     }
 
     const T &operator()(my_size_t i) const
     {
-        my_size_t idxArray[2];
         if (this->getDim(0) == 1)
         {
-            idxArray[0] = 0;
-            idxArray[1] = i;
+            return Base::operator()(0, i);
         }
         else
         {
-            idxArray[0] = i;
-            idxArray[1] = 0;
+            return Base::operator()(i, 0);
         }
-        return this->rawData()[this->computeIndex(idxArray)];
     }
 };
 

@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_tensor.h"
 
-TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double)
+TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 {
     using T = TestType;
 
@@ -23,8 +23,8 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double)
         transposedTensor.setHomogen((T)1.0);
 
         // this sould pass
-        CHECK((tensor + 1.0) == transposedTensor.transpose_view() + 1.0);
-        CHECK((transposedTensor.transpose_view() + 1.0) == (tensor + 1.0));
+        CHECK((tensor + (T)1.0) == transposedTensor.transpose_view() + (T)1.0);
+        CHECK((transposedTensor.transpose_view() + (T)1.0) == (tensor + (T)1.0));
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")

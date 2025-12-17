@@ -5,15 +5,15 @@
 #include "fill_n_optimized.h"
 #include "copy_n_optimized.h"
 
-template <my_size_t N>
+template <my_size_t NumberOfDims>
 struct StridedLayout
 {
-    my_size_t shape[N];
-    my_size_t stride[N];
+    my_size_t shape[NumberOfDims];
+    my_size_t stride[NumberOfDims];
 
-    StridedLayout(const my_size_t dims[N]) noexcept
+    StridedLayout(const my_size_t dims[NumberOfDims]) noexcept
     {
-        for (my_size_t i = 0; i < N; ++i)
+        for (my_size_t i = 0; i < NumberOfDims; ++i)
             shape[i] = dims[i];
 
         compute_row_major_strides();
@@ -24,8 +24,8 @@ struct StridedLayout
     {
         if (this == &other)
             return; // Handle self-assignment
-        copy_n_optimized(other.shape, shape, N);
-        copy_n_optimized(other.stride, stride, N);
+        copy_n_optimized(other.shape, shape, NumberOfDims);
+        copy_n_optimized(other.stride, stride, NumberOfDims);
     }
 
     // move constructor
@@ -33,11 +33,11 @@ struct StridedLayout
     {
         if (this == &other)
             return; // Handle self-assignment
-        std::move(other.shape, other.shape + N, shape);
-        std::move(other.stride, other.stride + N, stride);
+        std::move(other.shape, other.shape + NumberOfDims, shape);
+        std::move(other.stride, other.stride + NumberOfDims, stride);
         // reset other
-        fill_n_optimized(other.shape, N, my_size_t{0});
-        fill_n_optimized(other.stride, N, my_size_t{0});
+        fill_n_optimized(other.shape, NumberOfDims, my_size_t{0});
+        fill_n_optimized(other.stride, NumberOfDims, my_size_t{0});
     }
 
     // copy assignment
@@ -45,8 +45,8 @@ struct StridedLayout
     {
         if (this == &other)
             return *this; // Handle self-assignment
-        copy_n_optimized(other.shape, shape, N);
-        copy_n_optimized(other.stride, stride, N);
+        copy_n_optimized(other.shape, shape, NumberOfDims);
+        copy_n_optimized(other.stride, stride, NumberOfDims);
         return *this;
     }
 
@@ -55,12 +55,12 @@ struct StridedLayout
     {
         if (this == &other)
             return *this; // Handle self-assignment
-        std::move(other.shape, other.shape + N, shape);
-        std::move(other.stride, other.stride + N, stride);
+        std::move(other.shape, other.shape + NumberOfDims, shape);
+        std::move(other.stride, other.stride + NumberOfDims, stride);
         return *this;
     }
 
-    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return N; }
+    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return NumberOfDims; }
 
     FORCE_INLINE my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
     {
@@ -93,7 +93,7 @@ struct StridedLayout
         }
     }
 
-    FORCE_INLINE void compute_indices_from_flat(my_size_t flatIdx, my_size_t (&indices)[N]) const noexcept
+    FORCE_INLINE void compute_indices_from_flat(my_size_t flatIdx, my_size_t (&indices)[NumberOfDims]) const noexcept
     {
         // We assume: flatIdx = sum(indices[i] * stride_[i])
         // Solve for indices[i] from highest stride to lowest stride.
@@ -126,7 +126,7 @@ struct StridedLayout
     {
         my_size_t off = 0;
 
-        for (my_size_t i = N; i-- > 0;)
+        for (my_size_t i = getNumDims(); i-- > 0;)
         {
             my_size_t idx = flat % shape[i];
             flat /= shape[i];
@@ -134,6 +134,29 @@ struct StridedLayout
         }
         return off;
     }
+
+    // FORCE_INLINE my_size_t remapFlatIndex(my_size_t flatIdx, const my_size_t (&permutations)[sizeof...(Dims)]) const noexcept
+    // {
+    //     // Step 1: Unravel flat index in **view order** to multi-index
+    //     my_size_t idx[numDims]; // idx[i] = index along original axis i
+    //     for (my_size_t i = numDims; i-- > 0;)
+    //     {
+    //         const my_size_t dim = getDim(permutations[i]); // dim of permuted axis
+    //         idx[i] = flatIdx % dim;                        // store in original axis position
+    //         flatIdx /= dim;
+    //     };
+
+    //     // Step 2: Compute flat index in original tensor layout
+    //     my_size_t remapedFlatIdx = 0;
+    //     my_size_t factor = 1;
+    //     for (my_size_t i = numDims; i-- > 0;)
+    //     {
+    //         remapedFlatIdx += idx[permutations[i]] * factor;
+    //         factor *= getDim(i); // multiply by original axis size
+    //     }
+
+    //     return remapedFlatIdx;
+    // }
 };
 
 #endif // FUSED_STRIDED_LAYOUT_H

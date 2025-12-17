@@ -28,7 +28,7 @@ TEMPLATE_TEST_CASE("FusedVector class", "[fused_vector]", double, float)
         CHECK(vector1.getTotalSize() == 15);
         CHECK(vector1.getNumDims() == 2);
         CHECK(vector1.getShape() == "(15,1)");
-        CHECK(vector1.transposed().getShape() == "(1,15)");
+        CHECK(vector1.transpose_view().getShape() == "(1,15)");
     }
 
     SECTION("Is FusedVector identity")

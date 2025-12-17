@@ -1,8 +1,8 @@
 #ifndef SPARSE_ACCESS_H
 #define SPARSE_ACCESS_H
 
-#include "../storage/static_storage.h"
-#include "../../fill_n_optimized.h"
+#include "fused/storage/static_storage.h"
+#include "fill_n_optimized.h"
 
 template <
     typename T,
