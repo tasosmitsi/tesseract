@@ -207,37 +207,37 @@ benchmark name                       samples       iterations    est run time
                                      mean          low mean      high mean
                                      std dev       low std dev   high std dev
 -------------------------------------------------------------------------------
-FusedMatrix long operations                    100             1    38.6383 ms 
-                                        379.222 us    378.281 us    382.076 us 
-                                        7.50839 us    2.09985 us    16.1349 us 
+FusedMatrix long operations                    100             1     37.716 ms 
+                                        377.387 us    376.776 us    379.341 us 
+                                        5.03923 us    1.71825 us    11.2186 us 
                                                                                
-Eigen long operations                          100             1    44.1392 ms 
-                                        390.483 us    388.091 us    393.515 us 
-                                        13.7401 us    11.7672 us     17.857 us 
+Eigen long operations                          100             1    39.5535 ms 
+                                        383.382 us    382.775 us    385.385 us 
+                                        5.04039 us    1.54613 us    11.2372 us 
                                                                                
-FusedMatrix matmul                             100             1    139.517 ms 
-                                        1.42035 ms    1.38667 ms    1.45643 ms 
-                                        178.058 us    161.304 us    198.055 us 
+FusedMatrix matmul                             100             1     50.801 ms 
+                                        548.602 us    530.716 us    567.471 us 
+                                         93.448 us    84.2679 us    106.142 us 
                                                                                
-Eigen matmul                                   100             1     3.6168 ms 
-                                        33.2281 us    32.7464 us    34.1266 us 
-                                        3.26674 us      2.147 us    5.13524 us 
+Eigen matmul                                   100             1     3.4708 ms 
+                                        33.0388 us    32.5843 us     34.137 us 
+                                        3.37313 us     1.7275 us    6.41646 us 
                                                                                
-FusedMatrix inverse                            100             2     2.9798 ms 
-                                        11.2536 us    11.1814 us    11.3924 us 
-                                        493.664 ns     296.14 ns    787.344 ns 
+FusedMatrix inverse                            100             2     2.1964 ms 
+                                        9.22072 us    9.16082 us     9.3357 us 
+                                        406.015 ns    245.778 ns    636.794 ns 
                                                                                
-Eigen inverse                                  100            24     1.9224 ms 
-                                        803.661 ns    799.698 ns     811.35 ns 
-                                        27.2454 ns    15.8709 ns     40.933 ns 
+Eigen inverse                                  100            24       1.92 ms 
+                                        804.018 ns    800.209 ns     811.26 ns 
+                                        25.7764 ns    15.4741 ns    39.7277 ns 
                                                                                
-FusedMatrix Cholesky Decomposition             100             8     2.0376 ms 
-                                        2.13216 us    2.12418 us    2.14682 us 
-                                        53.6205 ns    31.6454 ns    78.9504 ns 
+FusedMatrix Cholesky Decomposition             100             5     1.8955 ms 
+                                         3.1683 us    3.15744 us    3.19468 us 
+                                         83.607 ns    39.4999 ns    144.428 ns 
                                                                                
-Eigen Cholesky Decomposition                   100             6     2.0094 ms 
-                                        3.34483 us    3.33556 us    3.36331 us 
-                                        63.4971 ns    36.7604 ns    99.5144 ns 
+Eigen Cholesky Decomposition                   100             6     2.0226 ms 
+                                        3.36218 us    3.35291 us    3.38386 us 
+                                        68.4079 ns    34.4429 ns    118.772 ns 
                                                                                
 
 -------------------------------------------------------------------------------
@@ -247,35 +247,35 @@ benchmark name                       samples       iterations    est run time
                                      mean          low mean      high mean
                                      std dev       low std dev   high std dev
 -------------------------------------------------------------------------------
-FusedMatrix long operations                    100             1    19.9591 ms 
-                                        189.859 us    189.251 us    192.129 us 
-                                        5.31992 us    1.34706 us    12.2927 us 
+FusedMatrix long operations                    100             1    18.9086 ms 
+                                        188.852 us    188.035 us    191.978 us 
+                                        7.39626 us    1.33233 us    17.3781 us 
                                                                                
-Eigen long operations                          100             1    20.6471 ms 
-                                         191.33 us    190.681 us    193.514 us 
-                                        5.46045 us    1.84318 us    12.3329 us 
+Eigen long operations                          100             1    20.5788 ms 
+                                        191.755 us    190.711 us    195.182 us 
+                                        8.54103 us    1.91308 us    18.7689 us 
                                                                                
-FusedMatrix matmul                             100             1     136.07 ms 
-                                        1.41467 ms    1.38643 ms    1.44283 ms 
-                                        144.019 us    131.382 us    159.118 us 
+FusedMatrix matmul                             100             1    57.0981 ms 
+                                         572.09 us    554.786 us    593.386 us 
+                                        98.0738 us    82.1576 us     114.87 us 
                                                                                
-Eigen matmul                                   100             2     3.6582 ms 
-                                        16.6498 us    16.4148 us    17.0552 us 
-                                        1.53392 us    1.01504 us    2.13999 us 
+Eigen matmul                                   100             2     3.5762 ms 
+                                         16.602 us    16.4049 us    16.9708 us 
+                                        1.33158 us    785.436 ns    1.98529 us 
                                                                                
-FusedMatrix inverse                            100             2     2.7164 ms 
-                                        10.3433 us    10.3094 us    10.4102 us 
-                                        232.874 ns    129.883 ns    360.298 ns 
+FusedMatrix inverse                            100             2     2.1618 ms 
+                                        9.05416 us    8.98452 us    9.17101 us 
+                                        452.552 ns    290.792 ns    646.619 ns 
                                                                                
-Eigen inverse                                  100            25      1.865 ms 
-                                        748.007 ns    744.573 ns    755.046 ns 
-                                        24.0746 ns    13.8936 ns    37.7925 ns 
+Eigen inverse                                  100            25     1.8625 ms 
+                                        749.428 ns    745.386 ns    757.463 ns 
+                                        27.9641 ns    15.0259 ns    45.3381 ns 
                                                                                
-FusedMatrix Cholesky Decomposition             100             8     2.1192 ms 
-                                        1.94345 us    1.93748 us    1.95652 us 
-                                        42.7868 ns    21.8059 ns    75.2195 ns 
+FusedMatrix Cholesky Decomposition             100             6       2.13 ms 
+                                        2.92102 us    2.91226 us    2.93821 us 
+                                        60.2316 ns    34.3328 ns    95.5562 ns 
                                                                                
-Eigen Cholesky Decomposition                   100            11     1.9811 ms 
-                                        1.79071 us    1.78585 us    1.80051 us 
-                                        33.3831 ns     19.352 ns    52.6223 ns 
+Eigen Cholesky Decomposition                   100            11     1.9712 ms 
+                                        1.79068 us    1.78596 us    1.80027 us 
+                                        32.5313 ns    18.8424 ns    50.5642 ns /                
 ```
