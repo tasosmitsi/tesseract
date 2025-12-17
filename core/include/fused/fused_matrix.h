@@ -1,9 +1,9 @@
 #ifndef FUSEDMATRIX_H
 #define FUSEDMATRIX_H
 
-#include "fused_tensor.h"
-#include "../matrix_algorithms.h"
-#include "../matrix_traits.h"
+#include "fused/fused_tensor.h"
+#include "matrix_algorithms.h"
+#include "matrix_traits.h"
 
 template <typename T, my_size_t Rows, my_size_t Cols>
 class FusedMatrix : public FusedTensorND<T, Rows, Cols>
@@ -180,34 +180,12 @@ public:
 
     T &operator()(my_size_t i, my_size_t j)
     {
-        my_size_t idxArray[2] = {i, j};
-        return this->rawData()[this->computeIndex(idxArray)];
+        return FusedTensorND<T, Rows, Cols>::operator()(i, j);
     }
 
     const T &operator()(my_size_t i, my_size_t j) const
     {
-        my_size_t idxArray[2] = {i, j};
-        return this->rawData()[this->computeIndex(idxArray)];
-    }
-
-    FusedMatrix transposed(void) const
-    {
-#ifdef DEBUG_FUSED_MATRIX
-        MyErrorHandler::log("FusedMatrix::transposed()", ErrorLevel::Info);
-#endif
-        // Call base class transposed(), which returns a FusedTensorND
-        FusedTensorND<T, Rows, Cols> transposedTensor = FusedTensorND<T, Rows, Cols>::transposed();
-
-        // Convert the transposed tensor into a FusedMatrix
-        return FusedMatrix(transposedTensor);
-    }
-
-    void inplace_transpose(void)
-    {
-#ifdef DEBUG_FUSED_MATRIX
-        MyErrorHandler::log("FusedMatrix::inplace_transpose()", ErrorLevel::Info);
-#endif
-        FusedTensorND<T, Rows, Cols>::inplace_transpose();
+        return FusedTensorND<T, Rows, Cols>::operator()(i, j);
     }
 
     // Override setToZero to return a FusedMatrix
@@ -321,9 +299,7 @@ public:
         // use transpose() to get the transpose of the matrix
         // and see if it's equal to the original matrix
 
-        FusedMatrix transposed = this->transposed();
-
-        return (*this == transposed);
+        return (*this == this->transpose_view());
     }
 
     bool isUpperTriangular(void) const
@@ -544,30 +520,30 @@ public:
         return _outp;
     }
 
-    bool isOrthogonal(void)
-    {
-        // Check if the matrix is square
-        if (!this->areDimsEqual())
-        {
-            MyErrorHandler::error("FusedMatrix is not square");
-        }
+    // bool isOrthogonal(void)
+    // {
+    //     // Check if the matrix is square
+    //     if (!this->areDimsEqual())
+    //     {
+    //         MyErrorHandler::error("FusedMatrix is not square");
+    //     }
 
-        // Check if the matrix is orthogonal
-        FusedMatrix transposed = this->transposed();
+    //     // Check if the matrix is orthogonal
+    //     FusedMatrix transposed = this->transposed();
 
-        auto ident = FusedMatrix<T, Rows, Cols>::matmul(*this, transposed);
-        if (!ident.isIdentity())
-        {
-            return false;
-        }
+    //     auto ident = FusedMatrix<T, Rows, Cols>::matmul(*this, transposed);
+    //     if (!ident.isIdentity())
+    //     {
+    //         return false;
+    //     }
 
-        auto ident1 = FusedMatrix<T, Rows, Cols>::matmul(transposed, *this);
-        if (!ident1.isIdentity())
-        {
-            return false;
-        }
-        return true;
-    }
+    //     auto ident1 = FusedMatrix<T, Rows, Cols>::matmul(transposed, *this);
+    //     if (!ident1.isIdentity())
+    //     {
+    //         return false;
+    //     }
+    //     return true;
+    // }
 
     matrix_traits::Definiteness isPositiveDefinite(bool verbose = false)
     {

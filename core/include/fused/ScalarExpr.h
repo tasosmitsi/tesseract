@@ -16,30 +16,36 @@ public:
     ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>
-    T operator()(my_size_t (&indices)[length]) const
+    T operator()(my_size_t (&indices)[length]) const noexcept
     {
         return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar); // expr op scalar
     }
 
     // template <my_size_t length>
-    type evalu(my_size_t flat) const
+    type evalu(const my_size_t flat) const noexcept
     {
         return Op<T, Bits, Arch>::apply(_expr.evalu(flat), _scalar);
     }
 
-    my_size_t getNumDims() const
+    my_size_t getNumDims() const noexcept
     {
         return _expr.getNumDims();
     }
 
-    my_size_t getDim(my_size_t i) const
+    my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
     {
         return _expr.getDim(i);
     }
 
-    inline bool getIsTransposed() const noexcept
+    my_size_t getTotalSize() const noexcept
     {
-        return _expr.getIsTransposed();
+        return _expr.getTotalSize();
+    }
+
+protected:
+    inline T operator()(const my_size_t *indices) const noexcept
+    {
+        return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar);
     }
 };
 
@@ -54,29 +60,35 @@ public:
     ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>
-    T operator()(my_size_t (&indices)[length]) const
+    T operator()(my_size_t (&indices)[length]) const noexcept
     {
         return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices)); // expr op scalar
     }
 
     // template <my_size_t length>
-    type evalu(my_size_t flat) const
+    type evalu(const my_size_t flat) const noexcept
     {
         return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(flat));
     }
 
-    my_size_t getNumDims() const
+    my_size_t getNumDims() const noexcept
     {
         return _expr.getNumDims();
     }
 
-    my_size_t getDim(my_size_t i) const
+    my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
     {
         return _expr.getDim(i);
     }
 
-    inline bool getIsTransposed() const noexcept
+    my_size_t getTotalSize() const noexcept
     {
-        return _expr.getIsTransposed();
+        return _expr.getTotalSize();
+    }
+
+protected:
+    inline T operator()(const my_size_t *indices) const noexcept
+    {
+        return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices));
     }
 };
