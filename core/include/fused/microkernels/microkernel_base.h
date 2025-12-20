@@ -106,6 +106,11 @@ using DefaultArch = X86_AVX;
 #pragma message "[COMPILE-TIME] Using X86_SSE2 arch"
 constexpr my_size_t BITS = 128;
 using DefaultArch = X86_SSE;
+
+#else
+#pragma message "[COMPILE-TIME] Using GenericArch arch"
+constexpr my_size_t BITS = 0;
+using DefaultArch = GenericArch;
 #endif
 
 constexpr my_size_t DATA_ALIGNAS = BITS / 8;
@@ -118,11 +123,5 @@ constexpr my_size_t DATA_ALIGNAS = BITS / 8;
 // Add more architecture-specific includes here
 // #if defined(__ARM_NEON)
 // using DefaultArch = ARM_NEON;
-// #elif defined(__AVX__)
-// // TODO: use this instead constexpr my_size_t AVX_BITS = 256;
-// // #include "op_traits_f_X86_AVX.h"
-// #else
-// using DefaultArch = GenericArch;
-// #endif
 
 #endif // MICROKERNEL_BASE_H
