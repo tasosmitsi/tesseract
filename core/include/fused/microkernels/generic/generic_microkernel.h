@@ -15,15 +15,13 @@ struct Microkernel<T, Bits, GenericArch>
     static constexpr my_size_t simdWidth = 1;
     using VecType = T;
 
-    FORCE_INLINE static VecType load(const T *ptr) { return *ptr; }
-    FORCE_INLINE static void store(T *ptr, VecType val) { *ptr = val; }
-    FORCE_INLINE static VecType set1(T scalar) { return scalar; } // In scalar mode, set1 is identity}
-    FORCE_INLINE static VecType add(VecType a, VecType b) { return a + b; }
-    FORCE_INLINE static VecType mul(VecType a, VecType b) { return a * b; }
-    FORCE_INLINE static VecType sub(VecType a, VecType b) { return a - b; }
-    FORCE_INLINE static VecType div(VecType a, VecType b) { return a / b; }
-
-    FORCE_INLINE static void test() { std::cout << "Generic Microkernel: scalar fallback for type " << typeid(T).name() << " with bit width " << Bits << "\n"; }
+    FORCE_INLINE static VecType load(const T *ptr) noexcept { return *ptr; }
+    FORCE_INLINE static void store(T *ptr, VecType val) noexcept { *ptr = val; }
+    FORCE_INLINE static VecType set1(T scalar) noexcept { return scalar; } // In scalar mode, set1 is identity}
+    FORCE_INLINE static VecType add(VecType a, VecType b) noexcept { return a + b; }
+    FORCE_INLINE static VecType mul(VecType a, VecType b) noexcept { return a * b; }
+    FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept { return a - b; }
+    FORCE_INLINE static VecType div(VecType a, VecType b) noexcept { return a / b; }
 };
 
 #endif // GENERIC_MICROKERNEL_H
