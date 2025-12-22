@@ -1,54 +1,48 @@
-#ifndef FUSED_PERMUTED_VIEW_H
-#define FUSED_PERMUTED_VIEW_H
+#ifndef FUSED_PERMUTED_VIEW_CONSTEXPR_H
+#define FUSED_PERMUTED_VIEW_CONSTEXPR_H
 
 #include "config.h"
 #include "fused/BaseExpr.h"
 #include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout.h"
 
-#include <algorithm> // for std::max_element, std::min_element
+/*  The reason the PermutedViewConstExpr is because only if permutation is known at compile time
+    static checks can be performed. Otherwise if the permutation order is to be decided
+    at runtime PermutedView must be usued insted.
+ */
 
-template <typename Tensor, my_size_t N>
-class PermutedView : public BaseExpr<PermutedView<Tensor, N>, typename Tensor::value_type>
+template <typename Tensor, my_size_t... Perm>
+class PermutedViewConstExpr : public BaseExpr<PermutedViewConstExpr<Tensor, Perm...>, typename Tensor::value_type>
 {
 public:
     using VecType = typename Tensor::VecType;
     using T = typename Tensor::value_type;
     static constexpr my_size_t simdWidth = Tensor::simdWidth;
 
-    static constexpr my_size_t NumDims = N;
-    static constexpr const my_size_t *Dim = Tensor::Dim;
+    static constexpr my_size_t Perm_Array[] = {Perm...}; // Fixed array of original dimensions
+    static constexpr my_size_t NumDims = sizeof...(Perm);
+    static constexpr my_size_t Dim[] = {Tensor::Dim[Perm]...};
     static constexpr my_size_t TotalSize = Tensor::TotalSize;
 
-    explicit PermutedView(const Tensor &t, const my_size_t perm[NumDims])
+    explicit PermutedViewConstExpr(const Tensor &t)
         : t_(t), layout_(t.layout_) // Bind the reference member t_ to the existing object t
                                     // and copy the layout from the base tensor
     {
-        // runtime checks TODO: get rid of std
-        auto max_it = std::max_element(perm, perm + NumDims);
-        auto min_it = std::min_element(perm, perm + NumDims);
-
-        if (*max_it != NumDims - 1)
-            MyErrorHandler::error("Max value of permutation array is greater than the tensor's number of dimensions");
-
-        if (*min_it != 0)
-            MyErrorHandler::error("Min value of permutation array is not equal to 0");
-
         for (std::size_t i = 0; i < NumDims; ++i)
         {
             // then set the permuted shape and stride
-            layout_.shape[i] = t_.getDim(perm[i]);
-            layout_.stride[i] = t_.getStride(perm[i]);
+            layout_.shape[i] = t_.getDim(Perm_Array[i]);
+            layout_.stride[i] = t_.getStride(Perm_Array[i]);
         }
     }
 
     // delete copy constructor and copy assignment to avoid accidental copies
-    PermutedView(const PermutedView &) = delete;
-    PermutedView &operator=(const PermutedView &) = delete;
+    PermutedViewConstExpr(const PermutedViewConstExpr &) = delete;
+    PermutedViewConstExpr &operator=(const PermutedViewConstExpr &) = delete;
 
     // delete move constructor and move assignment to avoid accidental moves
-    PermutedView(PermutedView &&) = delete;
-    PermutedView &operator=(PermutedView &&) = delete;
+    PermutedViewConstExpr(PermutedViewConstExpr &&) = delete;
+    PermutedViewConstExpr &operator=(PermutedViewConstExpr &&) = delete;
 
     // Const version of the access operator, because this is a view
     template <typename... Indices>
@@ -115,4 +109,4 @@ private:
     Layout layout_;
 };
 
-#endif // FUSED_PERMUTED_VIEW_H
+#endif // FUSED_PERMUTED_VIEW_CONSTEXPR_H

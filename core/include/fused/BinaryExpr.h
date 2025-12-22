@@ -1,6 +1,8 @@
 #pragma once
+#include "config.h"
 #include "fused/BaseExpr.h"
 #include "fused/Operations.h"
+#include "helper_traits.h"
 
 // ===============================
 // Binary Expression Template
@@ -8,12 +10,27 @@
 template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
 class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>, T>
 {
+#ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
+    // Compile-time check that both expressions have the same number of dimensions
+    static_assert(LHS::NumDims == RHS::NumDims,
+                  "BinaryExpr: number of dimensions mismatch");
+#endif
+#ifdef COMPILETIME_CHECK_DIMENSIONS_SIZE_MISMATCH
+    // Compile-time check that both expressions have the same dimensions
+    static_assert(dims_match<LHS::NumDims>(LHS::Dim, RHS::Dim),
+                  "BinaryExpr: there is at least one dimension mismatch");
+#endif
+// TODO: runtime checks should be here and not in the operators (in this constructor?)
+// Or not, because in the case of the permuted views? We don't want checks there...
+
     const LHS &_lhs;
     const RHS &_rhs;
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
 public:
-    // Expose compile-time shape if LHS provides it
-    // static constexpr my_size_t NumDims = LHS::getNumDims();
+    // Expose compile-time shape constants
+    static constexpr my_size_t NumDims = LHS::NumDims;
+    static constexpr const my_size_t *Dim = LHS::Dim;
+    static constexpr my_size_t TotalSize = LHS::TotalSize;
 
     BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
 

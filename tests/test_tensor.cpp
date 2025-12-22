@@ -4,7 +4,7 @@
 TEST_CASE("TensorND class", "[tensor]")
 {
 
-    SECTION("TensorND testing dimentions after transpose")
+    SECTION("TensorND testing dimensions after transpose")
     {
         TensorND<double, 2, 3> tensor;
         auto transposed = tensor.transposed();

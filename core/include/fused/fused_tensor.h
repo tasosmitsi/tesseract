@@ -3,6 +3,7 @@
 
 // #include <algorithm> // for std::fill_n and std::copy
 #include <utility> // for std::move
+#include <random>
 
 #include "copy_n_optimized.h"
 
@@ -19,6 +20,7 @@
 #include "fused/access/dense_access.h"
 #include "fused/access/sparse_access.h"
 #include "fused/views/permuted_view.h"
+#include "fused/views/permuted_view_constexpr.h"
 #include "fused/layouts/strided_layout.h"
 
 // Base class: FusedTensorND
@@ -26,9 +28,13 @@ template <typename T, my_size_t... Dims>
 class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>, T>
 {
 public:
+    // Compile time constants
+    static constexpr my_size_t NumDims = sizeof...(Dims);
+    static constexpr my_size_t Dim[] = {Dims...};
+    static constexpr my_size_t TotalSize = (Dims * ...);
+    // ----------------------
     using Self = FusedTensorND<T, Dims...>;
-    static constexpr my_size_t N = sizeof...(Dims);
-    using TransposedType = PermutedView<Self, N>;
+    static constexpr my_size_t N = sizeof...(Dims); // TODO: use NumDims instead
 
     using VecType = typename Microkernel<T, BITS, DefaultArch>::VecType;
     static constexpr my_size_t simdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth;
@@ -77,17 +83,6 @@ public:
         }
     }
 
-    //     template <typename TT, my_size_t M>
-    //     FusedTensorND &operator=(const PermutedView<TT, M> &view) noexcept
-    //     {
-    // #ifdef DEBUG_FUSED_TENSOR
-    //         MyErrorHandler::log("FusedTensorND copy assignment from view", ErrorLevel::Info);
-    // #endif
-    //         // call copyToTensor method to get a new tensor with the data copied
-    //         view.copyToTensor(*this); // copy into this tensor
-    //         return *this;
-    //     }
-
     template <typename Expr>
     FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
     {
@@ -95,6 +90,16 @@ public:
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
+
+        // check if the dimensions match at compile time
+        if constexpr (NumDims != Expr::NumDims)
+        {
+            MyErrorHandler::error("Dimensions count mismatch in assignment operator");
+        }
+        if constexpr (!dims_match<NumDims>(Dim, Expr::Dim))
+        {
+            MyErrorHandler::error("Dimensions size mismatch in assignment operator");
+        }
 
         // Evaluate using vectorized contiguous if architecture supports it
         if constexpr (!is_same_v<DefaultArch, GenericArch>)
@@ -288,48 +293,38 @@ public:
         return true;
     }
 
-    // inline FusedTensorND transposed(const my_size_t perm[sizeof...(Dims)]) const noexcept
-    // {
-    //     FusedTensorND out; // create output tensor
-    //     // make a view first and then copy the data
-    //     auto view = this->transpose_view(perm);
-    //     // call copyToTensor method to get a new tensor with the data copied
-    //     view.copyToTensor(out); // copy data into the output
-    //     out.isTransposed();
-    //     return out;
-    // }
-
-    // inline FusedTensorND transposed(void) const noexcept
-    // {
-    //     static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-    //     my_size_t perm[2] = {1, 0};
-    //     FusedTensorND out;
-
-    //     // make a view first and then copy the data
-    //     auto view = this->transpose_view(perm);
-    //     view.copyToTensor(out);
-    //     out.isTransposed();
-    //     // call copyToTensor method to get a new tensor with the data copied
-    //     return out;
-    // }
-
-    FORCE_INLINE TransposedType transpose_view(void) const noexcept
+    // Generic transpose_view by pack
+    template <my_size_t... Perm>
+    FORCE_INLINE auto transpose_view() const noexcept
     {
-        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-        my_size_t perm[2] = {1, 0};
+        static_assert(sizeof...(Perm) == sizeof...(Dims),
+                      "Permutation pack must match tensor's number of dimensions");
 
-        return this->transpose_view(perm);
+        static_assert(max_value<Perm...>() <= (sizeof...(Dims) - 1),
+                      "Max value of permutation pack is greater than the tensor's number of dimensions");
+
+        static_assert(min_value<Perm...>() == 0,
+                      "Min value of permutation pack is not equal to 0");
+        return PermutedViewConstExpr<Self, Perm...>(*this);
     }
 
-    FORCE_INLINE TransposedType transpose_view(const my_size_t perm[sizeof...(Dims)]) const noexcept
+    FORCE_INLINE auto transpose_view(void) const noexcept
     {
-        return TransposedType(*this, perm);
+        // since for 2D tenosrs the permutation of axis is known
+        // at compile time we can use PermutedViewConstExpr
+        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
+        return PermutedViewConstExpr<Self, 1, 0>(*this);
+    }
+
+    FORCE_INLINE auto transpose_view(const my_size_t perm[NumDims]) const noexcept
+    {
+        return PermutedView<Self, NumDims>(*this, perm);
     }
 
     // Utility function to retrieve total number of elements
     FORCE_INLINE constexpr my_size_t getTotalSize() const noexcept
     {
-        return totalSize;
+        return TotalSize;
     }
 
     // Utility function to retrieve the number of dimensions
@@ -354,7 +349,7 @@ public:
 
     FusedTensorND &setToZero(void) noexcept
     {
-        for (my_size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < TotalSize; ++i)
         {
             data_[i] = T{};
         }
@@ -363,7 +358,7 @@ public:
 
     FusedTensorND &setHomogen(T _val) noexcept
     {
-        for (my_size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < TotalSize; ++i)
         {
             data_[i] = _val;
         }
@@ -372,10 +367,16 @@ public:
 
     FusedTensorND &setRandom(my_size_t _maxRand, my_size_t _minRand)
     {
-        for (my_size_t i = 0; i < totalSize; ++i)
+
+        std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr))); // Mersenne Twister RNG
+        std::uniform_real_distribution<T> dist(_minRand, _maxRand);
+
+        for (my_size_t i = 0; i < TotalSize; ++i)
         {
             // TODO: seed the random number generator
-            data_[i] = static_cast<T>((rand() % (_maxRand - _minRand + 1)) + _minRand);
+            // std::srand(static_cast<unsigned int>(std::time(nullptr)));
+            // data_[i] = static_cast<T>((rand()));
+            data_[i] = static_cast<T>(dist(rng));
         }
         return *this;
     }
@@ -390,7 +391,7 @@ public:
 
         // Calculate the minimum dimension
         my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        my_size_t indices[numDims] = {0};       // Initialize all indices to zero
+        my_size_t indices[NumDims] = {0};       // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
         {
@@ -428,7 +429,7 @@ public:
 
     FusedTensorND &setSequencial(void)
     {
-        for (my_size_t i = 0; i < totalSize; ++i)
+        for (my_size_t i = 0; i < TotalSize; ++i)
         {
             data_[i] = i;
         }
@@ -436,11 +437,11 @@ public:
     }
 
     template <my_size_t DiagonalSize>
-    void getDiagonalEntries(FusedTensorND<T, DiagonalSize, 1> &diagonalEntries) const
+    void getDiagonalEntries(FusedTensorND<T, DiagonalSize, 1> &diagonalEntries) const // TODO: needs to be tested
     {
         static_assert(sizeof...(Dims) >= 2, "Getting diagonal entries requires at least 2 dimensions.");
         // Calculate the minimum dimension
-        my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
+        my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum TODO: std::min can be replaced with by helper_trait min_value
         my_size_t indices[getNumDims()] = {0};  // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
@@ -456,52 +457,58 @@ public:
         }
     }
 
-    // contract two tensors along a specific dimension (axis) and return the result
-    template <my_size_t... Dims1, my_size_t... Dims2>
-    static FusedTensorND einsum(const FusedTensorND<T, Dims1...> &_tensor1, const FusedTensorND<T, Dims2...> &_tensor2, my_size_t a, my_size_t b)
+    // contract two expression along a specific dimension (axis) and return the result
+    template <typename LeftExpr, typename RightExpr>
+    static FusedTensorND einsum(const BaseExpr<LeftExpr, T> &_tensor1, const BaseExpr<RightExpr, T> &_tensor2, const my_size_t a, const my_size_t b)
     {
-        static_assert(sizeof...(Dims1) >= 2, "Tensor 1 must have at least 2 dimension");
-        static_assert(sizeof...(Dims2) >= 2, "Tensor 2 must have at least 2 dimension");
+        static const my_size_t Dims1 = LeftExpr::NumDims;
+        static const my_size_t Dims2 = RightExpr::NumDims;
 
-        // check if a and b are valid dimensions
-        if (a >= sizeof...(Dims1) || b >= sizeof...(Dims2))
+        // static_assert(Dims1 >= 2, "Tensor 1 must have at least 2 dimension");
+        // static_assert(Dims2 >= 2, "Tensor 2 must have at least 2 dimension");
+
+        if constexpr (Dims1 < 2)
+        {
+            MyErrorHandler::error("Tensor 1 must have at least 2 dimension");
+        }
+        if constexpr (Dims2 < 2)
+        {
+            MyErrorHandler::error("Tensor 2 must have at least 2 dimension");
+        }
+
+        // check if a and b are valid dimensions at runtime
+        if (a >= Dims1 || b >= Dims2)
         {
             MyErrorHandler::error("Invalid dimensions");
         }
 
-        // check if the a axis of tensor1 is equal to the b axis of tensor2
-        if (_tensor1.getDim(a) != _tensor2.getDim(b))
+        // check if the a axis of tensor1 is equal to the b axis of tensor2 at runtime
+        if (_tensor1.derived().getDim(a) != _tensor2.derived().getDim(b))
         {
-            MyErrorHandler::error("Dimensions mismatch");
+            MyErrorHandler::error("Dimensions mismatch between tensors for einsum operation");
         }
 
+        // ------------------------------------------------------
+        // TODO: all this inside the ----- can be done at compile time only
         // calculate the new dimensions
-        constexpr my_size_t n_newDims = sizeof...(Dims1) + sizeof...(Dims2) - 2;
+        constexpr my_size_t n_newDims = Dims1 + Dims2 - 2;
         my_size_t newDims[n_newDims];
         my_size_t k = 0;
-        for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+        for (my_size_t i = 0; i < Dims1; ++i)
         {
             if (i != a)
             {
-                newDims[k++] = _tensor1.getDim(i);
+                newDims[k++] = _tensor1.derived().getDim(i);
             }
         }
 
-        for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+        for (my_size_t i = 0; i < Dims2; ++i)
         {
             if (i != b)
             {
-                newDims[k++] = _tensor2.getDim(i);
+                newDims[k++] = _tensor2.derived().getDim(i);
             }
         }
-
-        // print the new dimensions
-        // std::cout << "New dimensions: ";
-        // for (my_size_t i = 0; i < n_newDims; ++i)
-        // {
-        //     std::cout << newDims[i] << " ";
-        // }
-        // std::cout << std::endl;
 
         // create a new tensor with the new dimensions
         FusedTensorND<T, Dims...> _outp;
@@ -511,9 +518,10 @@ public:
         {
             if (newDims[i] != _outp.getDim(i))
             {
-                MyErrorHandler::error("Dimensions mismatch");
+                MyErrorHandler::error("Dimensions mismatch in output tensor");
             }
         }
+        // ------------------------------------------------------
 
         // calculate the total number of combinations and create a 2D array to store them
         constexpr my_size_t total_combinations = (1 * ... * Dims);
@@ -522,29 +530,18 @@ public:
         // generate all the combinations
         generate_combinations(newDims, combinations);
 
-        // print_combinations(combinations);
-
         // calculate the contraction
         for (my_size_t comb = 0; comb < total_combinations; ++comb)
         {
             T sum = 0;
-
-            // // print the sum with the output tensor
-            // std::cout << std::endl << "---------------" << std::endl << "_outp(";
-            // for (my_size_t i = 0; i < n_newDims; ++i)
-            // {
-            //     std::cout << combinations[comb][i] << (i < n_newDims - 1 ? ", " : "");
-            // }
-            // std::cout << ") = " << "sum" << ";" << std::endl << std::endl;
-
-            my_size_t K = _tensor1.getDim(a); // or _tensor2.getDim(b) since they are equal
+            my_size_t K = _tensor1.derived().getDim(a); // or _tensor2.derived().getDim(b) since they are equal
             for (my_size_t k = 0; k < K; ++k)
             {
-                my_size_t indices1[sizeof...(Dims1)] = {0};
-                my_size_t indices2[sizeof...(Dims2)] = {0};
+                my_size_t indices1[Dims1] = {0};
+                my_size_t indices2[Dims2] = {0};
 
                 my_size_t l = 0;
-                for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
+                for (my_size_t i = 0; i < Dims1; ++i)
                 {
                     if (i != a)
                     {
@@ -556,8 +553,8 @@ public:
                     }
                 }
 
-                l = sizeof...(Dims1) - 1;
-                for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
+                l = Dims1 - 1;
+                for (my_size_t i = 0; i < Dims2; ++i)
                 {
                     if (i != b)
                     {
@@ -568,21 +565,7 @@ public:
                         indices2[i] = k;
                     }
                 }
-
-                // // print the sumation operation with the indices of the tensors
-                // std::cout << "Sum += _tensor1(";
-                // for (my_size_t i = 0; i < sizeof...(Dims1); ++i)
-                // {
-                //     std::cout << indices1[i] << (i < sizeof...(Dims1) - 1 ? ", " : "");
-                // }
-                // std::cout << ") * _tensor2(";
-                // for (my_size_t i = 0; i < sizeof...(Dims2); ++i)
-                // {
-                //     std::cout << indices2[i] << (i < sizeof...(Dims2) - 1 ? ", " : "");
-                // }
-                // std::cout << ");" << std::endl;
-
-                sum += _tensor1(indices1) * _tensor2(indices2);
+                sum += _tensor1.derived()(indices1) * _tensor2.derived()(indices2);
             }
             _outp(combinations[comb]) = sum;
         }
@@ -631,17 +614,15 @@ public:
 
 private:
     // Calculate total number of elements at compile time
-    static constexpr my_size_t totalSize = (Dims * ...);
-    static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions
-    static constexpr my_size_t numDims = sizeof...(Dims);
+    static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions TODO: can be replace by Dim[] compile time constant
 
     // Example of using different access and storage policies
-    // using AccessPolicy = DenseAccess<T, totalSize, StaticStorage>;
-    // using AccessPolicy = DenseAccess<T, totalSize, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t, DynamicStorage, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t, StaticStorage, StaticStorage>;
-    // using AccessPolicy = SparseAccess<T, totalSize, my_size_t>; // default is static storage
-    using AccessPolicy = DenseAccess<T, totalSize>; // default is static storage
+    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>;
+    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>;
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>;
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>;
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage
+    using AccessPolicy = DenseAccess<T, TotalSize>; // default is static storage
     AccessPolicy data_;
 
     template <my_size_t... Dims1>
@@ -790,6 +771,9 @@ protected:
 
     template <typename, my_size_t>
     friend class PermutedView;
+
+    template <typename, my_size_t...>
+    friend class PermutedViewConstExpr;
 };
 
 #endif // FUSEDTENSORND_H

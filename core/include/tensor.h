@@ -52,7 +52,7 @@ public:
     template <typename... Indices>
     T &operator()(Indices... indices)
     {
-        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
+        #ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
@@ -64,7 +64,7 @@ public:
     template <typename... Indices>
     const T &operator()(Indices... indices) const
     {
-        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
+        #ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
             static_assert(sizeof...(indices) == sizeof...(Dims), "Incorrect number of indices");
         #endif
 
@@ -76,7 +76,7 @@ public:
     template<my_size_t length>
     T& operator()(my_size_t (&indices)[length])
     {
-        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
+        #ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
             static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
         #endif
 
@@ -86,7 +86,7 @@ public:
     template<my_size_t length>
     const T& operator()(my_size_t (&indices)[length]) const
     {
-        #ifdef STATIC_CHECK_NUMBER_OF_INDICES
+        #ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
             static_assert(length == sizeof...(Dims), "Incorrect number of indicessss");
         #endif
 
