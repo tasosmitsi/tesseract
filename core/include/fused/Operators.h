@@ -3,11 +3,12 @@
 #include "fused/BinaryExpr.h"
 #include "fused/ScalarExpr.h"
 #include "fused/Operations.h"
+#include "helper_traits.h"
 
 template <typename Expr1, typename Expr2>
 inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName) // TODO: conditionally noexcept
 {
-#ifdef RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH
+#ifdef RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH
     if (lhs.getNumDims() != rhs.getNumDims())
         MyErrorHandler::error(opName + ": dimension count mismatch");
 #endif
@@ -28,7 +29,7 @@ template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>
 operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
-#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator+");
 #endif
     return BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
@@ -38,7 +39,7 @@ template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>
 operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
-#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator-");
 #endif
     return BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
@@ -48,7 +49,7 @@ template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>
 operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
-#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator*");
 #endif
     return BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
@@ -58,7 +59,7 @@ template <typename LHS, typename RHS, typename T>
 BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>
 operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
-#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator/");
 #endif
     return BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>(lhs.derived(), rhs.derived());
@@ -139,11 +140,18 @@ operator/(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 template <typename LHS, typename RHS, typename T>
 bool operator==(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
+#ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
     // Compile-time check that both expressions have the same number of dimensions
-    // static_assert(LHS::N == RHS::N, "Cannot compare tensors with different number of dimensions");
+    static_assert(LHS::NumDims == RHS::NumDims, "operator== or operator!= : Cannot compare tensors with different number of dimensions");
+#endif
+#ifdef COMPILETIME_CHECK_DIMENSIONS_SIZE_MISMATCH
+    // Compile-time check that both expressions have the same dimensions
+    static_assert(dims_match<LHS::NumDims>(LHS::Dim, RHS::Dim),
+                  "operator== or operator!= : there is at least one dimension mismatch");
+#endif
 
     // runtime check that all dimensions are the same
-#if defined(RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator== or operator!=");
 #endif
 

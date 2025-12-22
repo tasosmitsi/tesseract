@@ -249,8 +249,8 @@ public:
     }
 
     // matmul using einsum of parent class
-    template <my_size_t Common, my_size_t mat1_rows, my_size_t mat2_cols>
-    static FusedMatrix<T, Rows, Cols> matmul(const FusedMatrix<T, mat1_rows, Common> &mat1, const FusedMatrix<T, Common, mat2_cols> &mat2)
+    template <typename LeftExpr, typename RightExpr>
+    static FusedMatrix<T, Rows, Cols> matmul(const BaseExpr<LeftExpr, T> &mat1, const BaseExpr<RightExpr, T> &mat2)
     {
         return {FusedTensorND<T, Rows, Cols>::einsum(mat1, mat2, 1, 0)};
     }
@@ -520,30 +520,27 @@ public:
         return _outp;
     }
 
-    // bool isOrthogonal(void)
-    // {
-    //     // Check if the matrix is square
-    //     if (!this->areDimsEqual())
-    //     {
-    //         MyErrorHandler::error("FusedMatrix is not square");
-    //     }
+    bool isOrthogonal(void)
+    {
+        // Check if the matrix is square
+        if (!this->areDimsEqual())
+        {
+            MyErrorHandler::error("FusedMatrix is not square");
+        }
 
-    //     // Check if the matrix is orthogonal
-    //     FusedMatrix transposed = this->transposed();
+        auto ident = FusedMatrix<T, Rows, Cols>::matmul(*this, this->transpose_view());
+        if (!ident.isIdentity())
+        {
+            return false;
+        }
 
-    //     auto ident = FusedMatrix<T, Rows, Cols>::matmul(*this, transposed);
-    //     if (!ident.isIdentity())
-    //     {
-    //         return false;
-    //     }
-
-    //     auto ident1 = FusedMatrix<T, Rows, Cols>::matmul(transposed, *this);
-    //     if (!ident1.isIdentity())
-    //     {
-    //         return false;
-    //     }
-    //     return true;
-    // }
+        auto ident1 = FusedMatrix<T, Rows, Cols>::matmul(this->transpose_view(), *this);
+        if (!ident1.isIdentity())
+        {
+            return false;
+        }
+        return true;
+    }
 
     matrix_traits::Definiteness isPositiveDefinite(bool verbose = false)
     {

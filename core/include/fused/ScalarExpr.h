@@ -13,6 +13,10 @@ class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
 
 public:
+    static constexpr my_size_t NumDims = EXPR::NumDims;
+    static constexpr const my_size_t *Dim = EXPR::Dim;
+    static constexpr my_size_t TotalSize = EXPR::TotalSize;
+
     ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>
@@ -57,6 +61,10 @@ class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, Op, T, Bits, Arch>, T>
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
 
 public:
+    static constexpr my_size_t NumDims = EXPR::NumDims;
+    static constexpr const my_size_t *Dim = EXPR::Dim;
+    static constexpr my_size_t TotalSize = EXPR::TotalSize;
+
     ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>

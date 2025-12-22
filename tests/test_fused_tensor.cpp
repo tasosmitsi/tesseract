@@ -18,7 +18,6 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         FusedTensorND<T, 10, 10> transposedTensor;
         FusedTensorND<T, 10, 10> tensor;
 
-
         tensor.setHomogen((T)1.0);
         transposedTensor.setHomogen((T)1.0);
 

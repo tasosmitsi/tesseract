@@ -604,20 +604,20 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         CHECK(result == matrix_traits::Definiteness::NotPositiveDefinite);
     }
 
-    // SECTION("Is matrix orthogonal")
-    // {
-    //     // init the matrix
-    //     T initValues[4][4] = {
-    //         {1, 0, 0, 0},
-    //         {0, 0, -1, 0},
-    //         {0, 1, 0, 0},
-    //         {0, 0, 0, 1}};
+    SECTION("Is matrix orthogonal")
+    {
+        // init the matrix
+        T initValues[4][4] = {
+            {1, 0, 0, 0},
+            {0, 0, -1, 0},
+            {0, 1, 0, 0},
+            {0, 0, 0, 1}};
 
-    //     FusedMatrix<T, 4, 4> matrix3 = initValues;
+        FusedMatrix<T, 4, 4> matrix3 = initValues;
 
-    //     CHECK(matrix3.isOrthogonal());
+        CHECK(matrix3.isOrthogonal());
 
-    //     matrix3(0, 0) = 2;
-    //     CHECK_FALSE(matrix3.isOrthogonal());
-    // }
+        matrix3(0, 0) = 2;
+        CHECK_FALSE(matrix3.isOrthogonal());
+    }
 }

@@ -3,10 +3,6 @@
 
 // Configuration file for FusedTensorND
 
-#ifdef __AVX512F__
-#pragma message "[COMPILE-TIME] Use AVX512F"
-#endif
-
 #ifdef __GNUC__
 #define FORCE_INLINE inline __attribute__((always_inline))
 #elif defined(_MSC_VER)
@@ -42,11 +38,21 @@ using MyErrorHandler = ErrorHandler<PCErrorHandler>;
 
 // #define DEBUG_FUSED_TENSOR
 
-/* Define this to enable matrix number of indices checking */
-#define STATIC_CHECK_NUMBER_OF_INDICES
+/*  Comment on the runtime vs compile time checks. In order for the tests to run
+    successfully we need exceptions, and for that reason we want the
+    code to be able to fail in runtime. Hence, leave runtime
+    checks on and compiletime checks off. */
 
-#define RUNTIME_CHECK_DIMENTIONS_COUNT_MISMATCH
+/* Define this to enable compile time number of dimensions/indices checking */
+// #define COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
 
+/* Define this to enable compile time size of dimensions checking */
+// #define COMPILETIME_CHECK_DIMENSIONS_SIZE_MISMATCH
+
+/* Define this to enable runtime number of dimensions/indices checking */
+#define RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH
+
+/* Define this to enable runtime size of dimensions checking */
 #define RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH
 
 /* Define this to enable matrix bound checking */

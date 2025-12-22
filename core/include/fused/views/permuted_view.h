@@ -6,20 +6,25 @@
 #include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout.h"
 
-template <typename Tensor, my_size_t NumberOfDims>
-class PermutedView : public BaseExpr<PermutedView<Tensor, NumberOfDims>, typename Tensor::value_type>
+#include <algorithm> // for std::max_element, std::min_element
+
+template <typename Tensor, my_size_t N>
+class PermutedView : public BaseExpr<PermutedView<Tensor, N>, typename Tensor::value_type>
 {
 public:
     using VecType = typename Tensor::VecType;
     using T = typename Tensor::value_type;
     static constexpr my_size_t simdWidth = Tensor::simdWidth;
-    static constexpr my_size_t N = NumberOfDims;
 
-    explicit PermutedView(const Tensor &t, const my_size_t perm[N])
+    static constexpr my_size_t NumDims = N;
+    static constexpr const my_size_t *Dim = Tensor::Dim;
+    static constexpr my_size_t TotalSize = Tensor::TotalSize;
+
+    explicit PermutedView(const Tensor &t, const my_size_t perm[NumDims])
         : t_(t), layout_(t.layout_) // Bind the reference member t_ to the existing object t
                                     // and copy the layout from the base tensor
     {
-        for (std::size_t i = 0; i < N; ++i)
+        for (std::size_t i = 0; i < NumDims; ++i)
         {
             // then set the permuted shape and stride
             layout_.shape[i] = t_.getDim(perm[i]);
@@ -37,7 +42,7 @@ public:
 
     // Const version of the access operator, because this is a view
     template <typename... Indices>
-        requires(sizeof...(Indices) == N)
+        requires(sizeof...(Indices) == NumDims)
     FORCE_INLINE const T &operator()(Indices... indices) const noexcept
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
@@ -45,7 +50,7 @@ public:
     }
 
     // Const version of the access operator with array of indices, because this is a view
-    FORCE_INLINE const T &operator()(my_size_t (&indices)[N]) const noexcept
+    FORCE_INLINE const T &operator()(my_size_t (&indices)[NumDims]) const noexcept
     {
         return t_.data_.data()[layout_.compute_flat_index(indices)];
     }
@@ -63,7 +68,7 @@ public:
         return Tensor::microkernel::gather(t_.data_.data(), idxList);
     }
 
-    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return N; }
+    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return NumDims; }
 
     FORCE_INLINE constexpr my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
     {
@@ -96,7 +101,7 @@ public:
 private:
     const Tensor &t_;
 
-    using Layout = StridedLayout<N>;
+    using Layout = StridedLayout<NumDims>;
     Layout layout_;
 };
 
