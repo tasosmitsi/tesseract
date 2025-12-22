@@ -24,6 +24,16 @@ public:
         : t_(t), layout_(t.layout_) // Bind the reference member t_ to the existing object t
                                     // and copy the layout from the base tensor
     {
+        // runtime checks TODO: get rid of std
+        auto max_it = std::max_element(perm, perm + NumDims);
+        auto min_it = std::min_element(perm, perm + NumDims);
+
+        if (*max_it != NumDims - 1)
+            MyErrorHandler::error("Max value of permutation array is greater than the tensor's number of dimensions");
+
+        if (*min_it != 0)
+            MyErrorHandler::error("Min value of permutation array is not equal to 0");
+
         for (std::size_t i = 0; i < NumDims; ++i)
         {
             // then set the permuted shape and stride
