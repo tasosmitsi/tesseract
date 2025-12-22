@@ -3,6 +3,7 @@
 
 // #include <algorithm> // for std::fill_n and std::copy
 #include <utility> // for std::move
+#include <random>
 
 #include "copy_n_optimized.h"
 
@@ -19,6 +20,7 @@
 #include "fused/access/dense_access.h"
 #include "fused/access/sparse_access.h"
 #include "fused/views/permuted_view.h"
+#include "fused/views/permuted_view_constexpr.h"
 #include "fused/layouts/strided_layout.h"
 
 // Base class: FusedTensorND
@@ -291,37 +293,27 @@ public:
         return true;
     }
 
-    // inline FusedTensorND transposed(const my_size_t perm[sizeof...(Dims)]) const noexcept
-    // {
-    //     FusedTensorND out; // create output tensor
-    //     // make a view first and then copy the data
-    //     auto view = this->transpose_view(perm);
-    //     // call copyToTensor method to get a new tensor with the data copied
-    //     view.copyToTensor(out); // copy data into the output
-    //     out.isTransposed();
-    //     return out;
-    // }
-
-    // inline FusedTensorND transposed(void) const noexcept
-    // {
-    //     static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-    //     my_size_t perm[2] = {1, 0};
-    //     FusedTensorND out;
-
-    //     // make a view first and then copy the data
-    //     auto view = this->transpose_view(perm);
-    //     view.copyToTensor(out);
-    //     out.isTransposed();
-    //     // call copyToTensor method to get a new tensor with the data copied
-    //     return out;
-    // }
-
-    FORCE_INLINE TransposedType transpose_view(void) const noexcept
+    // Generic transpose_view by pack
+    template <my_size_t... Perm>
+    FORCE_INLINE auto transpose_view() const noexcept
     {
-        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
-        my_size_t perm[2] = {1, 0};
+        static_assert(sizeof...(Perm) == sizeof...(Dims),
+                      "Permutation pack must match tensor's number of dimensions");
 
-        return this->transpose_view(perm);
+        static_assert(max_value<Perm...>() <= (sizeof...(Dims) - 1),
+                      "Max value of permutation pack is greater than the tensor's number of dimensions");
+
+        static_assert(min_value<Perm...>() == 0,
+                      "Min value of permutation pack is not equal to 0");
+        return PermutedViewConstExpr<Self, Perm...>(*this);
+    }
+
+    FORCE_INLINE auto transpose_view(void) const noexcept
+    {
+        // since for 2D tenosrs the permutation of axis is known
+        // at compile time we can use PermutedViewConstExpr
+        static_assert(sizeof...(Dims) == 2, "Transpose is only supported for 2D tensors");
+        return PermutedViewConstExpr<Self, 1, 0>(*this);
     }
 
     FORCE_INLINE auto transpose_view(const my_size_t perm[NumDims]) const noexcept
@@ -779,6 +771,9 @@ protected:
 
     template <typename, my_size_t>
     friend class PermutedView;
+
+    template <typename, my_size_t...>
+    friend class PermutedViewConstExpr;
 };
 
 #endif // FUSEDTENSORND_H

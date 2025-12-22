@@ -358,8 +358,10 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 
         // now lets test a higher order tensor
         FusedTensorND<T, 2, 3, 4> tensor1;
-        size_t order[] = {2, 1, 0};
-        auto transposed1 = tensor1.transpose_view(order);
+        // size_t order[] = {2, 1, 0};
+        // auto transposed1 = tensor1.transpose_view(order);
+        // or the following for constexpr view
+        auto transposed1 = tensor1.template transpose_view<2, 1, 0>();
 
         // Check tensor, it should not be transposed
         CHECK(tensor1.getNumDims() == 3);
@@ -438,6 +440,7 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 
         FusedTensorND<T, 2, 3> tensor1(2), tensor2(2);
         FusedTensorND<T, 3, 2> tensor3(2);
+        FusedTensorND<T, 2, 2> result2;
 
         auto result = FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2, 1, 1);
 
@@ -452,5 +455,25 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK(result1.getShape() == "(3,3)");
         CHECK(result1.getDim(0) == 3);
         CHECK(result1.getDim(1) == 3);
+
+        CHECK_NOTHROW(result2 =
+                          FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view<1, 0>(), 1, 0));
+
+        CHECK_NOTHROW(result2 =
+                          FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view<0, 1>(), 1, 1));
+
+        // The following two use the non-constexpr version of PermutedView, because the order is runtime.
+        // One should prefere the constexpr version (above) for maximum performance if the permutation
+        // in known at compile time. So there are the following versions:
+        // transpose_view<param pack with permutations>()
+        // transpose_view() -> this assumes 2D -> known permutation and hence constexpr view
+        // transpose_vie(order array with permutations)
+        size_t order[2] = {1, 0};
+        CHECK_NOTHROW(result2 =
+                          FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view(order), 1, 0));
+
+        size_t order1[2] = {0, 1};
+        CHECK_NOTHROW(result2 =
+                          FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view(order1), 1, 1));
     }
 }
