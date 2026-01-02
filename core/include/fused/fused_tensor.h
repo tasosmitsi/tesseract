@@ -22,6 +22,7 @@
 #include "fused/views/permuted_view.h"
 #include "fused/views/permuted_view_constexpr.h"
 #include "fused/layouts/strided_layout.h"
+#include "algebra/algebraic_traits.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
@@ -459,6 +460,9 @@ public:
 
     // contract two expression along a specific dimension (axis) and return the result
     template <typename LeftExpr, typename RightExpr>
+        requires(
+            algebra::is_tensor_v<LeftExpr> &&
+            algebra::is_tensor_v<RightExpr>)
     static FusedTensorND einsum(const BaseExpr<LeftExpr, T> &_tensor1, const BaseExpr<RightExpr, T> &_tensor2, const my_size_t a, const my_size_t b)
     {
         static const my_size_t Dims1 = LeftExpr::NumDims;
