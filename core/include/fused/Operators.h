@@ -4,6 +4,7 @@
 #include "fused/ScalarExpr.h"
 #include "fused/Operations.h"
 #include "helper_traits.h"
+#include "algebra/algebraic_traits.h"
 
 template <typename Expr1, typename Expr2>
 inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName) // TODO: conditionally noexcept
@@ -26,6 +27,7 @@ inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string
 // Operator Overloads
 // ===============================
 template <typename LHS, typename RHS, typename T>
+    requires(algebra::is_vector_space_v<LHS> && algebra::is_vector_space_v<RHS>)
 BinaryExpr<LHS, RHS, Add, T, BITS, DefaultArch>
 operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
@@ -36,6 +38,7 @@ operator+(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: con
 }
 
 template <typename LHS, typename RHS, typename T>
+    requires(algebra::is_vector_space_v<LHS> && algebra::is_vector_space_v<RHS>)
 BinaryExpr<LHS, RHS, Sub, T, BITS, DefaultArch>
 operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
@@ -46,6 +49,11 @@ operator-(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: con
 }
 
 template <typename LHS, typename RHS, typename T>
+    requires( // for Hadamard product only it must be tensors, not general algebras
+        algebra::is_tensor_v<LHS> &&
+        algebra::is_tensor_v<RHS> &&
+        !algebra::is_algebra_v<LHS> &&
+        !algebra::is_algebra_v<RHS>)
 BinaryExpr<LHS, RHS, Mul, T, BITS, DefaultArch>
 operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
@@ -56,6 +64,11 @@ operator*(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: con
 }
 
 template <typename LHS, typename RHS, typename T>
+    requires( // for Hadamard product (element-wise division) only it must be tensors, not general algebras
+        algebra::is_tensor_v<LHS> &&
+        algebra::is_tensor_v<RHS> &&
+        !algebra::is_algebra_v<LHS> &&
+        !algebra::is_algebra_v<RHS>)
 BinaryExpr<LHS, RHS, Div, T, BITS, DefaultArch>
 operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: conditionally noexcept
 {
@@ -67,6 +80,7 @@ operator/(const BaseExpr<LHS, T> &lhs, const BaseExpr<RHS, T> &rhs) // TODO: con
 
 // matrix + scalar (scalar on RHS)
 template <typename LHS, typename T>
+    requires(algebra::is_vector_space_v<LHS>)
 ScalarExprRHS<LHS, Add, T, BITS, DefaultArch>
 operator+(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 {
@@ -75,6 +89,7 @@ operator+(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 
 // scalar + matrix (scalar on LHS)
 template <typename RHS, typename T>
+    requires(algebra::is_vector_space_v<RHS>)
 ScalarExprRHS<RHS, Add, T, BITS, DefaultArch>
 operator+(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 {
@@ -83,6 +98,7 @@ operator+(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 
 // Override operator- to get the negative
 template <typename RHS, typename T>
+    requires(algebra::is_vector_space_v<RHS>)
 ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>
 operator-(const BaseExpr<RHS, T> &expr) noexcept
 {
@@ -91,6 +107,7 @@ operator-(const BaseExpr<RHS, T> &expr) noexcept
 
 // matrix - scalar (scalar on RHS)
 template <typename LHS, typename T>
+    requires(algebra::is_vector_space_v<LHS>)
 ScalarExprRHS<LHS, Sub, T, BITS, DefaultArch>
 operator-(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 {
@@ -99,6 +116,7 @@ operator-(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 
 // scalar - matrix (scalar on LHS)
 template <typename RHS, typename T>
+    requires(algebra::is_vector_space_v<RHS>)
 ScalarExprLHS<RHS, Sub, T, BITS, DefaultArch>
 operator-(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 {
@@ -107,6 +125,7 @@ operator-(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 
 // matrix * scalar (scalar on RHS)
 template <typename LHS, typename T>
+    requires(algebra::is_vector_space_v<LHS>)
 ScalarExprRHS<LHS, Mul, T, BITS, DefaultArch>
 operator*(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 {
@@ -115,6 +134,7 @@ operator*(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 
 // scalar * matrix (scalar on LHS)
 template <typename RHS, typename T>
+    requires(algebra::is_vector_space_v<RHS>)
 ScalarExprRHS<RHS, Mul, T, BITS, DefaultArch>
 operator*(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 {
@@ -123,6 +143,7 @@ operator*(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 
 // matrix / scalar (scalar on RHS)
 template <typename LHS, typename T>
+    requires(algebra::is_vector_space_v<LHS>)
 ScalarExprRHS<LHS, Div, T, BITS, DefaultArch>
 operator/(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 {
@@ -131,6 +152,7 @@ operator/(const BaseExpr<LHS, T> &lhs, T scalar) noexcept
 
 // scalar / matrix (scalar on LHS)
 template <typename RHS, typename T>
+    requires(algebra::is_vector_space_v<RHS>)
 ScalarExprLHS<RHS, Div, T, BITS, DefaultArch>
 operator/(T scalar, const BaseExpr<RHS, T> &rhs) noexcept
 {
