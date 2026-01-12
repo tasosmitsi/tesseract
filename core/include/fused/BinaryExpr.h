@@ -3,13 +3,20 @@
 #include "fused/BaseExpr.h"
 #include "fused/Operations.h"
 #include "helper_traits.h"
+#include "simple_type_traits.h"
 
 // ===============================
 // Binary Expression Template
 // ===============================
-template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
-class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>, T>
+template <
+    typename LHS, typename RHS,
+    template <typename, my_size_t, typename> class Op>
+class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op>>
 {
+    // Compile-time check that LHS and RHS have the same value_type
+    static_assert(is_same_v<typename LHS::value_type, typename RHS::value_type>,
+                  "BinaryExpr: LHS and RHS must have the same value_type");
+
 #ifdef COMPILETIME_CHECK_DIMENSIONS_COUNT_MISMATCH
     // Compile-time check that both expressions have the same number of dimensions
     static_assert(LHS::NumDims == RHS::NumDims,

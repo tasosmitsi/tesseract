@@ -1,13 +1,21 @@
 #pragma once
 #include "fused/BaseExpr.h"
 #include "fused/Operations.h"
+#include "simple_type_traits.h"
 
 // ===============================
 // Scalar Expression Template
 // ===============================
-template <typename EXPR, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
-class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
+template <
+    typename EXPR,
+    typename ScalarT,
+    template <typename, my_size_t, typename> class Op>
+class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, ScalarT, Op>>
 {
+    // Compile-time check that EXPR value_type and ScalarT are the same
+    static_assert(is_same_v<typename EXPR::value_type, ScalarT>,
+                  "ScalarExprRHS: EXPR value_type and ScalarT must be the same");
+
     const EXPR &_expr;
     T _scalar;
     using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
