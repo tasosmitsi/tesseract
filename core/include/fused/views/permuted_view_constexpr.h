@@ -5,6 +5,7 @@
 #include "fused/BaseExpr.h"
 #include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout.h"
+#include "helper_traits.h"
 
 /*  The reason the PermutedViewConstExpr is because only if permutation is known at compile time
     static checks can be performed. Otherwise if the permutation order is to be decided
@@ -14,6 +15,17 @@
 template <typename Tensor, my_size_t... Perm>
 class PermutedViewConstExpr : public BaseExpr<PermutedViewConstExpr<Tensor, Perm...>>
 {
+    static_assert(sizeof...(Perm) == Tensor::NumDims,
+                  "Permutation pack must match tensor's number of dimensions");
+
+    static_assert(all_unique<Perm...>(),
+                  "Permutation indices must be unique");
+
+    static_assert(max_value<Perm...>() < Tensor::NumDims,
+                  "Max value of permutation pack is greater than the tensor's number of dimensions");
+
+    static_assert(min_value<Perm...>() == 0,
+                  "Min value of permutation pack is not equal to 0");
 
 public:
     using value_type = typename Tensor::value_type;

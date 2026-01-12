@@ -292,14 +292,7 @@ public:
     template <my_size_t... Perm>
     FORCE_INLINE auto transpose_view() const noexcept
     {
-        static_assert(sizeof...(Perm) == sizeof...(Dims),
-                      "Permutation pack must match tensor's number of dimensions");
-
-        static_assert(max_value<Perm...>() <= (sizeof...(Dims) - 1),
-                      "Max value of permutation pack is greater than the tensor's number of dimensions");
-
-        static_assert(min_value<Perm...>() == 0,
-                      "Min value of permutation pack is not equal to 0");
+        // static_assert to check that Permutation pack is valid are in PermutedViewConstExpr
         return PermutedViewConstExpr<Self, Perm...>(*this);
     }
 
