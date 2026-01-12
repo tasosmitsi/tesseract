@@ -26,30 +26,24 @@
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
-class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>, T>
+class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>>
 {
 public:
     // Compile time constants
     static constexpr my_size_t NumDims = sizeof...(Dims);
     static constexpr my_size_t Dim[] = {Dims...};
     static constexpr my_size_t TotalSize = (Dims * ...);
+    using value_type = T;
     // ----------------------
     using Self = FusedTensorND<T, Dims...>;
     static constexpr my_size_t N = sizeof...(Dims); // TODO: use NumDims instead
 
-    using VecType = typename Microkernel<T, BITS, DefaultArch>::VecType;
-    static constexpr my_size_t simdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth;
-
-    using microkernel = Microkernel<T, BITS, DefaultArch>;
-
-    using value_type = T;
-
     // Default constructors
-    FusedTensorND() noexcept
+    FusedTensorND() noexcept // TODO make explicit if needed?, use Dim
         : layout_(dims) {}
 
     // Constructor to initialize all elements to a specific value
-    FusedTensorND(T initValue) noexcept
+    FusedTensorND(T initValue) noexcept // TODO make explicit, use Dim
         : data_(initValue), layout_(dims) {}
 
     // Copy constructor
@@ -85,7 +79,7 @@ public:
     }
 
     template <typename Expr>
-    FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
+    FusedTensorND &operator=(const BaseExpr<Expr> &expr)
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
@@ -127,10 +121,10 @@ public:
         return *this;
     }
 
-    // template <my_size_t length>
-    typename Microkernel<T, BITS, DefaultArch>::VecType evalu(my_size_t flat) const noexcept
+    template <typename T_, my_size_t Bits, typename Arch>
+    typename Microkernel<T_, Bits, Arch>::VecType evalu(my_size_t flat) const noexcept
     {
-        using K = Microkernel<T, BITS, DefaultArch>;
+        using K = Microkernel<T_, Bits, Arch>;
         // TODO: add assert to check alignment if needed
         // assert((flat % K::simdWidth) == 0 && "baseIdx must be multiple of K::simdWidth for aligned load!");
         return K::load(data_.data() + flat);
@@ -463,7 +457,7 @@ public:
         requires(
             algebra::is_tensor_v<LeftExpr> &&
             algebra::is_tensor_v<RightExpr>)
-    static FusedTensorND einsum(const BaseExpr<LeftExpr, T> &_tensor1, const BaseExpr<RightExpr, T> &_tensor2, const my_size_t a, const my_size_t b)
+    static FusedTensorND einsum(const BaseExpr<LeftExpr> &_tensor1, const BaseExpr<RightExpr> &_tensor2, const my_size_t a, const my_size_t b)
     {
         static const my_size_t Dims1 = LeftExpr::NumDims;
         static const my_size_t Dims2 = RightExpr::NumDims;

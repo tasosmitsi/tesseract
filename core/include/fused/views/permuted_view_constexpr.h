@@ -12,15 +12,13 @@
  */
 
 template <typename Tensor, my_size_t... Perm>
-class PermutedViewConstExpr : public BaseExpr<PermutedViewConstExpr<Tensor, Perm...>, typename Tensor::value_type>
+class PermutedViewConstExpr : public BaseExpr<PermutedViewConstExpr<Tensor, Perm...>>
 {
-public:
-    using VecType = typename Tensor::VecType;
-    using T = typename Tensor::value_type;
-    static constexpr my_size_t simdWidth = Tensor::simdWidth;
 
+public:
+    using value_type = typename Tensor::value_type;
     static constexpr my_size_t Perm_Array[] = {Perm...}; // Fixed array of original dimensions
-    static constexpr my_size_t NumDims = sizeof...(Perm);
+    static constexpr my_size_t NumDims = Tensor::NumDims;
     static constexpr my_size_t Dim[] = {Tensor::Dim[Perm]...};
     static constexpr my_size_t TotalSize = Tensor::TotalSize;
 
@@ -47,29 +45,34 @@ public:
     // Const version of the access operator, because this is a view
     template <typename... Indices>
         requires(sizeof...(Indices) == NumDims)
-    FORCE_INLINE const T &operator()(Indices... indices) const noexcept
+    FORCE_INLINE const value_type &operator()(Indices... indices) const noexcept
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
         return t_.data_.data()[layout_.compute_flat_index(idxArray)];
     }
 
     // Const version of the access operator with array of indices, because this is a view
-    FORCE_INLINE const T &operator()(my_size_t (&indices)[NumDims]) const noexcept
+    FORCE_INLINE const value_type &operator()(my_size_t (&indices)[NumDims]) const noexcept
     {
         return t_.data_.data()[layout_.compute_flat_index(indices)];
     }
 
-    FORCE_INLINE const T &operator()(const my_size_t *indices) const noexcept
+    FORCE_INLINE const value_type &operator()(const my_size_t *indices) const noexcept
     {
         return t_.data_.data()[layout_.compute_flat_index(indices)];
     }
 
-    FORCE_INLINE VecType evalu(my_size_t flat) const noexcept
+    template <typename T, my_size_t Bits, typename Arch>
+    FORCE_INLINE typename Microkernel<T, Bits, Arch>::VecType evalu(my_size_t flat) const noexcept
     {
-        my_size_t idxList[simdWidth];
-        for (my_size_t i = 0; i < simdWidth; ++i)
+        using K = Microkernel<T, Bits, Arch>;
+        constexpr my_size_t width = K::simdWidth;
+
+        my_size_t idxList[width];
+        for (my_size_t i = 0; i < width; ++i)
             idxList[i] = layout_.computeOffsetFromFlat(flat + i);
-        return Tensor::microkernel::gather(t_.data_.data(), idxList);
+
+        return K::gather(t_.data_.data(), idxList);
     }
 
     FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return NumDims; }
