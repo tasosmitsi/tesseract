@@ -4,13 +4,13 @@
 #include "config.h"
 
 // Generic microkernel for ANY type and ANY bit width (scalar fallback)
-// This is a partial specialization that matches any T and any Bits with GenericArch
-struct GenericArch
+// This is a partial specialization that matches any T and any Bits with GENERICARCH
+struct GENERICARCH
 {
 }; // Scalar fallback
 
 template <typename T, my_size_t Bits>
-struct Microkernel<T, Bits, GenericArch>
+struct Microkernel<T, Bits, GENERICARCH>
 {
     static constexpr my_size_t simdWidth = 1;
     using VecType = T;

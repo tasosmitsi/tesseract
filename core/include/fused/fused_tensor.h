@@ -103,7 +103,7 @@ public:
         }
 
         // Evaluate using vectorized contiguous if architecture supports it
-        if constexpr (!is_same_v<DefaultArch, GenericArch>)
+        if constexpr (!is_same_v<DefaultArch, GENERICARCH>)
         {
             TensorKernels<T, BITS, DefaultArch, Dims...>::eval_vectorized_contiguous(
                 data_.data(),
