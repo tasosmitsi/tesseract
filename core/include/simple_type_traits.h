@@ -7,19 +7,72 @@
 
 // Check if a type is POD (Plain Old Data)
 // Default case: not POD
-template <typename T> struct is_pod { static constexpr bool value = false; };
+template <typename T>
+struct is_pod
+{
+    static constexpr bool value = false;
+};
 
 // // Specializations for fundamental types — define each type exactly once here:
-template <> struct is_pod<char>             { static constexpr bool value = true; };
-template <> struct is_pod<unsigned char>    { static constexpr bool value = true; };
-template <> struct is_pod<short>            { static constexpr bool value = true; };
-template <> struct is_pod<unsigned short>   { static constexpr bool value = true; };
-template <> struct is_pod<int>              { static constexpr bool value = true; };
-template <> struct is_pod<unsigned int>     { static constexpr bool value = true; };
-template <> struct is_pod<long>             { static constexpr bool value = true; };
-template <> struct is_pod<unsigned long>    { static constexpr bool value = true; };
-template <> struct is_pod<float>            { static constexpr bool value = true; };
-template <> struct is_pod<double>           { static constexpr bool value = true; };
+template <>
+struct is_pod<char>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<unsigned char>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<short>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<unsigned short>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<int>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<unsigned int>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<long>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<unsigned long>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<float>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_pod<double>
+{
+    static constexpr bool value = true;
+};
 
 // Helper variable for easier usage in if constexpr
 template <typename T>
@@ -31,11 +84,17 @@ inline constexpr bool is_pod_v = is_pod<T>::value;
 
 // Default: types are not the same
 template <typename A, typename B>
-struct is_same { static constexpr bool value = false; };
+struct is_same
+{
+    static constexpr bool value = false;
+};
 
 // Specialization: types are the same
 template <typename T>
-struct is_same<T, T> { static constexpr bool value = true; };
+struct is_same<T, T>
+{
+    static constexpr bool value = true;
+};
 
 // Helper variable for easier usage in if constexpr
 template <typename A, typename B>
@@ -65,5 +124,28 @@ void foo() {
     }
 }
 */
+
+// ===============================
+// Compile-time Base Class Check
+// ===============================
+
+template <typename Base, typename Derived>
+struct is_base_of
+{
+#if defined(__has_builtin)
+#if __has_builtin(__is_base_of)
+    static constexpr bool value = __is_base_of(Base, Derived);
+#else
+    // fallback implementation
+#endif
+#elif defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
+    static constexpr bool value = __is_base_of(Base, Derived);
+#else
+    // fallback implementation
+#endif
+};
+
+template <typename Base, typename Derived>
+inline constexpr bool is_base_of_v = is_base_of<Base, Derived>::value;
 
 #endif // SIMPLE_TYPE_TRAITS_HPP
