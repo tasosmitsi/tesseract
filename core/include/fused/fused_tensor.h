@@ -26,30 +26,24 @@
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>
-class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>, T>
+class FusedTensorND : public BaseExpr<FusedTensorND<T, Dims...>>
 {
 public:
     // Compile time constants
     static constexpr my_size_t NumDims = sizeof...(Dims);
     static constexpr my_size_t Dim[] = {Dims...};
     static constexpr my_size_t TotalSize = (Dims * ...);
+    using value_type = T;
     // ----------------------
     using Self = FusedTensorND<T, Dims...>;
     static constexpr my_size_t N = sizeof...(Dims); // TODO: use NumDims instead
 
-    using VecType = typename Microkernel<T, BITS, DefaultArch>::VecType;
-    static constexpr my_size_t simdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth;
-
-    using microkernel = Microkernel<T, BITS, DefaultArch>;
-
-    using value_type = T;
-
     // Default constructors
-    FusedTensorND() noexcept
+    FusedTensorND() noexcept // TODO make explicit if needed?, use Dim
         : layout_(dims) {}
 
     // Constructor to initialize all elements to a specific value
-    FusedTensorND(T initValue) noexcept
+    FusedTensorND(T initValue) noexcept // TODO make explicit, use Dim
         : data_(initValue), layout_(dims) {}
 
     // Copy constructor
@@ -85,7 +79,7 @@ public:
     }
 
     template <typename Expr>
-    FusedTensorND &operator=(const BaseExpr<Expr, T> &expr)
+    FusedTensorND &operator=(const BaseExpr<Expr> &expr)
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
@@ -103,7 +97,7 @@ public:
         }
 
         // Evaluate using vectorized contiguous if architecture supports it
-        if constexpr (!is_same_v<DefaultArch, GenericArch>)
+        if constexpr (!is_same_v<DefaultArch, GENERICARCH>)
         {
             TensorKernels<T, BITS, DefaultArch, Dims...>::eval_vectorized_contiguous(
                 data_.data(),
@@ -127,10 +121,10 @@ public:
         return *this;
     }
 
-    // template <my_size_t length>
-    typename Microkernel<T, BITS, DefaultArch>::VecType evalu(my_size_t flat) const noexcept
+    template <typename T_, my_size_t Bits, typename Arch>
+    typename Microkernel<T_, Bits, Arch>::VecType evalu(my_size_t flat) const noexcept
     {
-        using K = Microkernel<T, BITS, DefaultArch>;
+        using K = Microkernel<T_, Bits, Arch>;
         // TODO: add assert to check alignment if needed
         // assert((flat % K::simdWidth) == 0 && "baseIdx must be multiple of K::simdWidth for aligned load!");
         return K::load(data_.data() + flat);
@@ -298,14 +292,7 @@ public:
     template <my_size_t... Perm>
     FORCE_INLINE auto transpose_view() const noexcept
     {
-        static_assert(sizeof...(Perm) == sizeof...(Dims),
-                      "Permutation pack must match tensor's number of dimensions");
-
-        static_assert(max_value<Perm...>() <= (sizeof...(Dims) - 1),
-                      "Max value of permutation pack is greater than the tensor's number of dimensions");
-
-        static_assert(min_value<Perm...>() == 0,
-                      "Min value of permutation pack is not equal to 0");
+        // static_assert to check that Permutation pack is valid are in PermutedViewConstExpr
         return PermutedViewConstExpr<Self, Perm...>(*this);
     }
 
@@ -463,7 +450,7 @@ public:
         requires(
             algebra::is_tensor_v<LeftExpr> &&
             algebra::is_tensor_v<RightExpr>)
-    static FusedTensorND einsum(const BaseExpr<LeftExpr, T> &_tensor1, const BaseExpr<RightExpr, T> &_tensor2, const my_size_t a, const my_size_t b)
+    static FusedTensorND einsum(const BaseExpr<LeftExpr> &_tensor1, const BaseExpr<RightExpr> &_tensor2, const my_size_t a, const my_size_t b)
     {
         static const my_size_t Dims1 = LeftExpr::NumDims;
         static const my_size_t Dims2 = RightExpr::NumDims;

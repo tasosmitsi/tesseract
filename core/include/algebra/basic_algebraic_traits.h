@@ -133,43 +133,4 @@ namespace algebra
 
     template <typename T>
     inline constexpr bool is_tensor_v = algebraic_traits<T>::tensor;
-
-    // ===============================
-    // Expression-aware helpers
-    // Forward traits through BaseExpr CRTP
-    // ===============================
-    // template <typename Expr>
-    // inline constexpr bool is_vector_space_expr_v = algebraic_traits<typename Expr::DerivedType>::vector_space;
-
-    // template <typename Expr>
-    // inline constexpr bool is_algebra_expr_v = algebraic_traits<typename Expr::DerivedType>::algebra;
-
-    // template <typename Expr>
-    // inline constexpr bool is_lie_group_expr_v = algebraic_traits<typename Expr::DerivedType>::lie_group;
-
-    // template <typename Expr>
-    // inline constexpr bool is_metric_expr_v = algebraic_traits<typename Expr::DerivedType>::metric;
-
-    // template <typename Expr>
-    // inline constexpr bool is_tensor_expr_v = algebraic_traits<typename Expr::DerivedType>::tensor;
-
-    // template <typename Expr>
-    // inline constexpr bool is_vector_space_expr_v =
-    //     algebraic_traits<std::decay_t<Expr>>::vector_space;
-
-    // template <typename Expr>
-    // inline constexpr bool is_algebra_expr_v =
-    //     algebraic_traits<std::decay_t<Expr>>::algebra;
-
-    // template <typename Expr>
-    // inline constexpr bool is_lie_group_expr_v =
-    //     algebraic_traits<std::decay_t<Expr>>::lie_group;
-
-    // template <typename Expr>
-    // inline constexpr bool is_metric_expr_v =
-    //     algebraic_traits<std::decay_t<Expr>>::metric;
-
-    // template <typename Expr>
-    // inline constexpr bool is_tensor_expr_v =
-    //     algebraic_traits<std::decay_t<Expr>>::tensor;
 } // namespace algebra

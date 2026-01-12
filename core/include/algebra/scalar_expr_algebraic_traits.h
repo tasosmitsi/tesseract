@@ -8,21 +8,21 @@
         ✔ algebra preserved only if tensor supports it
  */
 template <typename EXPR,
-          template <typename, my_size_t, typename> class Op,
-          typename T, my_size_t Bits, typename Arch>
+          typename ScalarT,
+          template <typename, my_size_t, typename> class Op>
 class ScalarExprRHS;
 
 template <typename EXPR,
-          template <typename, my_size_t, typename> class Op,
-          typename T, my_size_t Bits, typename Arch>
+          typename ScalarT,
+          template <typename, my_size_t, typename> class Op>
 class ScalarExprLHS;
 
 namespace algebra
 {
     template <typename EXPR,
-              template <typename, my_size_t, typename> class Op,
-              typename T, my_size_t Bits, typename Arch>
-    struct algebraic_traits<ScalarExprRHS<EXPR, Op, T, Bits, Arch>>
+              typename ScalarT,
+              template <typename, my_size_t, typename> class Op>
+    struct algebraic_traits<ScalarExprRHS<EXPR, ScalarT, Op>>
     {
         static constexpr bool vector_space = is_vector_space_v<EXPR>;
         static constexpr bool algebra = is_algebra_v<EXPR>;
@@ -32,9 +32,9 @@ namespace algebra
     };
 
     template <typename EXPR,
-              template <typename, my_size_t, typename> class Op,
-              typename T, my_size_t Bits, typename Arch>
-    struct algebraic_traits<ScalarExprLHS<EXPR, Op, T, Bits, Arch>>
+              typename ScalarT,
+              template <typename, my_size_t, typename> class Op>
+    struct algebraic_traits<ScalarExprLHS<EXPR, ScalarT, Op>>
     {
         static constexpr bool vector_space = is_vector_space_v<EXPR>;
         static constexpr bool algebra = is_algebra_v<EXPR>;

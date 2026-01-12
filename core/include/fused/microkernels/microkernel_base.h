@@ -108,9 +108,9 @@ constexpr my_size_t BITS = 128;
 using DefaultArch = X86_SSE;
 
 #else
-#pragma message "[COMPILE-TIME] Using GenericArch arch"
+#pragma message "[COMPILE-TIME] Using GENERICARCH arch"
 constexpr my_size_t BITS = 0;
-using DefaultArch = GenericArch;
+using DefaultArch = GENERICARCH;
 #endif
 
 constexpr my_size_t DATA_ALIGNAS = BITS / 8;

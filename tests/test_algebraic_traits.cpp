@@ -3,12 +3,14 @@
 #include "fused/fused_matrix.h"
 #include "algebra/algebraic_traits.h"
 #include "utilities.h"
+#include "expr_diag.h"
 
 TEST_CASE("Algebraic traits", "[algebraic_traits]")
 {
     SECTION("FusedTensorND")
     {
-        FusedTensorND<double, 3, 3> fmat1, fmat2;
+        FusedTensorND<double, 3, 2> fmat1, fmat2;
+        FusedTensorND<double, 2, 3> fmat4;
         using Tensor = FusedTensorND<double, 3, 3>;
         using Matrix = FusedMatrix<double, 3, 3>;
 
@@ -27,10 +29,12 @@ TEST_CASE("Algebraic traits", "[algebraic_traits]")
         static_assert(algebra::is_tensor_v<Tensor>,
                       "FusedTensorND should be tensor");
 
-        static_assert(!algebra::is_vector_space_v<BaseExpr<Tensor, float>>); // false since we don't have BaseExpr specialization
+        static_assert(!algebra::is_vector_space_v<BaseExpr<Tensor>>); // false since we don't have BaseExpr specialization
 
-        auto fmat3 = fmat1 + fmat2 + fmat2;
+        auto fmat3 = fmat1 + fmat2 + fmat4.transpose_view<1, 0>() + (double)2.0 + (double)3.0;
 
-        std ::cout << demangleTypeName(typeid(fmat3)) << std::endl;
+        // std ::cout << demangleTypeName(typeid(fmat3)) << std::endl;
+
+        expr_diag::print_expr<decltype(fmat3)>();
     }
 }

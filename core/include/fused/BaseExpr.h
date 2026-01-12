@@ -1,10 +1,17 @@
 #pragma once
 
+namespace detail
+{
+    struct BaseExprTag
+    {
+    };
+}
+
 // ===============================
 // Base Expression Interface (CRTP)
 // ===============================
-template <typename Derived, typename T>
-class BaseExpr
+template <typename Derived>
+class BaseExpr : public detail::BaseExprTag
 {
 public:
     const Derived &derived() const

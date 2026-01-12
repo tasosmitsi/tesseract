@@ -30,7 +30,7 @@ struct TensorKernels
         // SIMD loop
         for (my_size_t i = 0; i < simdSteps; ++i)
         {
-            auto val = expr.evalu(i * simdWidth);
+            auto val = expr.template evalu<T, Bits, Arch>(i * simdWidth);
             // Contiguous case — fast path
             K::store(output + i * simdWidth, val);
         }

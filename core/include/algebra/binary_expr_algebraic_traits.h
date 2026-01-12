@@ -1,16 +1,15 @@
 #pragma once
 
 // Forward declare BinaryExpr
-template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
+template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op>
 class BinaryExpr;
 
 namespace algebra
 {
     // Propagate traits for BinaryExpr
     template <typename LHS, typename RHS,
-              template <typename, my_size_t, typename> class Op,
-              typename T, my_size_t Bits, typename Arch>
-    struct algebraic_traits<BinaryExpr<LHS, RHS, Op, T, Bits, Arch>>
+              template <typename, my_size_t, typename> class Op>
+    struct algebraic_traits<BinaryExpr<LHS, RHS, Op>>
     {
         static constexpr bool vector_space = is_vector_space_v<LHS> && is_vector_space_v<RHS>;
         static constexpr bool algebra = is_algebra_v<LHS> && is_algebra_v<RHS>;
