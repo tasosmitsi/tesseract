@@ -27,30 +27,34 @@ class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op>>
     static_assert(dims_match<LHS::NumDims>(LHS::Dim, RHS::Dim),
                   "BinaryExpr: there is at least one dimension mismatch");
 #endif
-// TODO: runtime checks should be here and not in the operators (in this constructor?)
-// Or not, because in the case of the permuted views? We don't want checks there...
+    // TODO: runtime checks should be here and not in the operators (in this constructor?)
+    // Or not, because in the case of the permuted views? We don't want checks there...
 
     const LHS &_lhs;
     const RHS &_rhs;
-    using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
+
 public:
     // Expose compile-time shape constants
     static constexpr my_size_t NumDims = LHS::NumDims;
     static constexpr const my_size_t *Dim = LHS::Dim;
     static constexpr my_size_t TotalSize = LHS::TotalSize;
+    using value_type = typename LHS::value_type;
 
     BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
 
     template <my_size_t length>
-    inline T operator()(my_size_t (&indices)[length]) const noexcept
+    inline auto operator()(my_size_t (&indices)[length]) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
+        using T = std::decay_t<decltype(_lhs(indices))>; // TODO: get rid of std
+        return Op<T, 0, GENERICARCH>::apply(_lhs(indices), _rhs(indices));
     }
 
-    // template <my_size_t length>
-    inline type evalu(const my_size_t flat) const noexcept
+    template <typename T, my_size_t Bits, typename Arch>
+    typename Op<T, Bits, Arch>::type evalu(my_size_t flat) const noexcept
     {
-        return Op<T, Bits, Arch>::apply(_lhs.evalu(flat), _rhs.evalu(flat));
+        return Op<T, Bits, Arch>::apply(
+            _lhs.template evalu<T, Bits, Arch>(flat),
+            _rhs.template evalu<T, Bits, Arch>(flat));
     }
 
     // Forward getNumDims to _lhs
@@ -71,8 +75,9 @@ public:
     }
 
 protected:
-    inline T operator()(const my_size_t *indices) const noexcept
+    inline auto operator()(const my_size_t *indices) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_lhs(indices), _rhs(indices));
+        using T = std::decay_t<decltype(_lhs(indices))>; // TODO: get rid of std
+        return Op<T, 0, GENERICARCH>::apply(_lhs(indices), _rhs(indices));
     }
 };
