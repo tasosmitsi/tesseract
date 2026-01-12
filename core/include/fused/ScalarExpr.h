@@ -1,34 +1,47 @@
 #pragma once
 #include "fused/BaseExpr.h"
 #include "fused/Operations.h"
+#include "simple_type_traits.h"
 
 // ===============================
 // Scalar Expression Template
 // ===============================
-template <typename EXPR, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
-class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, Op, T, Bits, Arch>, T>
+template <
+    typename EXPR,
+    typename ScalarT,
+    template <typename, my_size_t, typename> class Op>
+class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, ScalarT, Op>>
 {
+    // Compile-time check that EXPR value_type and ScalarT are the same
+    static_assert(is_same_v<typename EXPR::value_type, ScalarT>,
+                  "ScalarExprRHS: EXPR value_type and ScalarT must be the same");
+
     const EXPR &_expr;
-    T _scalar;
-    using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
+    ScalarT _scalar;
 
 public:
     static constexpr my_size_t NumDims = EXPR::NumDims;
     static constexpr const my_size_t *Dim = EXPR::Dim;
     static constexpr my_size_t TotalSize = EXPR::TotalSize;
+    using value_type = typename EXPR::value_type;
 
-    ScalarExprRHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
+    ScalarExprRHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>
-    T operator()(my_size_t (&indices)[length]) const noexcept
+    inline auto operator()(my_size_t (&indices)[length]) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar); // expr op scalar
+        using T = std::decay_t<decltype(_expr(indices))>;
+        return Op<T, 0, GENERICARCH>::apply(
+            _expr(indices),
+            _scalar);
     }
 
-    // template <my_size_t length>
-    type evalu(const my_size_t flat) const noexcept
+    template <typename T, my_size_t Bits, typename Arch>
+    inline typename Op<T, Bits, Arch>::type evalu(const my_size_t flat) const noexcept
     {
-        return Op<T, Bits, Arch>::apply(_expr.evalu(flat), _scalar);
+        return Op<T, Bits, Arch>::apply(
+            _expr.template evalu<T, Bits, Arch>(flat),
+            _scalar);
     }
 
     my_size_t getNumDims() const noexcept
@@ -47,36 +60,51 @@ public:
     }
 
 protected:
-    inline T operator()(const my_size_t *indices) const noexcept
+    inline auto operator()(const my_size_t *indices) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_expr(indices), _scalar);
+        using T = std::decay_t<decltype(_expr(indices))>;
+        return Op<T, 0, GENERICARCH>::apply(
+            _expr(indices),
+            _scalar);
     }
 };
 
-template <typename EXPR, template <typename, my_size_t, typename> class Op, typename T, my_size_t Bits, typename Arch>
-class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, Op, T, Bits, Arch>, T>
+template <
+    typename EXPR,
+    typename ScalarT,
+    template <typename, my_size_t, typename> class Op>
+class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, ScalarT, Op>>
 {
+    // Compile-time check that EXPR value_type and ScalarT are the same
+    static_assert(is_same_v<typename EXPR::value_type, ScalarT>,
+                  "ScalarExprRHS: EXPR value_type and ScalarT must be the same");
+
     const EXPR &_expr;
-    T _scalar;
-    using type = typename Op<T, Bits, Arch>::type; // alias for easier usage
+    ScalarT _scalar;
 
 public:
     static constexpr my_size_t NumDims = EXPR::NumDims;
     static constexpr const my_size_t *Dim = EXPR::Dim;
     static constexpr my_size_t TotalSize = EXPR::TotalSize;
+    using value_type = typename EXPR::value_type;
 
-    ScalarExprLHS(const EXPR &expr, T scalar) : _expr(expr), _scalar(scalar) {}
+    ScalarExprLHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
 
     template <my_size_t length>
-    T operator()(my_size_t (&indices)[length]) const noexcept
+    auto operator()(my_size_t (&indices)[length]) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices)); // expr op scalar
+        using T = std::decay_t<decltype(_expr(indices))>;
+        return Op<T, 0, GENERICARCH>::apply(
+            _scalar,
+            _expr(indices));
     }
 
-    // template <my_size_t length>
-    type evalu(const my_size_t flat) const noexcept
+    template <typename T, my_size_t Bits, typename Arch>
+    inline typename Op<T, Bits, Arch>::type evalu(const my_size_t flat) const noexcept
     {
-        return Op<T, Bits, Arch>::apply(_scalar, _expr.evalu(flat));
+        return Op<T, Bits, Arch>::apply(
+            _scalar,
+            _expr.template evalu<T, Bits, Arch>(flat));
     }
 
     my_size_t getNumDims() const noexcept
@@ -95,8 +123,11 @@ public:
     }
 
 protected:
-    inline T operator()(const my_size_t *indices) const noexcept
+    inline auto operator()(const my_size_t *indices) const noexcept
     {
-        return Op<T, Bits, GenericArch>::apply(_scalar, _expr(indices));
+        using T = std::decay_t<decltype(_expr(indices))>;
+        return Op<T, 0, GENERICARCH>::apply(
+            _scalar,
+            _expr(indices));
     }
 };

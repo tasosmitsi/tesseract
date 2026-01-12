@@ -104,7 +104,7 @@ public:
 
     // Assignment from expression template (tested)
     template <typename Expr>
-    FusedMatrix &operator=(const BaseExpr<Expr, T> &expr)
+    FusedMatrix &operator=(const BaseExpr<Expr> &expr)
     {
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("FusedMatrix assignment from expression", ErrorLevel::Info);
@@ -250,7 +250,7 @@ public:
 
     // matmul using einsum of parent class
     template <typename LeftExpr, typename RightExpr>
-    static FusedMatrix<T, Rows, Cols> matmul(const BaseExpr<LeftExpr, T> &mat1, const BaseExpr<RightExpr, T> &mat2)
+    static FusedMatrix<T, Rows, Cols> matmul(const BaseExpr<LeftExpr> &mat1, const BaseExpr<RightExpr> &mat2)
     {
         return {FusedTensorND<T, Rows, Cols>::einsum(mat1, mat2, 1, 0)};
     }
