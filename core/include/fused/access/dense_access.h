@@ -3,7 +3,6 @@
 
 #include "fused/storage/static_storage.h"
 #include "fill_n_optimized.h"
-#include "copy_n_optimized.h"
 
 template <typename T, my_size_t Size, template <typename, my_size_t> class StoragePolicy = StaticStorage>
 
@@ -20,44 +19,16 @@ public:
     }
 
     // Copy constructor
-    DenseAccess(const DenseAccess &other)
-    {
-        if (this == &other)
-            return; // Handle self-assignment
-        copy_n_optimized(other.data_.data(), data_.data(), Size);
-    }
+    DenseAccess(const DenseAccess &other) = default;
 
     // Move constructor
-    DenseAccess(DenseAccess &&other) noexcept
-    {
-        if (this == &other)
-            return; // Handle self-assignment
-        std::move(other.data_.data(), other.data_.data() + Size, data_.data());
-        // reset other
-        fill_n_optimized(other.data_.data(), Size, T{});
-    }
+    DenseAccess(DenseAccess &&other) = default;
 
     // Copy assignment
-    DenseAccess &operator=(const DenseAccess &other)
-    {
-        if (this != &other)
-        {
-            copy_n_optimized(other.data_.data(), data_.data(), Size);
-        }
-        return *this;
-    }
+    DenseAccess &operator=(const DenseAccess &other) = default;
 
     // Move assignment
-    DenseAccess &operator=(DenseAccess &&other) noexcept
-    {
-        if (this != &other)
-        {
-            std::move(other.data_.data(), other.data_.data() + Size, data_.data());
-            // reset other
-            fill_n_optimized(other.data_.data(), Size, T{});
-        }
-        return *this;
-    }
+    DenseAccess &operator=(DenseAccess &&other) = default;
 
     // Forwarding accessors
     FORCE_INLINE constexpr T &operator[](my_size_t idx) noexcept { return data_[idx]; }
