@@ -100,30 +100,84 @@ struct is_same<T, T>
 template <typename A, typename B>
 inline constexpr bool is_same_v = is_same<A, B>::value;
 
-/*
-Usage examples:
+// ===============================
+// Remove Reference Qualifiers
+// ===============================
 
-// 1. Check POD at compile-time
-static_assert(is_pod<int>::value, "int is POD");
-static_assert(!is_pod<void*>::value, "void* is not specialized POD");
-
-// 2. Type comparison
-static_assert(is_same<int, int>::value, "int == int");
-static_assert(!is_same<int, float>::value, "int != float");
-
-// 3. Using the helper variable
-if constexpr (is_same_v<int, float>) {
-    // This block won't compile/run
-}
-
-// 4. Generic usage in templates
 template <typename T>
-void foo() {
-    if constexpr (is_pod_v<T>) {
-        // Only for POD types
-    }
+struct remove_reference
+{
+    using type = T;
+};
+
+template <typename T>
+struct remove_reference<T &>
+{
+    using type = T;
+};
+
+template <typename T>
+struct remove_reference<T &&>
+{
+    using type = T;
+};
+
+template <typename T>
+using remove_reference_t = typename remove_reference<T>::type;
+
+// ===============================
+// Remove CV Qualifiers
+// ===============================
+
+template <typename T>
+struct remove_cv
+{
+    using type = T;
+};
+
+template <typename T>
+struct remove_cv<const T>
+{
+    using type = T;
+};
+
+template <typename T>
+struct remove_cv<volatile T>
+{
+    using type = T;
+};
+
+template <typename T>
+struct remove_cv<const volatile T>
+{
+    using type = T;
+};
+
+template <typename T>
+using remove_cv_t = typename remove_cv<T>::type;
+
+// ===============================
+// Remove CV and Reference Qualifiers
+// ===============================
+template <typename T>
+struct remove_cvref
+{
+    using type = remove_cv_t<remove_reference_t<T>>;
+};
+
+// Helper type alias
+template <typename T>
+using remove_cvref_t = typename remove_cvref<T>::type;
+
+// ===============================
+// std::move Replacement
+// ===============================
+
+template <typename T>
+[[nodiscard]] constexpr remove_reference_t<T> &&move(T &&t) noexcept
+{
+    return static_cast<remove_reference_t<T> &&>(t);
 }
-*/
 
 // ===============================
 // Compile-time Base Class Check
@@ -147,5 +201,40 @@ struct is_base_of
 
 template <typename Base, typename Derived>
 inline constexpr bool is_base_of_v = is_base_of<Base, Derived>::value;
+
+/*
+Usage examples:
+
+// 1. Check POD at compile-time
+static_assert(is_pod<int>::value, "int is POD");
+static_assert(!is_pod<void*>::value, "void* is not specialized POD");
+
+// 2. Type comparison
+static_assert(is_same<int, int>::value, "int == int");
+static_assert(!is_same<int, float>::value, "int != float");
+
+// 3. Using the helper variable
+if constexpr (is_same_v<int, float>) {
+    // This block won't compile/run
+}
+
+// 4. Generic usage in templates
+template <typename T>
+void foo() {
+    if constexpr (is_pod_v<T>) {
+        // Only for POD types
+    }
+}
+
+// 5. Remove CV and Reference qualifiers
+using CleanType = remove_cvref_t<const volatile int&>; // CleanType is int
+
+// 6. Check base class relationship
+static_assert(is_base_of_v<std::exception, std::runtime_error>, "std::exception is base of std::runtime_error");
+
+// 7. Using move
+std::string str = "Hello";
+std::string newStr = move(str); // Transfers ownership
+*/
 
 #endif // SIMPLE_TYPE_TRAITS_HPP
