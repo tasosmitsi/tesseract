@@ -1,6 +1,7 @@
 #ifndef FUSEDMATRIX_H
 #define FUSEDMATRIX_H
 
+#include "simple_type_traits.h"
 #include "fused/fused_tensor.h"
 #include "matrix_algorithms.h"
 #include "matrix_traits.h"
@@ -39,7 +40,7 @@ public:
 
     // Move constructor from another FusedMatrix (tested)
     FusedMatrix(FusedMatrix &&other) noexcept
-        : FusedTensorND<T, Rows, Cols>(std::move(other))
+        : FusedTensorND<T, Rows, Cols>(move(other))
     {
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("Move constructor from another FusedMatrix", ErrorLevel::Info);
@@ -48,7 +49,7 @@ public:
 
     // Move constructor from base class (tested)
     FusedMatrix(FusedTensorND<T, Rows, Cols> &&baseTensor) noexcept
-        : FusedTensorND<T, Rows, Cols>(std::move(baseTensor))
+        : FusedTensorND<T, Rows, Cols>(move(baseTensor))
     {
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("Move constructor from base class FusedTensorND", ErrorLevel::Info);
@@ -78,7 +79,7 @@ public:
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("Static method to create a FusedMatrix from a FusedTensorND", ErrorLevel::Info);
 #endif
-        return FusedMatrix(std::move(tensor));
+        return FusedMatrix(move(tensor));
     }
 
     // method to copy this as a FusedTensorND (tested)
@@ -98,7 +99,7 @@ public:
         MyErrorHandler::log("Move a FusedMatrix to FusedTensorND", ErrorLevel::Info);
 #endif
         // Cast to base class to ensure correct type
-        return FusedTensorND<T, Rows, Cols>(std::move(*this));
+        return FusedTensorND<T, Rows, Cols>(move(*this));
     }
     /*---------------------------------------*/
 
@@ -145,7 +146,7 @@ public:
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("FusedMatrix move assignment from FusedTensorND", ErrorLevel::Info);
 #endif
-        FusedTensorND<T, Rows, Cols>::operator=(std::move(other));
+        FusedTensorND<T, Rows, Cols>::operator=(move(other));
         return *this;
     }
 
@@ -155,7 +156,7 @@ public:
 #ifdef DEBUG_FUSED_MATRIX
         MyErrorHandler::log("FusedMatrix move assignment from FusedMatrix", ErrorLevel::Info);
 #endif
-        FusedTensorND<T, Rows, Cols>::operator=(std::move(other));
+        FusedTensorND<T, Rows, Cols>::operator=(move(other));
         return *this;
     }
 

@@ -54,6 +54,12 @@ public:
     PermutedViewConstExpr(PermutedViewConstExpr &&) = delete;
     PermutedViewConstExpr &operator=(PermutedViewConstExpr &&) = delete;
 
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        return t_.may_alias(output); // recurse to underlying tensor
+    }
+
     // Const version of the access operator, because this is a view
     template <typename... Indices>
         requires(sizeof...(Indices) == NumDims)

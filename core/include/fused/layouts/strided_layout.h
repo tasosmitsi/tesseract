@@ -13,52 +13,21 @@ struct StridedLayout
 
     StridedLayout(const my_size_t dims[NumberOfDims]) noexcept
     {
-        for (my_size_t i = 0; i < NumberOfDims; ++i)
-            shape[i] = dims[i];
-
+        copy_n_optimized(dims, shape, NumberOfDims);
         compute_row_major_strides();
     }
 
     // copy constructor
-    StridedLayout(const StridedLayout &other) noexcept
-    {
-        if (this == &other)
-            return; // Handle self-assignment
-        copy_n_optimized(other.shape, shape, NumberOfDims);
-        copy_n_optimized(other.stride, stride, NumberOfDims);
-    }
+    StridedLayout(const StridedLayout &other) = default;
 
     // move constructor
-    StridedLayout(StridedLayout &&other) noexcept
-    {
-        if (this == &other)
-            return; // Handle self-assignment
-        std::move(other.shape, other.shape + NumberOfDims, shape);
-        std::move(other.stride, other.stride + NumberOfDims, stride);
-        // reset other
-        fill_n_optimized(other.shape, NumberOfDims, my_size_t{0});
-        fill_n_optimized(other.stride, NumberOfDims, my_size_t{0});
-    }
+    StridedLayout(StridedLayout &&other) = default;
 
     // copy assignment
-    StridedLayout &operator=(const StridedLayout &other) noexcept
-    {
-        if (this == &other)
-            return *this; // Handle self-assignment
-        copy_n_optimized(other.shape, shape, NumberOfDims);
-        copy_n_optimized(other.stride, stride, NumberOfDims);
-        return *this;
-    }
+    StridedLayout &operator=(const StridedLayout &other) = default;
 
     // move assignment
-    StridedLayout &operator=(StridedLayout &&other) noexcept
-    {
-        if (this == &other)
-            return *this; // Handle self-assignment
-        std::move(other.shape, other.shape + NumberOfDims, shape);
-        std::move(other.stride, other.stride + NumberOfDims, stride);
-        return *this;
-    }
+    StridedLayout &operator=(StridedLayout &&other) = default;
 
     FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return NumberOfDims; }
 

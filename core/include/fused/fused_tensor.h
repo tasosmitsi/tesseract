@@ -1,8 +1,6 @@
 #ifndef FUSEDTENSORND_H
 #define FUSEDTENSORND_H
 
-// #include <algorithm> // for std::fill_n and std::copy
-#include <utility> // for std::move
 #include <random>
 
 #include "copy_n_optimized.h"
@@ -64,7 +62,7 @@ public:
 
     // Move constructor
     FusedTensorND(FusedTensorND &&other) noexcept
-        : data_(std::move(other.data_)), layout_(std::move(other.layout_)) // invoke move constructor of AccessPolicy
+        : data_(move(other.data_)), layout_(move(other.layout_)) // invoke move constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
@@ -78,6 +76,21 @@ public:
         }
     }
 
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        // So the if constexpr is an optimization — when the compiler knows aliasing is impossible,
+        // it skips the check. When it can't know (same type), it defers to runtime.
+        if constexpr (is_same_v<remove_cvref_t<Output>, FusedTensorND>)
+        {
+            return this == &output;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     template <typename Expr>
     FusedTensorND &operator=(const BaseExpr<Expr> &expr)
     {
@@ -85,6 +98,11 @@ public:
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
+
+        if (e.may_alias(*this))
+        {
+            MyErrorHandler::log("Aliasing detected in assignment operator", ErrorLevel::Warning);
+        }
 
         // check if the dimensions match at compile time
         if constexpr (NumDims != Expr::NumDims)
@@ -177,10 +195,10 @@ public:
         }
 
         // Copy the layout
-        layout_ = std::move(other.layout_); // calls the move assignment of StridedLayout
+        layout_ = move(other.layout_); // calls the move assignment of StridedLayout
 
         // Move the data
-        data_ = std::move(other.data_); // calls the move assignment of AccessPolicy
+        data_ = move(other.data_); // calls the move assignment of AccessPolicy
         return *this;
     }
 
@@ -608,11 +626,11 @@ private:
     static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions TODO: can be replace by Dim[] compile time constant
 
     // Example of using different access and storage policies
-    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>;
-    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage
+    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>; // tested
+    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>; // tested
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>; // something is wrong here
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>; // something is wrong here
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage // something is wrong here
     using AccessPolicy = DenseAccess<T, TotalSize>; // default is static storage
     AccessPolicy data_;
 

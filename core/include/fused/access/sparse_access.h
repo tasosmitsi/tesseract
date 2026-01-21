@@ -3,6 +3,7 @@
 
 #include "fused/storage/static_storage.h"
 #include "fill_n_optimized.h"
+#include "simple_type_traits.h"  // for move
 
 template <
     typename T,
@@ -37,26 +38,15 @@ public:
 
     // Copy constructor
     SparseAccess(const SparseAccess &other)
+        : values_(other.values_), indices_(other.indices_), current_size_(other.current_size_)
     {
-        if (this == &other)
-            return; // Handle self-assignment
-        copy_n_optimized(other.values_.data(), values_.data(), NonZeroCount);
-        copy_n_optimized(other.indices_.data(), indices_.data(), NonZeroCount);
-        current_size_ = other.current_size_;
     }
 
     // Move constructor
     SparseAccess(SparseAccess &&other) noexcept
+        : values_(move(other.values_)), indices_(move(other.indices_)), current_size_(other.current_size_)
     {
-        if (this == &other)
-            return; // Handle self-assignment
-        std::move(other.values_.data(), other.values_.data() + NonZeroCount, values_.data());
-        std::move(other.indices_.data(), other.indices_.data() + NonZeroCount, indices_.data());
-        current_size_ = other.current_size_;
-        // reset other
-        fill_n_optimized(other.indices_.data(), NonZeroCount, IndexType(-1));
-        fill_n_optimized(other.values_.data(), NonZeroCount, T{});
-        other.current_size_ = 0;
+        other.current_size_ = 0; // only reset logical size
     }
 
     // Copy assignment
@@ -64,9 +54,10 @@ public:
     {
         if (this != &other)
         {
-            copy_n_optimized(other.values_.data(), values_.data(), NonZeroCount);
-            copy_n_optimized(other.indices_.data(), indices_.data(), NonZeroCount);
+            values_ = other.values_;
+            indices_ = other.indices_;
             current_size_ = other.current_size_;
+            last_idx_ = 0; // keep — old cache is stale
         }
         return *this;
     }
@@ -76,13 +67,10 @@ public:
     {
         if (this != &other)
         {
-            std::move(other.values_.data(), other.values_.data() + NonZeroCount, values_.data());
-            std::move(other.indices_.data(), other.indices_.data() + NonZeroCount, indices_.data());
+            values_ = move(other.values_);
+            indices_ = move(other.indices_);
             current_size_ = other.current_size_;
-
-            // reset other
-            fill_n_optimized(other.indices_.data(), NonZeroCount, IndexType(-1));
-            fill_n_optimized(other.values_.data(), NonZeroCount, T{});
+            last_idx_ = 0; // keep — old cache is stale
             other.current_size_ = 0;
         }
         return *this;
