@@ -1,8 +1,6 @@
 #ifndef FUSEDTENSORND_H
 #define FUSEDTENSORND_H
 
-// #include <algorithm> // for std::fill_n and std::copy
-#include <utility> // for std::move
 #include <random>
 
 #include "copy_n_optimized.h"
@@ -64,7 +62,7 @@ public:
 
     // Move constructor
     FusedTensorND(FusedTensorND &&other) noexcept
-        : data_(std::move(other.data_)), layout_(std::move(other.layout_)) // invoke move constructor of AccessPolicy
+        : data_(move(other.data_)), layout_(move(other.layout_)) // invoke move constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
@@ -177,10 +175,10 @@ public:
         }
 
         // Copy the layout
-        layout_ = std::move(other.layout_); // calls the move assignment of StridedLayout
+        layout_ = move(other.layout_); // calls the move assignment of StridedLayout
 
         // Move the data
-        data_ = std::move(other.data_); // calls the move assignment of AccessPolicy
+        data_ = move(other.data_); // calls the move assignment of AccessPolicy
         return *this;
     }
 
