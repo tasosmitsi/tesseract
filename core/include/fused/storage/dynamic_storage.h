@@ -1,20 +1,22 @@
 #ifndef DYNAMIC_STORAGE_H
 #define DYNAMIC_STORAGE_H
 
-#include <cstdlib>   // for malloc, free
-#include <cstring>   // for memcpy
-#include <stdexcept> // for exceptions
-#include <utility>   // for std::move
+#include <cstdlib> // for aligned_alloc, free
+#include <new>     // for std::bad_alloc (not <stdexcept>)
+#include "config.h"
+#include "fused/microkernels/microkernel_base.h"
 
 template <typename T, my_size_t N>
 class DynamicStorage
 {
+    T *_data = nullptr;
+
 public:
     // Constructor: allocate memory for N elements
     DynamicStorage()
     {
         // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
-        _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
+        _data = static_cast<T *>(std::aligned_alloc(DATA_ALIGNAS, N * sizeof(T)));
 
         if (!_data)
         {
@@ -32,10 +34,10 @@ public:
     DynamicStorage(const DynamicStorage &other)
     {
         // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
-        _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
+        _data = static_cast<T *>(std::aligned_alloc(DATA_ALIGNAS, N * sizeof(T)));
         if (!_data)
             throw std::bad_alloc();
-        std::memcpy(_data, other._data, N * sizeof(T));
+        __builtin_memcpy(_data, other._data, N * sizeof(T));
     }
 
     // Move constructor
@@ -51,10 +53,9 @@ public:
         {
             if (!_data)
             {
-                // _data = static_cast<T *>(std::malloc(N * sizeof(T)));
-                _data = static_cast<T *>(std::aligned_alloc(64, N * sizeof(T))); // 64-byte aligned
+                _data = static_cast<T *>(std::aligned_alloc(DATA_ALIGNAS, N * sizeof(T)));
             }
-            std::memcpy(_data, other._data, N * sizeof(T));
+            __builtin_memcpy(_data, other._data, N * sizeof(T));
         }
         return *this;
     }
@@ -72,8 +73,8 @@ public:
     }
 
     // Element access
-    FORCE_INLINE constexpr T &operator[](size_t idx) noexcept { return _data[idx]; }
-    FORCE_INLINE constexpr const T &operator[](size_t idx) const noexcept { return _data[idx]; }
+    FORCE_INLINE constexpr T &operator[](my_size_t idx) noexcept { return _data[idx]; }
+    FORCE_INLINE constexpr const T &operator[](my_size_t idx) const noexcept { return _data[idx]; }
 
     FORCE_INLINE constexpr T *data() noexcept { return _data; }
     FORCE_INLINE constexpr const T *data() const noexcept { return _data; }
@@ -83,9 +84,6 @@ public:
 
     FORCE_INLINE constexpr T *end() noexcept { return _data + N; }
     FORCE_INLINE constexpr const T *end() const noexcept { return _data + N; }
-
-private:
-    T *_data = nullptr;
 };
 
 #endif // DYNAMIC_STORAGE_H

@@ -1,6 +1,7 @@
 #ifndef STATIC_STORAGE_H
 #define STATIC_STORAGE_H
 
+#include "config.h"
 #include "fused/microkernels/microkernel_base.h"
 
 template <typename T, my_size_t Size>
