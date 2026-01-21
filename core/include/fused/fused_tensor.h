@@ -626,11 +626,11 @@ private:
     static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions TODO: can be replace by Dim[] compile time constant
 
     // Example of using different access and storage policies
-    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>;
-    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>;
-    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage
+    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>; // tested
+    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>; // tested
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>; // something is wrong here
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>; // something is wrong here
+    // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage // something is wrong here
     using AccessPolicy = DenseAccess<T, TotalSize>; // default is static storage
     AccessPolicy data_;
 
