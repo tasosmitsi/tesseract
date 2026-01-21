@@ -76,6 +76,21 @@ public:
         }
     }
 
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        // So the if constexpr is an optimization — when the compiler knows aliasing is impossible,
+        // it skips the check. When it can't know (same type), it defers to runtime.
+        if constexpr (is_same_v<remove_cvref_t<Output>, FusedTensorND>)
+        {
+            return this == &output;
+        }
+        else
+        {
+            return false;
+        }
+    }
+
     template <typename Expr>
     FusedTensorND &operator=(const BaseExpr<Expr> &expr)
     {
@@ -83,6 +98,11 @@ public:
         MyErrorHandler::log("FusedTensorND assignment operator called", ErrorLevel::Info);
 #endif
         const auto &e = expr.derived();
+
+        if (e.may_alias(*this))
+        {
+            MyErrorHandler::log("Aliasing detected in assignment operator", ErrorLevel::Warning);
+        }
 
         // check if the dimensions match at compile time
         if constexpr (NumDims != Expr::NumDims)

@@ -42,6 +42,12 @@ public:
 
     BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
 
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        return _lhs.may_alias(output) || _rhs.may_alias(output);
+    }
+
     template <my_size_t length>
     inline auto operator()(my_size_t (&indices)[length]) const noexcept
     {

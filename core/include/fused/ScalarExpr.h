@@ -27,6 +27,12 @@ public:
 
     ScalarExprRHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
 
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        return _expr.may_alias(output);
+    }
+
     template <my_size_t length>
     inline auto operator()(my_size_t (&indices)[length]) const noexcept
     {
@@ -89,6 +95,12 @@ public:
     using value_type = typename EXPR::value_type;
 
     ScalarExprLHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
+
+    template <typename Output>
+    bool may_alias(const Output &output) const noexcept
+    {
+        return _expr.may_alias(output);
+    }
 
     template <my_size_t length>
     auto operator()(my_size_t (&indices)[length]) const noexcept
