@@ -1,6 +1,6 @@
 # Compiler
-CXX = g++-12
-CC = gcc-12
+CXX = g++-14
+CC = gcc-14
 
 # Check if using Clang
 CXX_IS_CLANG := $(shell $(CXX) --version | grep -i -q clang && echo 1 || echo 0)
