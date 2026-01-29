@@ -251,6 +251,8 @@ namespace expr_diag
                               : (op == "Sub") ? " − "
                               : (op == "Mul") ? " · "
                               : (op == "Div") ? " / "
+                              : (op == "Min") ? " ∧ "
+                              : (op == "Max") ? " ∨ "
                                               : " ? ";
             return "(" + lhs + sym + rhs + ")";
         }
@@ -274,6 +276,8 @@ namespace expr_diag
                               : (op == "Sub") ? " − "
                               : (op == "Mul") ? " · "
                               : (op == "Div") ? " / "
+                              : (op == "Min") ? " ∧ "
+                              : (op == "Max") ? " ∨ "
                                               : " ? ";
             return "(" + expr + sym + scalar + ")";
         }

@@ -114,3 +114,45 @@ struct Div
         return microkernel::div(scalar, a);
     }
 };
+
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Min
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b) noexcept
+    {
+        return microkernel::min(a, b);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::min(a, scalar);
+    }
+
+    // commutative — no need for scalar-vec variant
+};
+
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Max
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b) noexcept
+    {
+        return microkernel::max(a, b);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T scalar) noexcept
+    {
+        return microkernel::max(a, scalar);
+    }
+
+    // commutative — no need for scalar-vec variant
+};

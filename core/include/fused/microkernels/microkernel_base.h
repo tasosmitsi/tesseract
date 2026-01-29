@@ -30,6 +30,8 @@ struct Microkernel
     FORCE_INLINE static VecType mul(VecType a, VecType b) noexcept;
     FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept;
     FORCE_INLINE static VecType div(VecType a, VecType b) noexcept;
+    FORCE_INLINE static VecType min(VecType a, VecType b) noexcept;
+    FORCE_INLINE static VecType max(VecType a, VecType b) noexcept;
 
     // // Vector-scalar operations (using set1 internally)
     // template <typename Vec = VecType, typename Scalar = T>

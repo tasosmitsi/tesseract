@@ -42,6 +42,12 @@ struct Microkernel<float, 256, X86_AVX>
 
     FORCE_INLINE static VecType fmadd(VecType a, VecType b, VecType c) noexcept { return _mm256_fmadd_ps(a, b, c); }
 
+    FORCE_INLINE static VecType min(VecType a, VecType b) noexcept { return _mm256_min_ps(a, b); }
+    FORCE_INLINE static VecType min(VecType a, ScalarType b) noexcept { return _mm256_min_ps(a, set1(b)); }
+
+    FORCE_INLINE static VecType max(VecType a, VecType b) noexcept { return _mm256_max_ps(a, b); }
+    FORCE_INLINE static VecType max(VecType a, ScalarType b) noexcept { return _mm256_max_ps(a, set1(b)); }
+
     // ============================================================================
     // Gather: non-contiguous load using index list
     // ============================================================================
@@ -101,6 +107,12 @@ struct Microkernel<double, 256, X86_AVX>
     FORCE_INLINE static VecType div(ScalarType a, VecType b) noexcept { return _mm256_div_pd(set1(a), b); }
 
     FORCE_INLINE static VecType fmadd(VecType a, VecType b, VecType c) noexcept { return _mm256_fmadd_pd(a, b, c); }
+
+    FORCE_INLINE static VecType min(VecType a, VecType b) noexcept { return _mm256_min_pd(a, b); }
+    FORCE_INLINE static VecType min(VecType a, ScalarType b) noexcept { return _mm256_min_pd(a, set1(b)); }
+
+    FORCE_INLINE static VecType max(VecType a, VecType b) noexcept { return _mm256_max_pd(a, b); }
+    FORCE_INLINE static VecType max(VecType a, ScalarType b) noexcept { return _mm256_max_pd(a, set1(b)); }
 
     FORCE_INLINE static VecType gather(const ScalarType *base, const my_size_t *indices) noexcept
     {
