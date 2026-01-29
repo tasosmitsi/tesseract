@@ -26,6 +26,29 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK((transposedTensor.transpose_view() + (T)1.0) == (tensor + (T)1.0));
     }
 
+    SECTION("FusedTensorND min/max operators with transpose views as part of the expression")
+    {
+        FusedTensorND<T, 5, 6> fmat1, result;
+        FusedTensorND<T, 6, 5> result_of_transpose;
+
+        fmat1.setSequencial();
+
+        result = min(max(fmat1, (T)5.0), (T)10.0);
+        result_of_transpose = min(max(fmat1.transpose_view(), (T)5.0), (T)10.0);
+
+        // check if all elements are within the range [5.0, 10.0]
+        for (size_t i = 0; i < result.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < result.getDim(1); ++j)
+            {
+                CHECK(result(i, j) >= (T)5.0);
+                CHECK(result(i, j) <= (T)10.0);
+                CHECK(result_of_transpose(j, i) >= (T)5.0);
+                CHECK(result_of_transpose(j, i) <= (T)10.0);
+            }
+        }
+    }
+
     SECTION("FusedTensorND total size, number of dimensions, and shape")
     {
         FusedTensorND<T, 2, 2> tensor;
