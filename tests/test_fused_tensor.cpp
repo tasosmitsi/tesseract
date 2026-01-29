@@ -168,7 +168,7 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK_FALSE(ten1.transpose_view() == ten2);
     }
 
-    SECTION("Check dimensions mismatch and == , != operators")
+    SECTION("Check dimensions mismatch and == , !=, min, max operators")
     {
         // this test should fail when the dimensions of the matrices are not equal
         // and should pass when the dimensions are equal even after transposing one of the matrices
@@ -177,8 +177,13 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 
         CHECK_THROWS(tensor1 == tensor2);
         CHECK_THROWS(tensor1 != tensor2);
+        CHECK_THROWS(min(tensor1, tensor2));
+        CHECK_THROWS(max(tensor1, tensor2));
 
         CHECK_NOTHROW(tensor1 == tensor2.transpose_view());
+        CHECK_NOTHROW(min(tensor1, tensor2.transpose_view()));
+        CHECK_NOTHROW(max(tensor1, tensor2.transpose_view()));
+        
         CHECK_FALSE(tensor1 != tensor2.transpose_view());
     }
 

@@ -120,7 +120,24 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         CHECK_FALSE(mat1.transpose_view() == mat2);
     }
 
-    SECTION("Check dimensions mismatch and == , != operators")
+    SECTION("Matrix min/max operators with transpose views as part of the expression")
+    {
+        mat1.setSequencial();
+
+        mat3 = min(max(mat1.transpose_view(), (T)5.0), (T)10.0);
+
+        // check if all elements are between 5 and 10
+        for (size_t i = 0; i < mat3.getDim(0); ++i)
+        {
+            for (size_t j = 0; j < mat3.getDim(1); ++j)
+            {
+                CHECK(mat3(i, j) >= 5.0);
+                CHECK(mat3(i, j) <= 10.0);
+            }
+        }
+    }
+
+    SECTION("Check dimensions mismatch and == , !=, min, max operators")
     {
         // this test should fail when the dimensions of the matrices are not equal
         // and should pass when the dimensions are equal even after transposing one of the matrices
@@ -129,8 +146,13 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
 
         CHECK_THROWS(matrix1 == matrix2);
         CHECK_THROWS(matrix1 != matrix2);
+        CHECK_THROWS(min(matrix1, matrix2));
+        CHECK_THROWS(max(matrix1, matrix2));
 
         CHECK_NOTHROW(matrix1 == matrix2.transpose_view());
+        CHECK_NOTHROW(min(matrix1, matrix2.transpose_view()));
+        CHECK_NOTHROW(max(matrix1, matrix2.transpose_view()));
+
         CHECK_FALSE(matrix1 != matrix2.transpose_view());
     }
 
