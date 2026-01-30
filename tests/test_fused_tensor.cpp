@@ -49,6 +49,24 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         }
     }
 
+    SECTION("FusedTensorND min/max reduction operators and as part of expression")
+    {
+        FusedTensorND<T, 5, 6> fmat1;
+        fmat1.setSequencial();
+
+        T min_value = min(fmat1);
+        T max_value = max(fmat1);
+
+        CHECK(min_value == (T)0.0);
+        CHECK(max_value == (T)(5 * 6 - 1));
+
+        min_value = min(fmat1 + (T)10.0);
+        max_value = max(fmat1 + (T)10.0);
+
+        CHECK(min_value == (T)10.0);
+        CHECK(max_value == (T)(10.0 + 5 * 6 - 1));
+    }
+
     SECTION("FusedTensorND total size, number of dimensions, and shape")
     {
         FusedTensorND<T, 2, 2> tensor;
@@ -183,7 +201,7 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         CHECK_NOTHROW(tensor1 == tensor2.transpose_view());
         CHECK_NOTHROW(min(tensor1, tensor2.transpose_view()));
         CHECK_NOTHROW(max(tensor1, tensor2.transpose_view()));
-        
+
         CHECK_FALSE(tensor1 != tensor2.transpose_view());
     }
 

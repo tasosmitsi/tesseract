@@ -137,6 +137,23 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         }
     }
 
+    SECTION("Matrix min/max reduction operators and as part of expression")
+    {
+        mat1.setSequencial();
+
+        T min_value = min(mat1);
+        T max_value = max(mat1);
+
+        CHECK(min_value == (T)0.0);
+        CHECK(max_value == (T)(10 * 10 - 1));
+
+        min_value = min(mat1 + (T)10.0);
+        max_value = max(mat1 + (T)10.0);
+
+        CHECK(min_value == (T)10.0);
+        CHECK(max_value == (T)(10 * 10 - 1 + 10));
+    }
+
     SECTION("Check dimensions mismatch and == , !=, min, max operators")
     {
         // this test should fail when the dimensions of the matrices are not equal
