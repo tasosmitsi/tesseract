@@ -10,7 +10,7 @@
 #include "simple_type_traits.h"
 
 #include "fused/BaseExpr.h"
-#include "fused/Operators.h"
+#include "fused/operators/Operators.h"
 #include "fused/microkernels/microkernel_base.h"
 #include "fused/microkernels/kernel_ops.h"
 #include "fused/storage/static_storage.h"
