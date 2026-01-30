@@ -4,6 +4,7 @@
 
 #include "config.h"
 #include "fused/microkernels/microkernel_base.h"
+#include "numeric_limits.h"
 
 // template <typename T, my_size_t Bits, typename Arch, my_size_t... Dims>
 // struct TensorKernels
@@ -156,7 +157,7 @@ struct KernelOps
         const Expr &expr,
         auto &&unravelIndexfn) noexcept
     {
-        typename K::VecType acc = K::set1(std::numeric_limits<T>::max());
+        typename K::VecType acc = K::set1(NumericLimits<T>::max());
 
         // SIMD loop
         for (my_size_t i = 0; i < simdSteps; ++i)
@@ -195,7 +196,7 @@ struct KernelOps
         const Expr &expr,
         auto &&unravelIndexfn) noexcept
     {
-        typename K::VecType acc = K::set1(std::numeric_limits<T>::lowest());
+        typename K::VecType acc = K::set1(NumericLimits<T>::lowest());
 
         // SIMD loop
         for (my_size_t i = 0; i < simdSteps; ++i)
