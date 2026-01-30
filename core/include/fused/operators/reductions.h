@@ -6,7 +6,7 @@
 #include "algebra/algebraic_traits.h"
 
 // ===============================
-// Min/Max/Sum   Reduction Functions
+// Min/Max/Sum Reduction Functions
 // ===============================
 
 template <typename Expr>
