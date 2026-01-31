@@ -114,23 +114,9 @@ public:
             MyErrorHandler::error("Dimensions size mismatch in assignment operator");
         }
 
-        auto unravel = [this](my_size_t i, my_size_t(&indices)[NumDims]) noexcept
-        {
-            this->layout_.compute_indices_from_flat(i, indices);
-        };
+        KernelOps<Expr, BITS, DefaultArch>::eval_vectorized_contiguous(
+            data_.data(), e);
 
-        // Evaluate using vectorized contiguous if architecture supports it
-        if constexpr (!is_same_v<DefaultArch, GENERICARCH>)
-        {
-            KernelOps<Expr, BITS, DefaultArch>::eval_vectorized_contiguous(
-                data_.data(), e, unravel);
-        }
-        else
-        {
-            // Fallback to scalar evaluation if no SIMD support is available
-            KernelOps<Expr, BITS, DefaultArch>::eval_scalar(
-                data_.data(), e, unravel);
-        }
         return *this;
     }
 

@@ -118,12 +118,13 @@ struct KernelOps
 
     FORCE_INLINE static void eval_vectorized_contiguous(
         T *output,
-        const Expr &expr,
-        auto &&unravelIndexfn) noexcept
+        const Expr &expr) noexcept
     {
         // SIMD loop
         for (my_size_t i = 0; i < simdSteps; ++i)
         {
+            // for GENERICARCH, Bits does not matter, simdWidth=1,
+            // so this works for both scalar and vectorized cases
             auto val = expr.template evalu<T, Bits, Arch>(i * simdWidth);
             K::store(output + i * simdWidth, val);
         }
@@ -131,31 +132,17 @@ struct KernelOps
         // Scalar remainder
         if constexpr (hasRemainder)
         {
-            my_size_t indices[numDims];
             for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
             {
-                unravelIndexfn(i, indices);
-                output[i] = expr(indices);
+                // fallback to scalar evaluation using GENERICARCH microkernel
+                // the 1 here is skipped since in scalar mode simdWidth=1
+                output[i] = expr.template evalu<T, 1, GENERICARCH>(i);
             }
         }
     }
 
-    FORCE_INLINE static void eval_scalar(
-        T *output,
-        const Expr &expr,
-        auto &&unravelIndexfn) noexcept
-    {
-        my_size_t indices[numDims];
-        for (my_size_t i = 0; i < totalSize; ++i)
-        {
-            unravelIndexfn(i, indices);
-            output[i] = expr(indices);
-        }
-    }
-
     FORCE_INLINE static T reduce_min(
-        const Expr &expr,
-        auto &&unravelIndexfn) noexcept
+        const Expr &expr) noexcept
     {
         typename K::VecType acc = K::set1(NumericLimits<T>::max());
 
@@ -176,14 +163,11 @@ struct KernelOps
                 result = tmp[i];
         }
 
-        // Scalar remainder
         if constexpr (hasRemainder)
         {
-            my_size_t indices[numDims];
             for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
             {
-                unravelIndexfn(i, indices);
-                T val = expr(indices);
+                T val = expr.template evalu<T, 1, GENERICARCH>(i);
                 if (val < result)
                     result = val;
             }
@@ -193,8 +177,7 @@ struct KernelOps
     }
 
     FORCE_INLINE static T reduce_max(
-        const Expr &expr,
-        auto &&unravelIndexfn) noexcept
+        const Expr &expr) noexcept
     {
         typename K::VecType acc = K::set1(NumericLimits<T>::lowest());
 
@@ -218,11 +201,9 @@ struct KernelOps
         // Scalar remainder
         if constexpr (hasRemainder)
         {
-            my_size_t indices[numDims];
             for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
             {
-                unravelIndexfn(i, indices);
-                T val = expr(indices);
+                T val = expr.template evalu<T, 1, GENERICARCH>(i);
                 if (val > result)
                     result = val;
             }
@@ -232,8 +213,7 @@ struct KernelOps
     }
 
     FORCE_INLINE static T reduce_sum(
-        const Expr &expr,
-        auto &&unravelIndexfn) noexcept
+        const Expr &expr) noexcept
     {
         typename K::VecType acc = K::set1(T{0});
 
@@ -256,11 +236,9 @@ struct KernelOps
         // Scalar remainder
         if constexpr (hasRemainder)
         {
-            my_size_t indices[numDims];
             for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
             {
-                unravelIndexfn(i, indices);
-                result += expr(indices);
+                result += expr.template evalu<T, 1, GENERICARCH>(i);
             }
         }
 
