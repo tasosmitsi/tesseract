@@ -65,6 +65,13 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
 
         CHECK(min_value == (T)10.0);
         CHECK(max_value == (T)(10.0 + 5 * 6 - 1));
+
+        // now with transpose view
+        min_value = min(fmat1.transpose_view());
+        max_value = max(fmat1.transpose_view());
+
+        CHECK(min_value == (T)0.0);
+        CHECK(max_value == (T)(5 * 6 - 1));
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")
