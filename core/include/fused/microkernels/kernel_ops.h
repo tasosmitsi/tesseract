@@ -244,6 +244,42 @@ struct KernelOps
 
         return result;
     }
+
+    template <typename ExprLHS, typename ExprRHS>
+    FORCE_INLINE static bool reduce_all_approx_equal(
+        const ExprLHS &lhs,
+        const ExprRHS &rhs,
+        T tolerance) noexcept
+    {
+        // SIMD loop
+        for (my_size_t i = 0; i < simdSteps; ++i)
+        {
+            auto lhs_vec = lhs.template evalu<T, Bits, Arch>(i * simdWidth);
+            auto rhs_vec = rhs.template evalu<T, Bits, Arch>(i * simdWidth);
+            if (!K::all_within_tolerance(lhs_vec, rhs_vec, tolerance))
+            {
+                return false;
+            }
+        }
+
+        // Scalar remainder
+        if constexpr (hasRemainder)
+        {
+            using ScalarK = Microkernel<T, 1, GENERICARCH>;
+            for (my_size_t i = simdSteps * simdWidth; i < totalSize; ++i)
+            {
+                T lhs_val = lhs.template evalu<T, 1, GENERICARCH>(i);
+                T rhs_val = rhs.template evalu<T, 1, GENERICARCH>(i);
+                T abs_diff = ScalarK::abs(lhs_val - rhs_val);
+                if (abs_diff > tolerance)
+                {
+                    return false;
+                }
+            }
+        }
+
+        return true;
+    }
 };
 
 #endif // KERNEL_OPS_H

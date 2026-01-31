@@ -77,6 +77,23 @@ struct Microkernel<float, 256, X86_AVX>
         for (my_size_t i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
     }
+
+    FORCE_INLINE static VecType abs(VecType v) noexcept
+    {
+        // Clear sign bit: AND with 0x7FFFFFFF
+        __m256 sign_mask = _mm256_set1_ps(-0.0f);
+        return _mm256_andnot_ps(sign_mask, v);
+    }
+
+    FORCE_INLINE static bool all_within_tolerance(VecType a, VecType b, ScalarType tol) noexcept
+    {
+        __m256 diff = _mm256_sub_ps(a, b);
+        __m256 abs_diff = abs(diff);
+        __m256 tol_vec = _mm256_set1_ps(tol);
+        __m256 cmp = _mm256_cmp_ps(abs_diff, tol_vec, _CMP_LE_OQ); // abs_diff <= tol
+        int mask = _mm256_movemask_ps(cmp);
+        return mask == 0xFF; // all 8 lanes passed
+    }
 };
 
 template <>
@@ -126,6 +143,22 @@ struct Microkernel<double, 256, X86_AVX>
         _mm256_storeu_pd(tmp, val);
         for (my_size_t i = 0; i < simdWidth; ++i)
             base[indices[i]] = tmp[i];
+    }
+
+    FORCE_INLINE static VecType abs(VecType v) noexcept
+    {
+        __m256d sign_mask = _mm256_set1_pd(-0.0);
+        return _mm256_andnot_pd(sign_mask, v);
+    }
+
+    FORCE_INLINE static bool all_within_tolerance(VecType a, VecType b, ScalarType tol) noexcept
+    {
+        __m256d diff = _mm256_sub_pd(a, b);
+        __m256d abs_diff = abs(diff);
+        __m256d tol_vec = _mm256_set1_pd(tol);
+        __m256d cmp = _mm256_cmp_pd(abs_diff, tol_vec, _CMP_LE_OQ);
+        int mask = _mm256_movemask_pd(cmp);
+        return mask == 0xF; // all 4 lanes passed
     }
 };
 

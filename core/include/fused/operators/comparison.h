@@ -4,6 +4,7 @@
 #include "fused/operators/operators_common.h"
 #include "simple_type_traits.h"
 #include "helper_traits.h"
+#include "fused/microkernels/kernel_ops.h"
 
 // ===============================
 // Comparison Operators
@@ -32,31 +33,10 @@ bool operator==(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: con
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator== or operator!=");
 #endif
 
-    // TODO: optimize this by checking using SIMD where possible
-    // check the actual elements
-    my_size_t indices[MAX_DIMS] = {0};
-    for (my_size_t i = 0; i < lhs.derived().getTotalSize(); ++i)
-    {
-        // increment the indices using for loop
-        for (my_size_t j = 0; j < lhs.derived().getNumDims(); ++j)
-        {
-            if (indices[j] < lhs.derived().getDim(j) - 1)
-            {
-                indices[j]++;
-                break;
-            }
-            else
-            {
-                indices[j] = 0;
-            }
-        }
-        // use the () operator to access the elements
-        if (std::abs(lhs.derived()(indices) - rhs.derived()(indices)) > lhs_type(PRECISION_TOLERANCE))
-        {
-            return false;
-        }
-    }
-    return true;
+    return KernelOps<LHS, BITS, DefaultArch>::reduce_all_approx_equal(
+        lhs.derived(),
+        rhs.derived(),
+        lhs_type(PRECISION_TOLERANCE));
 }
 
 template <typename LHS, typename RHS>

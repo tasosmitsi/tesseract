@@ -33,6 +33,13 @@ struct Microkernel<T, Bits, GENERICARCH>
 
     FORCE_INLINE static VecType gather(const T *base, const my_size_t *indices) noexcept { return base[indices[0]]; }
     FORCE_INLINE static void scatter(T *base, const my_size_t *indices, VecType val) noexcept { base[indices[0]] = val; }
+
+    FORCE_INLINE static VecType abs(VecType v) noexcept { return v < T{0} ? -v : v; }
+    FORCE_INLINE static bool all_within_tolerance(VecType a, VecType b, T tol) noexcept
+    {
+        T diff = a - b;
+        return abs(diff) <= tol;
+    }
 };
 
 #endif // GENERIC_MICROKERNEL_H
