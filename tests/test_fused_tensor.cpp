@@ -49,29 +49,35 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
         }
     }
 
-    SECTION("FusedTensorND min/max reduction operators and as part of expression")
+    SECTION("FusedTensorND min/max/sum reduction operators and as part of expression")
     {
         FusedTensorND<T, 5, 6> fmat1;
         fmat1.setSequencial();
 
         T min_value = min(fmat1);
         T max_value = max(fmat1);
+        T sum_value = sum(fmat1);
 
         CHECK(min_value == (T)0.0);
         CHECK(max_value == (T)(5 * 6 - 1));
+        CHECK(sum_value == (T)((5 * 6 * (5 * 6 - 1)) / 2)); // sum of first n natural numbers formula
 
         min_value = min(fmat1 + (T)10.0);
         max_value = max(fmat1 + (T)10.0);
+        sum_value = sum(fmat1 + (T)10.0);
 
         CHECK(min_value == (T)10.0);
         CHECK(max_value == (T)(10.0 + 5 * 6 - 1));
+        CHECK(sum_value == (T)((5 * 6 * (5 * 6 - 1)) / 2 + 10 * 5 * 6));
 
         // now with transpose view
         min_value = min(fmat1.transpose_view());
         max_value = max(fmat1.transpose_view());
+        sum_value = sum(fmat1.transpose_view());
 
         CHECK(min_value == (T)0.0);
         CHECK(max_value == (T)(5 * 6 - 1));
+        CHECK(sum_value == (T)((5 * 6 * (5 * 6 - 1)) / 2)); // sum of first n natural numbers formula
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")

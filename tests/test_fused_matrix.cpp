@@ -137,28 +137,34 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         }
     }
 
-    SECTION("Matrix min/max reduction operators and as part of expression")
+    SECTION("Matrix min/max/sum reduction operators and as part of expression")
     {
         mat1.setSequencial();
 
         T min_value = min(mat1);
         T max_value = max(mat1);
+        T sum_value = sum(mat1);
 
         CHECK(min_value == (T)0.0);
         CHECK(max_value == (T)(10 * 10 - 1));
+        CHECK(sum_value == (T)((10 * 10 * (10 * 10 - 1)) / 2)); // sum of first n natural numbers formula
 
         min_value = min(mat1 + (T)10.0);
         max_value = max(mat1 + (T)10.0);
+        sum_value = sum(mat1 + (T)10.0);
 
         CHECK(min_value == (T)10.0);
         CHECK(max_value == (T)(10 * 10 - 1 + 10));
+        CHECK(sum_value == (T)((10 * 10 * (10 * 10 - 1)) / 2 + 10 * 10 * 10));
 
         // now with transpose view
         min_value = min(mat1.transpose_view());
         max_value = max(mat1.transpose_view());
+        sum_value = sum(mat1.transpose_view());
 
         CHECK(min_value == (T)0.0);
         CHECK(max_value == (T)(10 * 10 - 1));
+        CHECK(sum_value == (T)((10 * 10 * (10 * 10 - 1)) / 2)); // sum of first n natural numbers formula
     }
 
     SECTION("Check dimensions mismatch and == , !=, min, max operators")
