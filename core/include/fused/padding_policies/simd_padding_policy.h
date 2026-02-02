@@ -181,8 +181,8 @@
  *   Tensor (uses storage)
  */
 
-template <typename T, my_size_t... Dims>
-struct SimdPaddingPolicy
+template <typename T, my_size_t SIMDWidth, my_size_t... Dims>
+struct SimdPaddingPolicyBase
 {
     // ========================================================================
     // COMPILE-TIME VALIDATION
@@ -204,7 +204,7 @@ struct SimdPaddingPolicy
      *   - Microkernel<Complex<double>, 256, X86_AVX>::SimdWidth = 2
      *   - Microkernel<float, 0, GENERICARCH>::SimdWidth = 1
      */
-    static constexpr my_size_t SimdWidth = Microkernel<T, BITS, DefaultArch>::simdWidth;
+    static constexpr my_size_t SimdWidth = SIMDWidth;
 
     static_assert(SimdWidth >= 1, "SimdPaddingPolicy: SimdWidth must be at least 1");
 
@@ -343,3 +343,7 @@ struct SimdPaddingPolicy
     /** Physical dimensions array - all computation happens at compile-time */
     static constexpr Array<my_size_t, NumDims> PhysicalDims = computePhysicalDims();
 };
+
+// Production alias - gets SimdWidth from Microkernel
+template <typename T, my_size_t... Dims>
+using SimdPaddingPolicy = SimdPaddingPolicyBase<T, Microkernel<T, BITS, DefaultArch>::simdWidth, Dims...>;
