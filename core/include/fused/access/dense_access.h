@@ -1,7 +1,6 @@
 #ifndef DENSE_ACCESS_H
 #define DENSE_ACCESS_H
 
-#include "fused/storage/static_storage.h"
 #include "fill_n_optimized.h"
 
 /**
@@ -19,12 +18,12 @@ template <typename T,
 class DenseAccess
 {
 public:
-    using Policy = PaddingPolicy<T, Dims...>;
+    using PadPolicy = PaddingPolicy<T, Dims...>;
 
-    static constexpr my_size_t NumDims = Policy::NumDims;
-    static constexpr my_size_t LogicalSize = Policy::LogicalSize;
-    static constexpr my_size_t PhysicalSize = Policy::PhysicalSize;
-    static constexpr my_size_t SimdWidth = Policy::SimdWidth;
+    static constexpr my_size_t NumDims = PadPolicy::NumDims;
+    static constexpr my_size_t LogicalSize = PadPolicy::LogicalSize;
+    static constexpr my_size_t PhysicalSize = PadPolicy::PhysicalSize;
+    static constexpr my_size_t SimdWidth = PadPolicy::SimdWidth;
 
 private:
     StoragePolicy<T, PhysicalSize> data_;
@@ -63,8 +62,8 @@ public:
     FORCE_INLINE constexpr const T *end() const noexcept { return data_.end(); }
 
     // Dimension queries (compile-time)
-    static constexpr my_size_t logical_dim(my_size_t i) { return Policy::LogicalDims.at(i); }
-    static constexpr my_size_t physical_dim(my_size_t i) { return Policy::PhysicalDims.at(i); }
+    static constexpr my_size_t logical_dim(my_size_t i) { return PadPolicy::LogicalDims.at(i); }
+    static constexpr my_size_t physical_dim(my_size_t i) { return PadPolicy::PhysicalDims.at(i); }
 };
 
 #endif // DENSE_ACCESS_H
