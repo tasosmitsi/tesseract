@@ -1,6 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/layouts/strided_layout_constexpr.h"
 #include "fused/padding_policies/simd_padding_policy.h"
+#include "fused/padding_policies/no_padding_policy.h"
 
 // ============================================================================
 // TEST CONFIGURATION
@@ -1839,5 +1840,207 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
         REQUIRE(Layout::logical_flat_to_physical_flat(2) == 32);  // (0,2) -> 32
         REQUIRE(Layout::logical_flat_to_physical_flat(3) == 1);   // (1,0) -> 1
         REQUIRE(Layout::logical_flat_to_physical_flat(14) == 36); // (4,2) -> 36
+    }
+}
+
+// ============================================================================
+// SECTION 17: Tests with NoPaddingPolicy
+// ============================================================================
+
+TEST_CASE("NoPaddingPolicy: 2D identity", "[layout][nopadding][2d][strided_layout_constexpr]")
+{
+    /*
+     * 2x3 matrix, no padding, identity permutation
+     *
+     * Physical memory:
+     *       col0 col1 col2
+     *      ┌────┬────┬────┐
+     * row0 │ 0  │ 1  │ 2  │
+     * row1 │ 3  │ 4  │ 5  │
+     *      └────┴────┴────┘
+     *
+     * LogicalSize == PhysicalSize (no padding)
+     * logical flat == physical flat (identity)
+     */
+    using Policy = NoPaddingPolicy<double, 2, 3>;
+    using Layout = StridedLayoutConstExpr<Policy>;
+
+    REQUIRE(Layout::LogicalSize == 6);
+    REQUIRE(Layout::PhysicalSize == 6);
+    REQUIRE(Layout::BaseStrides[0] == 3);
+    REQUIRE(Layout::BaseStrides[1] == 1);
+    REQUIRE(Layout::Strides[0] == 3);
+    REQUIRE(Layout::Strides[1] == 1);
+
+    // Identity: logical flat == physical flat
+    for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
+    {
+        REQUIRE(Layout::logical_flat_to_physical_flat(lf) == lf);
+    }
+}
+
+TEST_CASE("NoPaddingPolicy: 2D transposed", "[layout][nopadding][2d][transpose][strided_layout_constexpr]")
+{
+    /*
+     * 2x3 matrix transposed to 3x2 view
+     *
+     * Physical memory:          Transposed view (3x2):
+     *       col0 col1 col2            col0 col1
+     *      ┌────┬────┬────┐          ┌────┬────┐
+     * row0 │ A  │ B  │ C  │     row0 │ A  │ D  │
+     * row1 │ D  │ E  │ F  │     row1 │ B  │ E  │
+     *      └────┴────┴────┘     row2 │ C  │ F  │
+     *                                └────┴────┘
+     *
+     * Iterating transposed view row-major: A, D, B, E, C, F
+     * Physical locations:                  0, 3, 1, 4, 2, 5
+     */
+    using Policy = NoPaddingPolicy<double, 2, 3>;
+    using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
+
+    REQUIRE(Layout::LogicalSize == 6);
+    REQUIRE(Layout::PhysicalSize == 6);
+    REQUIRE(Layout::LogicalDims[0] == 3);
+    REQUIRE(Layout::LogicalDims[1] == 2);
+    REQUIRE(Layout::Strides[0] == 1);
+    REQUIRE(Layout::Strides[1] == 3);
+
+    REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0); // A
+    REQUIRE(Layout::logical_flat_to_physical_flat(1) == 3); // D
+    REQUIRE(Layout::logical_flat_to_physical_flat(2) == 1); // B
+    REQUIRE(Layout::logical_flat_to_physical_flat(3) == 4); // E
+    REQUIRE(Layout::logical_flat_to_physical_flat(4) == 2); // C
+    REQUIRE(Layout::logical_flat_to_physical_flat(5) == 5); // F
+}
+
+TEST_CASE("NoPaddingPolicy: 3D identity", "[layout][nopadding][3d][strided_layout_constexpr]")
+{
+    /*
+     * 2x3x4 tensor, no padding, identity permutation
+     *
+     * BaseStrides = [12, 4, 1]
+     * LogicalSize == PhysicalSize == 24
+     */
+    using Policy = NoPaddingPolicy<double, 2, 3, 4>;
+    using Layout = StridedLayoutConstExpr<Policy>;
+
+    REQUIRE(Layout::LogicalSize == 24);
+    REQUIRE(Layout::PhysicalSize == 24);
+    REQUIRE(Layout::BaseStrides[0] == 12);
+    REQUIRE(Layout::BaseStrides[1] == 4);
+    REQUIRE(Layout::BaseStrides[2] == 1);
+
+    // Identity: logical flat == physical flat
+    for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
+    {
+        REQUIRE(Layout::logical_flat_to_physical_flat(lf) == lf);
+    }
+
+    // Spot check coords
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 0) == 0);
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 3) == 3);
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 1, 0) == 4);
+    REQUIRE(Layout::logical_coords_to_physical_flat(1, 0, 0) == 12);
+    REQUIRE(Layout::logical_coords_to_physical_flat(1, 2, 3) == 23);
+}
+
+TEST_CASE("NoPaddingPolicy: 3D with permutation", "[layout][nopadding][3d][transpose][strided_layout_constexpr]")
+{
+    /*
+     * 2x3x4 tensor with permutation [2, 0, 1] creates 4x2x3 view
+     *
+     * Policy::LogicalDims = [2, 3, 4]
+     * Layout::LogicalDims = [4, 2, 3]
+     *
+     * BaseStrides = [12, 4, 1]
+     * Strides = [1, 12, 4]  (permuted)
+     *
+     * logical(i, j, k) -> physical(j, k, i)
+     * flat = i*1 + j*12 + k*4
+     */
+    using Policy = NoPaddingPolicy<double, 2, 3, 4>;
+    using Layout = StridedLayoutConstExpr<Policy, 2, 0, 1>;
+
+    REQUIRE(Layout::LogicalSize == 24);
+    REQUIRE(Layout::PhysicalSize == 24);
+    REQUIRE(Layout::LogicalDims[0] == 4);
+    REQUIRE(Layout::LogicalDims[1] == 2);
+    REQUIRE(Layout::LogicalDims[2] == 3);
+    REQUIRE(Layout::Strides[0] == 1);
+    REQUIRE(Layout::Strides[1] == 12);
+    REQUIRE(Layout::Strides[2] == 4);
+
+    // logical(0,0,0) -> 0
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 0) == 0);
+    // logical(1,0,0) -> 1 (stride 1 in dim 0)
+    REQUIRE(Layout::logical_coords_to_physical_flat(1, 0, 0) == 1);
+    // logical(0,1,0) -> 12 (stride 12 in dim 1)
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 1, 0) == 12);
+    // logical(0,0,1) -> 4 (stride 4 in dim 2)
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 1) == 4);
+    // logical(3,1,2) -> 3 + 12 + 8 = 23
+    REQUIRE(Layout::logical_coords_to_physical_flat(3, 1, 2) == 23);
+}
+
+TEST_CASE("NoPaddingPolicy: 1D vector", "[layout][nopadding][1d][strided_layout_constexpr]")
+{
+    /*
+     * 1D tensor of size 10
+     * No permutation possible (only one dimension)
+     */
+    using Policy = NoPaddingPolicy<double, 10>;
+    using Layout = StridedLayoutConstExpr<Policy>;
+
+    REQUIRE(Layout::NumDims == 1);
+    REQUIRE(Layout::LogicalSize == 10);
+    REQUIRE(Layout::PhysicalSize == 10);
+    REQUIRE(Layout::BaseStrides[0] == 1);
+
+    for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
+    {
+        REQUIRE(Layout::logical_flat_to_physical_flat(lf) == lf);
+        REQUIRE(Layout::logical_coords_to_physical_flat(lf) == lf);
+    }
+}
+
+TEST_CASE("NoPaddingPolicy: single element", "[layout][nopadding][edge][strided_layout_constexpr]")
+{
+    using Policy = NoPaddingPolicy<double, 1, 1, 1>;
+    using Layout = StridedLayoutConstExpr<Policy>;
+
+    REQUIRE(Layout::NumDims == 3);
+    REQUIRE(Layout::LogicalSize == 1);
+    REQUIRE(Layout::PhysicalSize == 1);
+
+    REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);
+    REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 0) == 0);
+}
+
+TEST_CASE("NoPaddingPolicy: roundtrip consistency", "[layout][nopadding][roundtrip][strided_layout_constexpr]")
+{
+    /*
+     * Verify roundtrip works correctly with NoPaddingPolicy
+     * 3x4x5 tensor with permutation [1, 2, 0] creates 4x5x3 view
+     */
+    using Policy = NoPaddingPolicy<double, 3, 4, 5>;
+    using Layout = StridedLayoutConstExpr<Policy, 1, 2, 0>;
+
+    REQUIRE(Layout::LogicalDims[0] == 4);
+    REQUIRE(Layout::LogicalDims[1] == 5);
+    REQUIRE(Layout::LogicalDims[2] == 3);
+
+    for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
+    {
+        my_size_t logical_coords[3];
+        Layout::logical_flat_to_logical_coords(lf, logical_coords);
+
+        my_size_t pf = Layout::logical_coords_to_physical_flat(logical_coords);
+
+        my_size_t logical_coords_roundtrip[3];
+        Layout::physical_flat_to_logical_coords(pf, logical_coords_roundtrip);
+
+        REQUIRE(logical_coords[0] == logical_coords_roundtrip[0]);
+        REQUIRE(logical_coords[1] == logical_coords_roundtrip[1]);
+        REQUIRE(logical_coords[2] == logical_coords_roundtrip[2]);
     }
 }
