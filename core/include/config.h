@@ -24,6 +24,7 @@ using MyErrorHandler = ErrorHandler<SerialErrorHandler>;
 #else
 #include "error_handler/pc_error_handler.h"
 using MyErrorHandler = ErrorHandler<PCErrorHandler>;
+#define TESSERACT_CONDITIONAL_NOEXCEPT
 #endif
 
 /*  Uncomment this line to enable debug output for FusedMatrix
