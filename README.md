@@ -15,6 +15,8 @@ tesseract: The ultimate N-dimensional tensor library in C++, embedded systems op
 
 </div>
 
+[![Documentation](https://img.shields.io/badge/docs-doxygen-blue.svg)](https://tasosmitsi.github.io/tesseract/)
+
 ---
 
 ## Overview
