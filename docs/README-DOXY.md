@@ -1,10 +1,11 @@
+\mainpage notitle
+
 <div align="center">
 
-<picture>
-  <source media="(prefers-color-scheme: light)" srcset="docs/tesseract_logo.png">
-  <img alt="tesseract logo" src="docs/tesseract_logo_reversed.png" width="85%">
-</picture>
-
+![tesseract logo](tesseract_logo_reversed.png)
+<br>
+<br>
+<br>
 The ultimate N-dimensional tensor library in C++, embedded systems optimized.
 
 <h3>
