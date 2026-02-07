@@ -77,8 +77,12 @@ public:
 
     static constexpr Array<my_size_t, NumDims> PermArray = computePermArray();
 
-    /** Inverse permutation array for mapping back to original layout.
+    /**
+     * @brief Compute the inverse permutation array at compile-time.
+     * Inverse permutation array for mapping back to original layout.
      * Only computed if permutation is provided, otherwise it's just the identity.
+     *
+     * @return constexpr Array<my_size_t, NumDims>
      */
     static constexpr Array<my_size_t, NumDims> computeInversePermArray() noexcept
     {
@@ -95,7 +99,11 @@ public:
     // ========================================================================
     // LOGICAL DIMENSIONS (permuted)
     // ========================================================================
-
+    /**
+     * @brief Compute logical dimensions with permutation applied.
+     *
+     * @return constexpr Array<my_size_t, NumDims>
+     */
     static constexpr Array<my_size_t, NumDims> computeLogicalDims() noexcept
     {
         Array<my_size_t, NumDims> result{};
@@ -249,7 +257,7 @@ public:
     }
 
     /**
-     * Logical flat index to logical coordinates.
+     * @brief Logical flat index to logical coordinates.
      *
      * Decomposes a flat index into multi-dimensional coordinates
      * using LogicalStrides (row-major order in logical space).
@@ -261,6 +269,10 @@ public:
      *   7 / 4 = 1, 7 - 4 = 3
      *   3 / 1 = 3
      *   → coords (1, 3)
+     *
+     * @param logical_flat Input flat index in logical space
+     * @param indices Output parameter for multi-dimensional coordinates
+     * @return constexpr voids
      */
     FORCE_INLINE static constexpr void logical_flat_to_logical_coords(my_size_t logical_flat, my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
