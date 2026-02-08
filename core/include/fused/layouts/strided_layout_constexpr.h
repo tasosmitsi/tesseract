@@ -23,22 +23,22 @@ struct PermValidation<true, Vals...>
 /**
  * @brief Compile-time strided layout with optional permutation.
  *
- * @tparam Policy  Padding policy (e.g., SimdPaddingPolicy<T, Dims...>)
+ * @tparam PadPolicy  Padding PadPolicy (e.g., SimdPaddingPadPolicy<T, Dims...>)
  * @tparam Perm    Optional permutation indices (empty = identity)
  *
  * All computations happen at compile-time. Zero runtime overhead.
  *
  * Usage:
- *   StridedLayoutConstExpr<Policy>           // no permutation (identity)
- *   StridedLayoutConstExpr<Policy, 1, 0>     // transposed
- *   StridedLayoutConstExpr<Policy, 2, 0, 1>  // custom permutation
+ *   StridedLayoutConstExpr<PadPolicy>           // no permutation (identity)
+ *   StridedLayoutConstExpr<PadPolicy, 1, 0>     // transposed
+ *   StridedLayoutConstExpr<PadPolicy, 2, 0, 1>  // custom permutation
  */
-template <typename Policy, my_size_t... Perm>
+template <typename PadPolicy, my_size_t... Perm>
 struct StridedLayoutConstExpr
 {
-    static constexpr my_size_t NumDims = Policy::NumDims;
-    static constexpr my_size_t LogicalSize = Policy::LogicalSize;
-    static constexpr my_size_t PhysicalSize = Policy::PhysicalSize;
+    static constexpr my_size_t NumDims = PadPolicy::NumDims;
+    static constexpr my_size_t LogicalSize = PadPolicy::LogicalSize;
+    static constexpr my_size_t PhysicalSize = PadPolicy::PhysicalSize;
     static constexpr bool IsPermProvided = sizeof...(Perm) > 0;
 
 private:
@@ -118,7 +118,7 @@ private:
         Array<my_size_t, NumDims> result{};
         for (my_size_t i = 0; i < NumDims; ++i)
         {
-            result[i] = Policy::LogicalDims[PermArray[i]];
+            result[i] = PadPolicy::LogicalDims[PermArray[i]];
         }
         return result;
     }
@@ -140,7 +140,7 @@ private:
         result[NumDims - 1] = 1;
         for (my_size_t i = NumDims - 1; i > 0; --i)
         {
-            result[i - 1] = result[i] * Policy::PhysicalDims[i];
+            result[i - 1] = result[i] * PadPolicy::PhysicalDims[i];
         }
         return result;
     }
