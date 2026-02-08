@@ -117,8 +117,8 @@ TEST_CASE("PermArray is identity when no permutation provided", "[layout][perm][
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::PermArray[0] == 0);
-        REQUIRE(Layout::PermArray[1] == 1);
+        REQUIRE(Layout::perm_array(0) == 0);
+        REQUIRE(Layout::perm_array(1) == 1);
     }
 
     SECTION("3D")
@@ -126,9 +126,9 @@ TEST_CASE("PermArray is identity when no permutation provided", "[layout][perm][
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3, 4>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::PermArray[0] == 0);
-        REQUIRE(Layout::PermArray[1] == 1);
-        REQUIRE(Layout::PermArray[2] == 2);
+        REQUIRE(Layout::perm_array(0) == 0);
+        REQUIRE(Layout::perm_array(1) == 1);
+        REQUIRE(Layout::perm_array(2) == 2);
     }
 
     SECTION("4D")
@@ -136,10 +136,10 @@ TEST_CASE("PermArray is identity when no permutation provided", "[layout][perm][
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3, 4, 5>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::PermArray[0] == 0);
-        REQUIRE(Layout::PermArray[1] == 1);
-        REQUIRE(Layout::PermArray[2] == 2);
-        REQUIRE(Layout::PermArray[3] == 3);
+        REQUIRE(Layout::perm_array(0) == 0);
+        REQUIRE(Layout::perm_array(1) == 1);
+        REQUIRE(Layout::perm_array(2) == 2);
+        REQUIRE(Layout::perm_array(3) == 3);
     }
 }
 
@@ -151,27 +151,27 @@ TEST_CASE("PermArray stores provided permutation", "[layout][perm][strided_layou
     {
         using Layout = StridedLayoutConstExpr<Policy, 1, 0, 2>;
 
-        REQUIRE(Layout::PermArray[0] == 1);
-        REQUIRE(Layout::PermArray[1] == 0);
-        REQUIRE(Layout::PermArray[2] == 2);
+        REQUIRE(Layout::perm_array(0) == 1);
+        REQUIRE(Layout::perm_array(1) == 0);
+        REQUIRE(Layout::perm_array(2) == 2);
     }
 
     SECTION("Rotate left: [1,2,0]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 1, 2, 0>;
 
-        REQUIRE(Layout::PermArray[0] == 1);
-        REQUIRE(Layout::PermArray[1] == 2);
-        REQUIRE(Layout::PermArray[2] == 0);
+        REQUIRE(Layout::perm_array(0) == 1);
+        REQUIRE(Layout::perm_array(1) == 2);
+        REQUIRE(Layout::perm_array(2) == 0);
     }
 
     SECTION("Reverse: [2,1,0]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 2, 1, 0>;
 
-        REQUIRE(Layout::PermArray[0] == 2);
-        REQUIRE(Layout::PermArray[1] == 1);
-        REQUIRE(Layout::PermArray[2] == 0);
+        REQUIRE(Layout::perm_array(0) == 2);
+        REQUIRE(Layout::perm_array(1) == 1);
+        REQUIRE(Layout::perm_array(2) == 0);
     }
 }
 
@@ -187,8 +187,8 @@ TEST_CASE("InversePermArray is correct", "[layout][perm][inverse][strided_layout
         using Layout = StridedLayoutConstExpr<Policy>;
 
         // Identity is its own inverse
-        REQUIRE(Layout::InversePermArray[0] == 0);
-        REQUIRE(Layout::InversePermArray[1] == 1);
+        REQUIRE(Layout::inverse_perm_array(0) == 0);
+        REQUIRE(Layout::inverse_perm_array(1) == 1);
     }
 
     SECTION("2D transpose: [1,0]")
@@ -197,8 +197,8 @@ TEST_CASE("InversePermArray is correct", "[layout][perm][inverse][strided_layout
         using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
 
         // Transpose is its own inverse
-        REQUIRE(Layout::InversePermArray[0] == 1);
-        REQUIRE(Layout::InversePermArray[1] == 0);
+        REQUIRE(Layout::inverse_perm_array(0) == 1);
+        REQUIRE(Layout::inverse_perm_array(1) == 0);
     }
 
     SECTION("3D rotation: [1,2,0]")
@@ -217,9 +217,9 @@ TEST_CASE("InversePermArray is correct", "[layout][perm][inverse][strided_layout
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3, 4>;
         using Layout = StridedLayoutConstExpr<Policy, 1, 2, 0>;
 
-        REQUIRE(Layout::InversePermArray[0] == 2);
-        REQUIRE(Layout::InversePermArray[1] == 0);
-        REQUIRE(Layout::InversePermArray[2] == 1);
+        REQUIRE(Layout::inverse_perm_array(0) == 2);
+        REQUIRE(Layout::inverse_perm_array(1) == 0);
+        REQUIRE(Layout::inverse_perm_array(2) == 1);
     }
 
     SECTION("Inverse property: Perm[InversePerm[i]] == i")
@@ -229,8 +229,8 @@ TEST_CASE("InversePermArray is correct", "[layout][perm][inverse][strided_layout
 
         for (my_size_t i = 0; i < Layout::NumDims; ++i)
         {
-            REQUIRE(Layout::PermArray[Layout::InversePermArray[i]] == i);
-            REQUIRE(Layout::InversePermArray[Layout::PermArray[i]] == i);
+            REQUIRE(Layout::perm_array(Layout::inverse_perm_array(i)) == i);
+            REQUIRE(Layout::inverse_perm_array(Layout::perm_array(i)) == i);
         }
     }
 }
@@ -242,15 +242,15 @@ TEST_CASE("InversePermArray is correct", "[layout][perm][inverse][strided_layout
 TEST_CASE("LogicalDims with identity permutation", "[layout][dims][strided_layout_constexpr]")
 {
     /*
-     * Identity: LogicalDims = Policy::LogicalDims
+     * Identity: LogicalDims = Policy::logical_dim
      */
     SECTION("2D")
     {
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 8, 6>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::LogicalDims[0] == 8);
-        REQUIRE(Layout::LogicalDims[1] == 6);
+        REQUIRE(Layout::logical_dim(0) == 8);
+        REQUIRE(Layout::logical_dim(1) == 6);
     }
 
     SECTION("3D")
@@ -258,9 +258,9 @@ TEST_CASE("LogicalDims with identity permutation", "[layout][dims][strided_layou
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3, 4>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::LogicalDims[0] == 2);
-        REQUIRE(Layout::LogicalDims[1] == 3);
-        REQUIRE(Layout::LogicalDims[2] == 4);
+        REQUIRE(Layout::logical_dim(0) == 2);
+        REQUIRE(Layout::logical_dim(1) == 3);
+        REQUIRE(Layout::logical_dim(2) == 4);
     }
 }
 
@@ -274,14 +274,14 @@ TEST_CASE("LogicalDims with transpose permutation", "[layout][dims][transpose][s
      *   [1,0] [1,1] [1,2]       [1,0] [1,1]
      *                          [2,0] [2,1]
      *
-     * Policy::LogicalDims = [2, 3]
-     * Layout::LogicalDims = [3, 2]  (permuted)
+     * Policy::logical_dim = [2, 3]
+     * Layout::logical_dim = [3, 2]  (permuted)
      */
     using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3>;
     using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
 
-    REQUIRE(Layout::LogicalDims[0] == 3); // was dim 1
-    REQUIRE(Layout::LogicalDims[1] == 2); // was dim 0
+    REQUIRE(Layout::logical_dim(0) == 3); // was dim 1
+    REQUIRE(Layout::logical_dim(1) == 2); // was dim 0
 }
 
 TEST_CASE("LogicalDims with 3D permutation", "[layout][dims][3d][strided_layout_constexpr]")
@@ -289,20 +289,20 @@ TEST_CASE("LogicalDims with 3D permutation", "[layout][dims][3d][strided_layout_
     /*
      * 2x3x4 tensor with permutation [2,0,1]
      *
-     * Policy::LogicalDims = [2, 3, 4]
+     * Policy::logical_dim = [2, 3, 4]
      * Permutation [2,0,1] means:
      *   new dim 0 = old dim 2 = 4
      *   new dim 1 = old dim 0 = 2
      *   new dim 2 = old dim 1 = 3
      *
-     * Layout::LogicalDims = [4, 2, 3]
+     * Layout::logical_dim = [4, 2, 3]
      */
     using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3, 4>;
     using Layout = StridedLayoutConstExpr<Policy, 2, 0, 1>;
 
-    REQUIRE(Layout::LogicalDims[0] == 4);
-    REQUIRE(Layout::LogicalDims[1] == 2);
-    REQUIRE(Layout::LogicalDims[2] == 3);
+    REQUIRE(Layout::logical_dim(0) == 4);
+    REQUIRE(Layout::logical_dim(1) == 2);
+    REQUIRE(Layout::logical_dim(2) == 3);
 }
 
 // ============================================================================
@@ -326,8 +326,8 @@ TEST_CASE("BaseStrides are row-major from PhysicalDims", "[layout][strides][base
     using Policy = SimdPaddingPolicyBase<double, AVX_DOUBLE, 2, 3>;
     using Layout = StridedLayoutConstExpr<Policy>;
 
-    REQUIRE(Layout::BaseStrides[0] == 4);
-    REQUIRE(Layout::BaseStrides[1] == 1);
+    REQUIRE(Layout::base_stride(0) == 4);
+    REQUIRE(Layout::base_stride(1) == 1);
 }
 
 TEST_CASE("BaseStrides for 3D tensor", "[layout][strides][base][3d][strided_layout_constexpr]")
@@ -344,9 +344,9 @@ TEST_CASE("BaseStrides for 3D tensor", "[layout][strides][base][3d][strided_layo
     using Policy = SimdPaddingPolicyBase<double, AVX_DOUBLE, 2, 3, 5>;
     using Layout = StridedLayoutConstExpr<Policy>;
 
-    REQUIRE(Layout::BaseStrides[0] == 24);
-    REQUIRE(Layout::BaseStrides[1] == 8);
-    REQUIRE(Layout::BaseStrides[2] == 1);
+    REQUIRE(Layout::base_stride(0) == 24);
+    REQUIRE(Layout::base_stride(1) == 8);
+    REQUIRE(Layout::base_stride(2) == 1);
 }
 
 TEST_CASE("Strides are permuted BaseStrides", "[layout][strides][permuted][strided_layout_constexpr]")
@@ -371,11 +371,11 @@ TEST_CASE("Strides are permuted BaseStrides", "[layout][strides][permuted][strid
     using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3>;
     using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
 
-    REQUIRE(Layout::BaseStrides[0] == 3);
-    REQUIRE(Layout::BaseStrides[1] == 1);
+    REQUIRE(Layout::base_stride(0) == 3);
+    REQUIRE(Layout::base_stride(1) == 1);
 
-    REQUIRE(Layout::Strides[0] == 1); // BaseStrides[PermArray[0]] = BaseStrides[1]
-    REQUIRE(Layout::Strides[1] == 3); // BaseStrides[PermArray[1]] = BaseStrides[0]
+    REQUIRE(Layout::stride(0) == 1); // BaseStrides[PermArray[0]] = BaseStrides[1]
+    REQUIRE(Layout::stride(1) == 3); // BaseStrides[PermArray[1]] = BaseStrides[0]
 }
 
 TEST_CASE("LogicalStrides are row-major from LogicalDims", "[layout][strides][logical][strided_layout_constexpr]")
@@ -394,11 +394,11 @@ TEST_CASE("LogicalStrides are row-major from LogicalDims", "[layout][strides][lo
     using Policy = SimdPaddingPolicyBase<double, SCALAR, 2, 3>;
     using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
 
-    REQUIRE(Layout::LogicalDims[0] == 3);
-    REQUIRE(Layout::LogicalDims[1] == 2);
+    REQUIRE(Layout::logical_dim(0) == 3);
+    REQUIRE(Layout::logical_dim(1) == 2);
 
-    REQUIRE(Layout::LogicalStrides[0] == 2);
-    REQUIRE(Layout::LogicalStrides[1] == 1);
+    REQUIRE(Layout::logical_stride(0) == 2);
+    REQUIRE(Layout::logical_stride(1) == 1);
 }
 
 TEST_CASE("?Stride invariant: BaseStrides product equals PhysicalSize", "[layout][strides][invariant][strided_layout_constexpr]")
@@ -408,7 +408,7 @@ TEST_CASE("?Stride invariant: BaseStrides product equals PhysicalSize", "[layout
         using Policy = SimdPaddingPolicyBase<double, SCALAR, 8, 6>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::BaseStrides[0] * Policy::PhysicalDims[0] == Layout::PhysicalSize);
+        REQUIRE(Layout::base_stride(0) * Policy::PhysicalDims[0] == Layout::PhysicalSize);
     }
 
     SECTION("2D with padding")
@@ -416,7 +416,7 @@ TEST_CASE("?Stride invariant: BaseStrides product equals PhysicalSize", "[layout
         using Policy = SimdPaddingPolicyBase<double, AVX_DOUBLE, 8, 6>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::BaseStrides[0] * Policy::PhysicalDims[0] == Layout::PhysicalSize);
+        REQUIRE(Layout::base_stride(0) * Policy::PhysicalDims[0] == Layout::PhysicalSize);
     }
 
     SECTION("3D with padding")
@@ -424,7 +424,7 @@ TEST_CASE("?Stride invariant: BaseStrides product equals PhysicalSize", "[layout
         using Policy = SimdPaddingPolicyBase<double, AVX_DOUBLE, 2, 3, 5>;
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        REQUIRE(Layout::BaseStrides[0] * Policy::PhysicalDims[0] == Layout::PhysicalSize);
+        REQUIRE(Layout::base_stride(0) * Policy::PhysicalDims[0] == Layout::PhysicalSize);
     }
 }
 
@@ -612,7 +612,7 @@ TEST_CASE("logical_coords_to_physical_flat: 3D padding and permutation", "[layou
      * ┌─────────────────────────────────────────────────────────────────────┐
      * │ PHYSICAL MEMORY LAYOUT (unchanged by permutation)                   │
      * │                                                                     │
-     * │ Policy::LogicalDims  = [2, 3, 5]                                    │
+     * │ Policy::logical_dim  = [2, 3, 5]                                    │
      * │ Policy::PhysicalDims = [2, 3, 8]  (last dim padded: 5 → 8)          │
      * │ BaseStrides = [24, 8, 1]                                            │
      * │                                                                     │
@@ -636,7 +636,7 @@ TEST_CASE("logical_coords_to_physical_flat: 3D padding and permutation", "[layou
      * │ Logical dim 1 → Physical dim 0 (size 2)                             │
      * │ Logical dim 2 → Physical dim 1 (size 3)                             │
      * │                                                                     │
-     * │ Layout::LogicalDims = [5, 2, 3]                                     │
+     * │ Layout::logical_dim = [5, 2, 3]                                     │
      * │ Strides = [BaseStrides[2], BaseStrides[0], BaseStrides[1]]          │
      * │         = [1, 24, 8]                                                │
      * └─────────────────────────────────────────────────────────────────────┘
@@ -661,17 +661,17 @@ TEST_CASE("logical_coords_to_physical_flat: 3D padding and permutation", "[layou
     using Layout = StridedLayoutConstExpr<Policy, 2, 0, 1>;
 
     // Verify dimensions and strides
-    REQUIRE(Layout::LogicalDims[0] == 5);
-    REQUIRE(Layout::LogicalDims[1] == 2);
-    REQUIRE(Layout::LogicalDims[2] == 3);
+    REQUIRE(Layout::logical_dim(0) == 5);
+    REQUIRE(Layout::logical_dim(1) == 2);
+    REQUIRE(Layout::logical_dim(2) == 3);
 
-    REQUIRE(Layout::BaseStrides[0] == 24);
-    REQUIRE(Layout::BaseStrides[1] == 8);
-    REQUIRE(Layout::BaseStrides[2] == 1);
+    REQUIRE(Layout::base_stride(0) == 24);
+    REQUIRE(Layout::base_stride(1) == 8);
+    REQUIRE(Layout::base_stride(2) == 1);
 
-    REQUIRE(Layout::Strides[0] == 1);
-    REQUIRE(Layout::Strides[1] == 24);
-    REQUIRE(Layout::Strides[2] == 8);
+    REQUIRE(Layout::stride(0) == 1);
+    REQUIRE(Layout::stride(1) == 24);
+    REQUIRE(Layout::stride(2) == 8);
 
     // Corner cases
     REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 0) == 0);  // origin
@@ -1206,7 +1206,7 @@ TEST_CASE("physical_flat_to_logical_coords: padding gives out-of-bounds coords",
     Layout::physical_flat_to_logical_coords(3, coords);
     REQUIRE(coords[0] == 0);
     REQUIRE(coords[1] == 3); // >= LogicalDims[1], out of bounds!
-    REQUIRE(coords[1] >= Layout::LogicalDims[1]);
+    REQUIRE(coords[1] >= Layout::logical_dim(1));
 
     // Another padding location
     Layout::physical_flat_to_logical_coords(7, coords);
@@ -1286,9 +1286,9 @@ TEST_CASE("Roundtrip: logical_coords -> physical_flat -> logical_coords", "[layo
     {
         using Layout = StridedLayoutConstExpr<Policy>;
 
-        for (my_size_t i = 0; i < Layout::LogicalDims[0]; ++i)
+        for (my_size_t i = 0; i < Layout::logical_dim(0); ++i)
         {
-            for (my_size_t j = 0; j < Layout::LogicalDims[1]; ++j)
+            for (my_size_t j = 0; j < Layout::logical_dim(1); ++j)
             {
                 my_size_t physical = Layout::logical_coords_to_physical_flat(i, j);
                 my_size_t result[2];
@@ -1304,9 +1304,9 @@ TEST_CASE("Roundtrip: logical_coords -> physical_flat -> logical_coords", "[layo
     {
         using Layout = StridedLayoutConstExpr<Policy, 1, 0>;
 
-        for (my_size_t i = 0; i < Layout::LogicalDims[0]; ++i)
+        for (my_size_t i = 0; i < Layout::logical_dim(0); ++i)
         {
-            for (my_size_t j = 0; j < Layout::LogicalDims[1]; ++j)
+            for (my_size_t j = 0; j < Layout::logical_dim(1); ++j)
             {
                 my_size_t physical = Layout::logical_coords_to_physical_flat(i, j);
                 my_size_t result[2];
@@ -1453,9 +1453,9 @@ TEST_CASE("1D tensor (vector)", "[layout][edge][1d][strided_layout_constexpr]")
     REQUIRE(Layout::LogicalSize == 5);
     REQUIRE(Layout::PhysicalSize == 8);
 
-    REQUIRE(Layout::BaseStrides[0] == 1);
-    REQUIRE(Layout::Strides[0] == 1);
-    REQUIRE(Layout::LogicalStrides[0] == 1);
+    REQUIRE(Layout::base_stride(0) == 1);
+    REQUIRE(Layout::stride(0) == 1);
+    REQUIRE(Layout::logical_stride(0) == 1);
 
     REQUIRE(Layout::logical_coords_to_physical_flat(0) == 0);
     REQUIRE(Layout::logical_coords_to_physical_flat(4) == 4);
@@ -1517,11 +1517,11 @@ TEST_CASE("High dimensional tensor", "[layout][edge][highdim][strided_layout_con
     REQUIRE(Layout::PhysicalSize == 32);
 
     // Check strides are powers of 2
-    REQUIRE(Layout::BaseStrides[0] == 16);
-    REQUIRE(Layout::BaseStrides[1] == 8);
-    REQUIRE(Layout::BaseStrides[2] == 4);
-    REQUIRE(Layout::BaseStrides[3] == 2);
-    REQUIRE(Layout::BaseStrides[4] == 1);
+    REQUIRE(Layout::base_stride(0) == 16);
+    REQUIRE(Layout::base_stride(1) == 8);
+    REQUIRE(Layout::base_stride(2) == 4);
+    REQUIRE(Layout::base_stride(3) == 2);
+    REQUIRE(Layout::base_stride(4) == 1);
 }
 
 // ============================================================================
@@ -1544,17 +1544,17 @@ TEST_CASE("All members are constexpr", "[layout][constexpr][strided_layout_const
     static_assert(Layout::PhysicalSize == 8);
     static_assert(Layout::IsPermProvided == true);
 
-    static_assert(Layout::PermArray[0] == 1);
-    static_assert(Layout::PermArray[1] == 0);
+    static_assert(Layout::perm_array(0) == 1);
+    static_assert(Layout::perm_array(1) == 0);
 
-    static_assert(Layout::LogicalDims[0] == 3);
-    static_assert(Layout::LogicalDims[1] == 2);
+    static_assert(Layout::logical_dim(0) == 3);
+    static_assert(Layout::logical_dim(1) == 2);
 
-    static_assert(Layout::BaseStrides[0] == 4);
-    static_assert(Layout::BaseStrides[1] == 1);
+    static_assert(Layout::base_stride(0) == 4);
+    static_assert(Layout::base_stride(1) == 1);
 
-    static_assert(Layout::Strides[0] == 1);
-    static_assert(Layout::Strides[1] == 4);
+    static_assert(Layout::stride(0) == 1);
+    static_assert(Layout::stride(1) == 4);
 
     SUCCEED("All constexpr usages compiled successfully");
 }
@@ -1651,49 +1651,49 @@ TEST_CASE("All 3D permutations", "[layout][perm][3d][strided_layout_constexpr]")
     SECTION("[0,1,2] identity")
     {
         using Layout = StridedLayoutConstExpr<Policy, 0, 1, 2>;
-        REQUIRE(Layout::LogicalDims[0] == 2);
-        REQUIRE(Layout::LogicalDims[1] == 3);
-        REQUIRE(Layout::LogicalDims[2] == 4);
+        REQUIRE(Layout::logical_dim(0) == 2);
+        REQUIRE(Layout::logical_dim(1) == 3);
+        REQUIRE(Layout::logical_dim(2) == 4);
     }
 
     SECTION("[0,2,1]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 0, 2, 1>;
-        REQUIRE(Layout::LogicalDims[0] == 2);
-        REQUIRE(Layout::LogicalDims[1] == 4);
-        REQUIRE(Layout::LogicalDims[2] == 3);
+        REQUIRE(Layout::logical_dim(0) == 2);
+        REQUIRE(Layout::logical_dim(1) == 4);
+        REQUIRE(Layout::logical_dim(2) == 3);
     }
 
     SECTION("[1,0,2]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 1, 0, 2>;
-        REQUIRE(Layout::LogicalDims[0] == 3);
-        REQUIRE(Layout::LogicalDims[1] == 2);
-        REQUIRE(Layout::LogicalDims[2] == 4);
+        REQUIRE(Layout::logical_dim(0) == 3);
+        REQUIRE(Layout::logical_dim(1) == 2);
+        REQUIRE(Layout::logical_dim(2) == 4);
     }
 
     SECTION("[1,2,0]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 1, 2, 0>;
-        REQUIRE(Layout::LogicalDims[0] == 3);
-        REQUIRE(Layout::LogicalDims[1] == 4);
-        REQUIRE(Layout::LogicalDims[2] == 2);
+        REQUIRE(Layout::logical_dim(0) == 3);
+        REQUIRE(Layout::logical_dim(1) == 4);
+        REQUIRE(Layout::logical_dim(2) == 2);
     }
 
     SECTION("[2,0,1]")
     {
         using Layout = StridedLayoutConstExpr<Policy, 2, 0, 1>;
-        REQUIRE(Layout::LogicalDims[0] == 4);
-        REQUIRE(Layout::LogicalDims[1] == 2);
-        REQUIRE(Layout::LogicalDims[2] == 3);
+        REQUIRE(Layout::logical_dim(0) == 4);
+        REQUIRE(Layout::logical_dim(1) == 2);
+        REQUIRE(Layout::logical_dim(2) == 3);
     }
 
     SECTION("[2,1,0] reverse")
     {
         using Layout = StridedLayoutConstExpr<Policy, 2, 1, 0>;
-        REQUIRE(Layout::LogicalDims[0] == 4);
-        REQUIRE(Layout::LogicalDims[1] == 3);
-        REQUIRE(Layout::LogicalDims[2] == 2);
+        REQUIRE(Layout::logical_dim(0) == 4);
+        REQUIRE(Layout::logical_dim(1) == 3);
+        REQUIRE(Layout::logical_dim(2) == 2);
     }
 }
 
@@ -1721,10 +1721,10 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 15);
-        REQUIRE(Layout::LogicalDims[0] == 5);
-        REQUIRE(Layout::LogicalDims[1] == 3);
-        REQUIRE(Layout::BaseStrides[0] == 5);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::logical_dim(0) == 5);
+        REQUIRE(Layout::logical_dim(1) == 3);
+        REQUIRE(Layout::base_stride(0) == 5);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*5 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1741,8 +1741,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 18); // 3 * 6
-        REQUIRE(Layout::BaseStrides[0] == 6);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 6);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*6 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1759,8 +1759,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 24); // 3 * 8
-        REQUIRE(Layout::BaseStrides[0] == 8);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 8);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*8 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1777,8 +1777,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 24); // 3 * 8
-        REQUIRE(Layout::BaseStrides[0] == 8);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 8);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*8 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1795,8 +1795,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 24); // 3 * 8
-        REQUIRE(Layout::BaseStrides[0] == 8);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 8);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*8 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1813,8 +1813,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 24); // 3 * 8
-        REQUIRE(Layout::BaseStrides[0] == 8);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 8);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*8 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1831,8 +1831,8 @@ TEST_CASE("Layout works with all SIMD widths", "[layout][simd][strided_layout_co
 
         REQUIRE(Layout::LogicalSize == 15);
         REQUIRE(Layout::PhysicalSize == 48); // 3 * 16
-        REQUIRE(Layout::BaseStrides[0] == 16);
-        REQUIRE(Layout::BaseStrides[1] == 1);
+        REQUIRE(Layout::base_stride(0) == 16);
+        REQUIRE(Layout::base_stride(1) == 1);
 
         // Transposed: logical(i,j) -> physical j*16 + i
         REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0);   // (0,0) -> 0
@@ -1867,10 +1867,10 @@ TEST_CASE("NoPaddingPolicy: 2D identity", "[layout][nopadding][2d][strided_layou
 
     REQUIRE(Layout::LogicalSize == 6);
     REQUIRE(Layout::PhysicalSize == 6);
-    REQUIRE(Layout::BaseStrides[0] == 3);
-    REQUIRE(Layout::BaseStrides[1] == 1);
-    REQUIRE(Layout::Strides[0] == 3);
-    REQUIRE(Layout::Strides[1] == 1);
+    REQUIRE(Layout::base_stride(0) == 3);
+    REQUIRE(Layout::base_stride(1) == 1);
+    REQUIRE(Layout::stride(0) == 3);
+    REQUIRE(Layout::stride(1) == 1);
 
     // Identity: logical flat == physical flat
     for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
@@ -1900,10 +1900,10 @@ TEST_CASE("NoPaddingPolicy: 2D transposed", "[layout][nopadding][2d][transpose][
 
     REQUIRE(Layout::LogicalSize == 6);
     REQUIRE(Layout::PhysicalSize == 6);
-    REQUIRE(Layout::LogicalDims[0] == 3);
-    REQUIRE(Layout::LogicalDims[1] == 2);
-    REQUIRE(Layout::Strides[0] == 1);
-    REQUIRE(Layout::Strides[1] == 3);
+    REQUIRE(Layout::logical_dim(0) == 3);
+    REQUIRE(Layout::logical_dim(1) == 2);
+    REQUIRE(Layout::stride(0) == 1);
+    REQUIRE(Layout::stride(1) == 3);
 
     REQUIRE(Layout::logical_flat_to_physical_flat(0) == 0); // A
     REQUIRE(Layout::logical_flat_to_physical_flat(1) == 3); // D
@@ -1926,9 +1926,9 @@ TEST_CASE("NoPaddingPolicy: 3D identity", "[layout][nopadding][3d][strided_layou
 
     REQUIRE(Layout::LogicalSize == 24);
     REQUIRE(Layout::PhysicalSize == 24);
-    REQUIRE(Layout::BaseStrides[0] == 12);
-    REQUIRE(Layout::BaseStrides[1] == 4);
-    REQUIRE(Layout::BaseStrides[2] == 1);
+    REQUIRE(Layout::base_stride(0) == 12);
+    REQUIRE(Layout::base_stride(1) == 4);
+    REQUIRE(Layout::base_stride(2) == 1);
 
     // Identity: logical flat == physical flat
     for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
@@ -1949,8 +1949,8 @@ TEST_CASE("NoPaddingPolicy: 3D with permutation", "[layout][nopadding][3d][trans
     /*
      * 2x3x4 tensor with permutation [2, 0, 1] creates 4x2x3 view
      *
-     * Policy::LogicalDims = [2, 3, 4]
-     * Layout::LogicalDims = [4, 2, 3]
+     * Policy::logical_dim = [2, 3, 4]
+     * Layout::logical_dim = [4, 2, 3]
      *
      * BaseStrides = [12, 4, 1]
      * Strides = [1, 12, 4]  (permuted)
@@ -1963,12 +1963,12 @@ TEST_CASE("NoPaddingPolicy: 3D with permutation", "[layout][nopadding][3d][trans
 
     REQUIRE(Layout::LogicalSize == 24);
     REQUIRE(Layout::PhysicalSize == 24);
-    REQUIRE(Layout::LogicalDims[0] == 4);
-    REQUIRE(Layout::LogicalDims[1] == 2);
-    REQUIRE(Layout::LogicalDims[2] == 3);
-    REQUIRE(Layout::Strides[0] == 1);
-    REQUIRE(Layout::Strides[1] == 12);
-    REQUIRE(Layout::Strides[2] == 4);
+    REQUIRE(Layout::logical_dim(0) == 4);
+    REQUIRE(Layout::logical_dim(1) == 2);
+    REQUIRE(Layout::logical_dim(2) == 3);
+    REQUIRE(Layout::stride(0) == 1);
+    REQUIRE(Layout::stride(1) == 12);
+    REQUIRE(Layout::stride(2) == 4);
 
     // logical(0,0,0) -> 0
     REQUIRE(Layout::logical_coords_to_physical_flat(0, 0, 0) == 0);
@@ -1994,7 +1994,7 @@ TEST_CASE("NoPaddingPolicy: 1D vector", "[layout][nopadding][1d][strided_layout_
     REQUIRE(Layout::NumDims == 1);
     REQUIRE(Layout::LogicalSize == 10);
     REQUIRE(Layout::PhysicalSize == 10);
-    REQUIRE(Layout::BaseStrides[0] == 1);
+    REQUIRE(Layout::base_stride(0) == 1);
 
     for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
     {
@@ -2025,9 +2025,9 @@ TEST_CASE("NoPaddingPolicy: roundtrip consistency", "[layout][nopadding][roundtr
     using Policy = NoPaddingPolicy<double, 3, 4, 5>;
     using Layout = StridedLayoutConstExpr<Policy, 1, 2, 0>;
 
-    REQUIRE(Layout::LogicalDims[0] == 4);
-    REQUIRE(Layout::LogicalDims[1] == 5);
-    REQUIRE(Layout::LogicalDims[2] == 3);
+    REQUIRE(Layout::logical_dim(0) == 4);
+    REQUIRE(Layout::logical_dim(1) == 5);
+    REQUIRE(Layout::logical_dim(2) == 3);
 
     for (my_size_t lf = 0; lf < Layout::LogicalSize; ++lf)
     {

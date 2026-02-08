@@ -44,7 +44,6 @@ struct StridedLayoutConstExpr
 private:
     using PermCheck = PermValidation<IsPermProvided, Perm...>;
 
-public:
     static_assert(!IsPermProvided || sizeof...(Perm) == NumDims,
                   "Permutation must match number of dimensions");
 
@@ -57,7 +56,12 @@ public:
     static_assert(!IsPermProvided || PermCheck::min_val == 0,
                   "Min value of permutation pack is not equal to 0");
 
-    /** Identity or provided permutation */
+    /**
+     * @brief Compute the permutation array at compile-time.
+     * If permutation is provided, use it. Otherwise, generate identity.
+     *
+     * @return constexpr Array<my_size_t, NumDims>
+     */
     static constexpr Array<my_size_t, NumDims> computePermArray() noexcept
     {
         if constexpr (IsPermProvided)
@@ -75,6 +79,10 @@ public:
         }
     }
 
+    /**
+     * @brief Permutation array.
+     *
+     */
     static constexpr Array<my_size_t, NumDims> PermArray = computePermArray();
 
     /**
@@ -94,11 +102,12 @@ public:
         return result;
     }
 
+    /**
+     * @brief Inverse permutation array.
+     *
+     */
     static constexpr Array<my_size_t, NumDims> InversePermArray = computeInversePermArray();
 
-    // ========================================================================
-    // LOGICAL DIMENSIONS (permuted)
-    // ========================================================================
     /**
      * @brief Compute logical dimensions with permutation applied.
      *
@@ -114,12 +123,17 @@ public:
         return result;
     }
 
+    /**
+     * @brief Logical dimensions with permutation applied.
+     *
+     */
     static constexpr Array<my_size_t, NumDims> LogicalDims = computeLogicalDims();
 
-    // ========================================================================
-    // BASE STRIDES (unpermuted, for physical decomposition)
-    // ========================================================================
-
+    /**
+     * @brief Compute base strides for physical decomposition (unpermuted).
+     *
+     * @return constexpr Array<my_size_t, NumDims>
+     */
     static constexpr Array<my_size_t, NumDims> computeBaseStrides() noexcept
     {
         Array<my_size_t, NumDims> result{};
@@ -131,22 +145,16 @@ public:
         return result;
     }
 
+    /**
+     * @brief Base strides for physical decomposition (unpermuted).
+     *
+     */
     static constexpr Array<my_size_t, NumDims> BaseStrides = computeBaseStrides();
 
-    // ========================================================================
-    // PHYSICAL STRIDES (permuted)
-    // ========================================================================
-
     /**
-     * Compute physical strides with permutation applied.
+     * @brief Compute physical strides with permutation applied from base strides.
      *
-     * Two steps:
-     *   1. Compute base strides from unpermuted physical dims (above) BaseStrides
-     *   2. Permute the strides (not the dims!)
-     *
-     * Why not compute strides from permuted physical dims?
-     * Memory layout never changes — a permuted view just accesses it differently.
-     * We must permute the stride VALUES, not recompute from permuted dims.
+     * @return constexpr Array<my_size_t, NumDims>
      */
     static constexpr Array<my_size_t, NumDims> computeStrides() noexcept
     {
@@ -159,12 +167,17 @@ public:
         return result;
     }
 
+    /**
+     * @brief Physical strides with permutation applied.
+     *
+     */
     static constexpr Array<my_size_t, NumDims> Strides = computeStrides();
 
-    // ========================================================================
-    // LOGICAL STRIDES (for flat index decomposition)
-    // ========================================================================
-
+    /**
+     * @brief Compute logical strides for flat index decomposition.
+     *
+     * @return constexpr Array<my_size_t, NumDims>
+     */
     static constexpr Array<my_size_t, NumDims> computeLogicalStrides() noexcept
     {
         Array<my_size_t, NumDims> result{};
@@ -176,22 +189,90 @@ public:
         return result;
     }
 
+    /**
+     * @brief Logical strides for flat index decomposition.
+     *
+     */
     static constexpr Array<my_size_t, NumDims> LogicalStrides = computeLogicalStrides();
 
-    // ========================================================================
-    // DIMENSION QUERIES
-    // ========================================================================
-
+public:
+    /**
+     * @brief Get number of dimensions.
+     *
+     * @return constexpr my_size_t
+     */
     FORCE_INLINE static constexpr my_size_t num_dims() noexcept { return NumDims; }
 
+    /**
+     * @brief Get permutation at dimension i.
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
+    FORCE_INLINE static constexpr my_size_t perm_array(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
+    {
+        return PermArray.at(i);
+    }
+
+    /**
+     * @brief Get inverse permutation at dimension i.
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
+    FORCE_INLINE static constexpr my_size_t inverse_perm_array(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
+    {
+        return InversePermArray.at(i);
+    }
+
+    /**
+     * @brief Get logical dimension at index i (with permutation applied).
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
     FORCE_INLINE static constexpr my_size_t logical_dim(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         return LogicalDims.at(i);
     }
 
+    /**
+     * @brief Get base stride at dimension i (unpermuted, for physical decomposition).
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
+    FORCE_INLINE static constexpr my_size_t base_stride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
+    {
+        return BaseStrides.at(i);
+    }
+
+    /**
+     * @brief Get physical stride at dimension i (with permutation applied).
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
     FORCE_INLINE static constexpr my_size_t stride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         return Strides.at(i);
+    }
+
+    /**
+     * @brief Get logical stride at dimension i (for flat index decomposition).
+     *
+     * @param i
+     * @return constexpr my_size_t
+     * @throws if i >= NumDims
+     */
+    FORCE_INLINE static constexpr my_size_t logical_stride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
+    {
+        return LogicalStrides.at(i);
     }
 
     // ========================================================================
@@ -221,6 +302,11 @@ public:
         return offset;
     }
 
+    /**
+     * @brief Check if logical multi-index is in bounds.
+     *
+     * @return constexpr bool
+     */
     FORCE_INLINE static constexpr bool is_logical_index_in_bounds(const my_size_t (&indices)[NumDims]) noexcept
     {
         for (my_size_t i = 0; i < NumDims; ++i)
@@ -231,7 +317,12 @@ public:
         return true;
     }
 
-    /** Array multi-index to physical offset (bounds-checked) using */
+    /**
+     * @brief Logical coordinates (Array multi-index) to physical flat index (bounds-checked).
+     *
+     * @return constexpr my_size_t
+     * @throws if any index is out of bounds for its logical dimension
+     */
     FORCE_INLINE static constexpr my_size_t logical_coords_to_physical_flat(const my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         if (!is_logical_index_in_bounds(indices))
@@ -247,7 +338,14 @@ public:
         return flat;
     }
 
-    /** Variadic multi-index to physical offset (bounds-checked against logical dims) */
+    /**
+     * @brief Logical coordinates (variadic multi-index) to physical flat index (bounds-checked).
+     *
+     * @tparam Indices
+     * @param indices
+     * @return constexpr my_size_t
+     * @throws if any index is out of bounds for its logical dimension
+     */
     template <typename... Indices>
     FORCE_INLINE static constexpr my_size_t logical_coords_to_physical_flat(Indices... indices) TESSERACT_CONDITIONAL_NOEXCEPT
     {
@@ -272,7 +370,8 @@ public:
      *
      * @param logical_flat Input flat index in logical space
      * @param indices Output parameter for multi-dimensional coordinates
-     * @return constexpr voids
+     * @return constexpr void
+     * @throws if logical_flat is out of bounds for LogicalSize
      */
     FORCE_INLINE static constexpr void logical_flat_to_logical_coords(my_size_t logical_flat, my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
@@ -291,7 +390,7 @@ public:
     }
 
     /**
-     * Physical flat index to physical coordinates.
+     * @brief Physical flat index to physical coordinates.
      *
      * Decomposes a flat index into multi-dimensional coordinates
      * using BaseStrides (row-major order in physical memory).
@@ -306,6 +405,11 @@ public:
      *   7 / 4 = 1, 7 - 4 = 3
      *   3 / 1 = 3
      *   → coords (1, 3)  ← column 3 is padding (LogicalDims[1] = 3)
+     *
+     * @param physical_flat
+     * @param indices Output parameter for multi-dimensional coordinates
+     * @return constexpr void
+     * @throws if physical_flat is out of bounds for PhysicalSize
      */
     FORCE_INLINE static constexpr void physical_flat_to_physical_coords(my_size_t physical_flat, my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
@@ -329,7 +433,7 @@ public:
     // ========================================================================
 
     /**
-     * Physical flat index to logical coordinates.
+     * @brief Physical flat index to logical coordinates.
      *
      * Decomposes a flat index into physical coordinates using BaseStrides,
      * then applies permutation to get logical coordinates.
@@ -349,6 +453,10 @@ public:
      *     logical[0] = physical[PermArray[0]] = physical[1] = 1
      *     logical[1] = physical[PermArray[1]] = physical[0] = 1
      *     → logical coords (1, 1)
+     * @param physical_flat
+     * @param indices Output parameter for logical multi-dimensional coordinates
+     * @return constexpr void
+     * @throws if physical_flat is out of bounds for PhysicalSize
      */
     FORCE_INLINE static constexpr void physical_flat_to_logical_coords(my_size_t physical_flat, my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
