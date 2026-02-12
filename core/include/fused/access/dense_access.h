@@ -1,6 +1,7 @@
 #ifndef DENSE_ACCESS_H
 #define DENSE_ACCESS_H
 
+#include "config.h"
 #include "fill_n_optimized.h"
 
 /**
@@ -20,10 +21,7 @@ class DenseAccess
 public:
     using PadPolicy = PaddingPolicy<T, Dims...>;
 
-    static constexpr my_size_t NumDims = PadPolicy::NumDims;
-    static constexpr my_size_t LogicalSize = PadPolicy::LogicalSize;
     static constexpr my_size_t PhysicalSize = PadPolicy::PhysicalSize;
-    static constexpr my_size_t SimdWidth = PadPolicy::SimdWidth;
 
 private:
     StoragePolicy<T, PhysicalSize> data_;
@@ -47,8 +45,8 @@ public:
     FORCE_INLINE constexpr T &operator[](my_size_t idx) noexcept { return data_[idx]; }
     FORCE_INLINE constexpr const T &operator[](my_size_t idx) const noexcept { return data_[idx]; }
 
-    FORCE_INLINE constexpr T &at(my_size_t idx) noexcept { return data_.at(idx); }
-    FORCE_INLINE constexpr const T &at(my_size_t idx) const noexcept { return data_.at(idx); }
+    FORCE_INLINE constexpr T &at(my_size_t idx) TESSERACT_CONDITIONAL_NOEXCEPT { return data_.at(idx); }
+    FORCE_INLINE constexpr const T &at(my_size_t idx) const TESSERACT_CONDITIONAL_NOEXCEPT { return data_.at(idx); }
 
     // Pointer access
     FORCE_INLINE constexpr T *data() noexcept { return data_.data(); }
@@ -60,10 +58,6 @@ public:
 
     FORCE_INLINE constexpr T *end() noexcept { return data_.end(); }
     FORCE_INLINE constexpr const T *end() const noexcept { return data_.end(); }
-
-    // Dimension queries (compile-time)
-    static constexpr my_size_t logical_dim(my_size_t i) { return PadPolicy::LogicalDims.at(i); }
-    static constexpr my_size_t physical_dim(my_size_t i) { return PadPolicy::PhysicalDims.at(i); }
 };
 
 #endif // DENSE_ACCESS_H
