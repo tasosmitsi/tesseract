@@ -1,8 +1,8 @@
 #ifndef STATIC_STORAGE_H
 #define STATIC_STORAGE_H
 
-#include "config.h"
-#include "fused/microkernels/microkernel_base.h"
+#include "config.h"                              // for my_size_t
+#include "fused/microkernels/microkernel_base.h" // for DATA_ALIGNAS
 
 template <typename T, my_size_t Size>
 class StaticStorage
