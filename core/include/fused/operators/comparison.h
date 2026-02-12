@@ -33,7 +33,7 @@ bool operator==(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: con
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator== or operator!=");
 #endif
 
-    return KernelOps<LHS, BITS, DefaultArch>::reduce_all_approx_equal(
+    return KernelOps<lhs_type, BITS, DefaultArch>::reduce_all_approx_equal(
         lhs.derived(),
         rhs.derived(),
         lhs_type(PRECISION_TOLERANCE));

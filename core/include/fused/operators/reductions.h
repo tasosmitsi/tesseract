@@ -13,7 +13,7 @@ template <typename Expr>
              !algebra::is_algebra_v<Expr>)
 typename Expr::value_type min(const BaseExpr<Expr> &expr)
 {
-    return KernelOps<Expr, BITS, DefaultArch>::reduce_min(expr.derived());
+    return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_min(expr.derived());
 }
 
 template <typename Expr>
@@ -21,7 +21,7 @@ template <typename Expr>
              !algebra::is_algebra_v<Expr>)
 typename Expr::value_type max(const BaseExpr<Expr> &expr)
 {
-    return KernelOps<Expr, BITS, DefaultArch>::reduce_max(expr.derived());
+    return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_max(expr.derived());
 }
 
 template <typename Expr>
@@ -29,5 +29,5 @@ template <typename Expr>
              !algebra::is_algebra_v<Expr>)
 typename Expr::value_type sum(const BaseExpr<Expr> &expr)
 {
-    return KernelOps<Expr, BITS, DefaultArch>::reduce_sum(expr.derived());
+    return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_sum(expr.derived());
 }
