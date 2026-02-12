@@ -99,6 +99,19 @@ consteval bool all_unique()
     return true;
 }
 
+template <my_size_t... Vals>
+consteval bool is_sequential()
+{
+    static_assert(sizeof...(Vals) > 0, "is_sequential requires at least one value");
+    my_size_t arr[] = {Vals...};
+    for (my_size_t i = 0; i < sizeof...(Vals); ++i)
+    {
+        if (arr[i] != i)
+            return false;
+    }
+    return true;
+}
+
 template <my_size_t... Is>
 struct index_seq
 {
