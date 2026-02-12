@@ -41,6 +41,8 @@ struct StridedLayoutConstExpr
     static constexpr my_size_t PhysicalSize = PadPolicy::PhysicalSize;
     static constexpr bool IsPermProvided = sizeof...(Perm) > 0;
 
+    using PadPolicyType = PadPolicy;
+
 private:
     using PermCheck = PermValidation<IsPermProvided, Perm...>;
 
@@ -474,7 +476,7 @@ public:
             physical_flat -= idx * s;
         }
 
-        // Step 2: Apply inverse permutation
+        // Step 2: Apply forward permutation
         // logical[i] = physical[PermArray[i]]
         for (my_size_t i = 0; i < NumDims; ++i)
         {
