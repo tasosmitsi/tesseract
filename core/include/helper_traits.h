@@ -21,29 +21,33 @@ consteval bool dims_match(const my_size_t lhs[N], const my_size_t rhs[N])
 }
 
 // Compute the maximum of a pack at compile time
-template <my_size_t First, my_size_t... Rest>
+template <my_size_t... Vals>
 consteval my_size_t max_value()
 {
-    if constexpr (sizeof...(Rest) == 0)
-        return First;
-    else
+    static_assert(sizeof...(Vals) > 0, "max_value requires at least one value");
+    my_size_t arr[] = {Vals...};
+    my_size_t result = arr[0];
+    for (my_size_t i = 1; i < sizeof...(Vals); ++i)
     {
-        my_size_t tail_max = max_value<Rest...>();
-        return (First > tail_max ? First : tail_max);
+        if (arr[i] > result)
+            result = arr[i];
     }
+    return result;
 }
 
 // Compute the minimum of a pack at compile time
-template <my_size_t First, my_size_t... Rest>
+template <my_size_t... Vals>
 consteval my_size_t min_value()
 {
-    if constexpr (sizeof...(Rest) == 0)
-        return First;
-    else
+    static_assert(sizeof...(Vals) > 0, "min_value requires at least one value");
+    my_size_t arr[] = {Vals...};
+    my_size_t result = arr[0];
+    for (my_size_t i = 1; i < sizeof...(Vals); ++i)
     {
-        my_size_t tail_min = min_value<Rest...>();
-        return (First < tail_min ? First : tail_min);
+        if (arr[i] < result)
+            result = arr[i];
     }
+    return result;
 }
 
 // Helper wrapper for packs
@@ -82,6 +86,7 @@ consteval bool min_max_equal(Pack<A...>, Pack<B...>)
 template <my_size_t... Vals>
 consteval bool all_unique()
 {
+    static_assert(sizeof...(Vals) > 0, "all_unique requires at least one value");
     my_size_t arr[] = {Vals...};
     for (my_size_t i = 0; i < sizeof...(Vals); ++i)
     {
@@ -93,5 +98,21 @@ consteval bool all_unique()
     }
     return true;
 }
+
+template <my_size_t... Is>
+struct index_seq
+{
+};
+
+template <my_size_t N, my_size_t... Is>
+struct make_index_seq : make_index_seq<N - 1, N - 1, Is...>
+{
+};
+
+template <my_size_t... Is>
+struct make_index_seq<0, Is...>
+{
+    using type = index_seq<Is...>;
+};
 
 #endif // HELPERTRAITS_H
