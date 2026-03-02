@@ -11,7 +11,7 @@ namespace expression
     struct traits<PermutedViewConstExpr<Tensor, Perm...>>
     {
         static constexpr bool IsPermuted = !is_sequential<Perm...>();
-
         static constexpr bool IsContiguous = !IsPermuted;
+        static constexpr bool IsPhysical = true;
     };
 } // namespace expression
