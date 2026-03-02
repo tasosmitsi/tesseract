@@ -12,7 +12,7 @@
 #include "fused/BaseExpr.h"
 #include "fused/operators/Operators.h"
 #include "fused/microkernels/microkernel_base.h"
-#include "fused/microkernels/kernel_ops.h"
+#include "fused/kernel_ops/kernel_ops.h"
 #include "fused/storage/static_storage.h"
 #include "fused/storage/dynamic_storage.h"
 #include "fused/access/dense_access.h"
