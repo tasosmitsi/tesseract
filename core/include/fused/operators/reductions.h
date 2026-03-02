@@ -1,7 +1,7 @@
 #pragma once
 #include "config.h"
 #include "fused/BaseExpr.h"
-#include "fused/microkernels/kernel_ops.h"
+#include "fused/kernel_ops/kernel_ops.h"
 #include "algebra/algebraic_traits.h"
 
 // ===============================

@@ -4,7 +4,7 @@
 #include "fused/operators/operators_common.h"
 #include "simple_type_traits.h"
 #include "helper_traits.h"
-#include "fused/microkernels/kernel_ops.h"
+#include "fused/kernel_ops/kernel_ops.h"
 
 // ===============================
 // Comparison Operators
