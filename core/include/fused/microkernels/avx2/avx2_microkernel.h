@@ -123,7 +123,21 @@ struct Microkernel<double, 256, X86_AVX>
     FORCE_INLINE static VecType div(VecType a, ScalarType b) noexcept { return _mm256_div_pd(a, set1(b)); }
     FORCE_INLINE static VecType div(ScalarType a, VecType b) noexcept { return _mm256_div_pd(set1(a), b); }
 
+    // fmadd: a*b + c
     FORCE_INLINE static VecType fmadd(VecType a, VecType b, VecType c) noexcept { return _mm256_fmadd_pd(a, b, c); }
+    FORCE_INLINE static VecType fmadd(VecType a, ScalarType b, VecType c) noexcept { return _mm256_fmadd_pd(a, set1(b), c); }
+
+    // fmsub: a*b - c
+    FORCE_INLINE static VecType fmsub(VecType a, VecType b, VecType c) noexcept { return _mm256_fmsub_pd(a, b, c); }
+    FORCE_INLINE static VecType fmsub(VecType a, ScalarType b, VecType c) noexcept { return _mm256_fmsub_pd(a, set1(b), c); }
+
+    // fnmadd: -(a*b) + c
+    FORCE_INLINE static VecType fnmadd(VecType a, VecType b, VecType c) noexcept { return _mm256_fnmadd_pd(a, b, c); }
+    FORCE_INLINE static VecType fnmadd(VecType a, ScalarType b, VecType c) noexcept { return _mm256_fnmadd_pd(a, set1(b), c); }
+
+    // fnmsub: -(a*b) - c
+    FORCE_INLINE static VecType fnmsub(VecType a, VecType b, VecType c) noexcept { return _mm256_fnmsub_pd(a, b, c); }
+    FORCE_INLINE static VecType fnmsub(VecType a, ScalarType b, VecType c) noexcept { return _mm256_fnmsub_pd(a, set1(b), c); }
 
     FORCE_INLINE static VecType min(VecType a, VecType b) noexcept { return _mm256_min_pd(a, b); }
     FORCE_INLINE static VecType min(VecType a, ScalarType b) noexcept { return _mm256_min_pd(a, set1(b)); }
