@@ -7,13 +7,19 @@ CXX_IS_CLANG := $(shell $(CXX) --version | grep -i -q clang && echo 1 || echo 0)
 $(info Clang detected: $(CXX_IS_CLANG))
 
 # Directories
-CORE_SRC_DIR = core/src
-CORE_INC_DIR = core/include
-TEST_DIR = tests
-EXAMPLE_DIR = examples/src
-BUILD_DIR = build
-CATCH2_DIR = Catch2/extras
-PY_FLAGS = -I/usr/include/python3.12 -lpython3.12  -I/usr/local/src/eigen/Eigen
+CORE_SRC_DIR 	= core/src
+CORE_INC_DIR 	= core/include
+TEST_DIR 		= tests
+EXAMPLE_DIR 	= examples/src
+BUILD_DIR 		= build
+CATCH2_DIR     	= Catch2/extras
+CATCH2_INC     	= -isystem$(CATCH2_DIR)
+EIGEN_INC      	= -isystem/usr/local/src/eigen/Eigen
+
+PY_INC         	= -I/usr/include/python3.12
+PY_LIBS        	= -lpython3.12
+
+THIRD_PARTY_FLAGS = $(CATCH2_INC) $(EIGEN_INC) $(PY_INC) $(PY_LIBS)
 
 # Flags
 DEPFLAGS = -MMD -MP
@@ -26,7 +32,7 @@ else
 	OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline -Rpass-missed=inline
 endif
 
-CXXFLAGS = -std=c++23 -Icore/include -Iexamples/include $(PY_FLAGS) -I$(CATCH2_DIR) $(DEPFLAGS) $(OPT)
+CXXFLAGS = -std=c++23 -Icore/include -Iexamples/include $(THIRD_PARTY_FLAGS) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 
 # ------------- test files -------------
@@ -77,7 +83,7 @@ $(CORE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES)
 
 # Linking the test executable (C++)
 $(TEST_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_TEST_FILES) $(C_OBJ_TEST_FILES)
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(PY_FLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(PY_LIBS)
 
 # Linking the example executable (C or C++)
 $(EXAMPLE_TARGET): $(CXX_OBJ_CORE_FILES) $(C_OBJ_CORE_FILES) $(CXX_OBJ_EXAMPLE_FILES) $(C_OBJ_EXAMPLE_FILES)
