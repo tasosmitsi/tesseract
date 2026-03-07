@@ -21,6 +21,7 @@
 #include "fused/kernel_ops/kernel_reduce.h"
 #include "fused/kernel_ops/kernel_compare.h"
 #include "fused/kernel_ops/kernel_dot.h"
+#include "fused/kernel_ops/kernel_gemm.h"
 
 template <typename T, my_size_t Bits, typename Arch>
 struct KernelOps

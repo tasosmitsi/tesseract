@@ -13,6 +13,11 @@ template <typename T, my_size_t Bits>
 struct Microkernel<T, Bits, GENERICARCH>
 {
     static constexpr my_size_t simdWidth = 1;
+    // GEMM tiling constants (scalar fallback)
+    static constexpr my_size_t num_registers = 16;
+    static constexpr my_size_t MR = 4;
+    static constexpr my_size_t NR_VECS = 1;
+    static constexpr my_size_t NR = NR_VECS * simdWidth; // 1
     using VecType = T;
     using ScalarType = T; // In scalar mode, VecType is the same as ScalarType
 
@@ -27,7 +32,7 @@ struct Microkernel<T, Bits, GENERICARCH>
     FORCE_INLINE static VecType mul(VecType a, VecType b) noexcept { return a * b; }
     FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept { return a - b; }
     FORCE_INLINE static VecType div(VecType a, VecType b) noexcept { return a / b; }
-    
+
     FORCE_INLINE static VecType min(VecType a, VecType b) noexcept { return a < b ? a : b; }
     FORCE_INLINE static VecType max(VecType a, VecType b) noexcept { return a > b ? a : b; }
 

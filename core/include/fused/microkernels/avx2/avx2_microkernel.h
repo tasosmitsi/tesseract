@@ -17,6 +17,11 @@ template <>
 struct Microkernel<float, 256, X86_AVX>
 {
     static constexpr my_size_t simdWidth = 8; // 256 bits / 32 bits per float = 8
+    // GEMM tiling constants (register-blocked)
+    static constexpr my_size_t num_registers = 16;
+    static constexpr my_size_t MR = 4;
+    static constexpr my_size_t NR_VECS = 3;
+    static constexpr my_size_t NR = NR_VECS * simdWidth; // 24
     using VecType = __m256;
     using ScalarType = float;
 
@@ -100,6 +105,11 @@ template <>
 struct Microkernel<double, 256, X86_AVX>
 {
     static constexpr my_size_t simdWidth = 4; // 256 bits / 64 bits per double = 4
+    // GEMM tiling constants (register-blocked)
+    static constexpr my_size_t num_registers = 16;
+    static constexpr my_size_t MR = 4;
+    static constexpr my_size_t NR_VECS = 3;
+    static constexpr my_size_t NR = NR_VECS * simdWidth; // 12
     using VecType = __m256d;
     using ScalarType = double;
 
