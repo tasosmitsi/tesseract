@@ -3,7 +3,7 @@
 #include <string>
 
 template <typename Expr1, typename Expr2>
-inline void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName) // TODO: conditionally noexcept
+void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #ifdef RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH
     if (lhs.getNumDims() != rhs.getNumDims())
