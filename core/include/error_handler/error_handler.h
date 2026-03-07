@@ -1,5 +1,5 @@
 #pragma once
-#include <string>
+#include "simple_type_traits.h"
 
 enum class ErrorLevel
 {
@@ -20,9 +20,22 @@ public:
         Impl::log(msg, level);
     }
 
+    template <typename... Args>
+    static void log(ErrorLevel level, Args &&...args)
+    {
+        Impl::log(level, forward<Args>(args)...);
+    }
+
     template <typename T>
-    static void error(const T &msg)
+    [[noreturn]] static void error(const T &msg)
     {
         Impl::error(msg);
+    }
+
+    template <typename... Args>
+        requires(sizeof...(Args) > 1)
+    [[noreturn]] static void error(Args &&...args)
+    {
+        Impl::error(forward<Args>(args)...);
     }
 };
