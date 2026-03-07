@@ -2,6 +2,7 @@
 #include "config.h"
 #include "fused/BinaryExpr.h"
 #include "fused/ScalarExpr.h"
+#include "fused/FmaExpr.h"
 #include "fused/Operations.h"
 #include "fused/operators/operators_common.h"
 #include "simple_type_traits.h"
@@ -11,10 +12,194 @@
 // Operator Overloads
 // ===============================
 
+// ===============================
+// FMA detection: operator+
+// ===============================
+
+// (A * B) + C → Fma
+template <typename L, typename R, typename C>
+    requires(algebra::is_vector_space_v<BinaryExpr<L, R, Mul>> &&
+             algebra::is_vector_space_v<C>)
+FmaExpr<L, R, C, Fma>
+operator+(const BaseExpr<BinaryExpr<L, R, Mul>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (A*B + C) triggered" << std::endl;
+    // return 42;
+    const auto &mul = lhs.derived();
+    return FmaExpr<L, R, C, Fma>(mul.lhs(), mul.rhs(), rhs.derived());
+}
+
+// C + (A * B) → Fma
+template <typename C, typename L, typename R>
+    requires(algebra::is_vector_space_v<C> &&
+             algebra::is_vector_space_v<BinaryExpr<L, R, Mul>>)
+FmaExpr<L, R, C, Fma>
+operator+(const BaseExpr<C> &lhs,
+          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (C + A*B) triggered" << std::endl;
+    // return 42;
+    const auto &mul = rhs.derived();
+    return FmaExpr<L, R, C, Fma>(mul.lhs(), mul.rhs(), lhs.derived());
+}
+
+// (A * scalar) + C → Fma
+template <typename L, typename T, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>> &&
+             algebra::is_vector_space_v<C>)
+ScalarFmaExpr<L, T, C, Fma>
+operator+(const BaseExpr<ScalarExprRHS<L, T, Mul>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (A*scalar + C) triggered" << std::endl;
+    // return 42;
+    const auto &mul = lhs.derived();
+    return ScalarFmaExpr<L, T, C, Fma>(mul.expr(), mul.scalar(), rhs.derived());
+}
+
+// C + (A * scalar) → Fma
+template <typename C, typename L, typename T>
+    requires(algebra::is_vector_space_v<C> &&
+             algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>>)
+ScalarFmaExpr<L, T, C, Fma>
+operator+(const BaseExpr<C> &lhs,
+          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (C + A*scalar) triggered" << std::endl;
+    // return 42;
+    const auto &mul = rhs.derived();
+    return ScalarFmaExpr<L, T, C, Fma>(mul.expr(), mul.scalar(), lhs.derived());
+}
+
+// -(A * B) + C → Fnma
+template <typename L, typename R, typename T, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &&
+             algebra::is_vector_space_v<C>)
+FmaExpr<L, R, C, Fnma>
+operator+(const BaseExpr<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (-(A*B) + C) triggered" << std::endl;
+    // return 42;
+    const auto &neg = lhs.derived();
+    const auto &mul = neg.expr(); // the BinaryExpr<L, R, Mul>
+    return FmaExpr<L, R, C, Fnma>(mul.lhs(), mul.rhs(), rhs.derived());
+}
+
+// -(A * scalar) + C → Fnma
+template <typename L, typename T1, typename T2, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &&
+             algebra::is_vector_space_v<C>)
+ScalarFmaExpr<L, T1, C, Fnma>
+operator+(const BaseExpr<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator+ for FMA pattern (-(A*scalar) + C) triggered" << std::endl;
+    // return 42;
+    const auto &neg = lhs.derived();
+    const auto &mul = neg.expr();
+    return ScalarFmaExpr<L, T1, C, Fnma>(mul.expr(), mul.scalar(), rhs.derived());
+}
+
+// ===============================
+// FMA detection: operator-
+// ===============================
+
+// (A * B) - C → Fms
+template <typename L, typename R, typename C>
+    requires(algebra::is_vector_space_v<BinaryExpr<L, R, Mul>> &&
+             algebra::is_vector_space_v<C>)
+FmaExpr<L, R, C, Fms>
+operator-(const BaseExpr<BinaryExpr<L, R, Mul>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (A*B - C) triggered" << std::endl;
+    // return 42;
+    const auto &mul = lhs.derived();
+    return FmaExpr<L, R, C, Fms>(mul.lhs(), mul.rhs(), rhs.derived());
+}
+
+// C - (A * B) → Fnma
+template <typename C, typename L, typename R>
+    requires(algebra::is_vector_space_v<C> &&
+             algebra::is_vector_space_v<BinaryExpr<L, R, Mul>>)
+FmaExpr<L, R, C, Fnma>
+operator-(const BaseExpr<C> &lhs,
+          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (C - A*B) triggered" << std::endl;
+    // return 42;
+    const auto &mul = rhs.derived();
+    return FmaExpr<L, R, C, Fnma>(mul.lhs(), mul.rhs(), lhs.derived());
+}
+
+// -(A * B) - C → Fnms
+template <typename L, typename R, typename T, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &&
+             algebra::is_vector_space_v<C>)
+FmaExpr<L, R, C, Fnms>
+operator-(const BaseExpr<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (-(A*B) - C) triggered" << std::endl;
+    // return 42;
+    const auto &neg = lhs.derived();
+    const auto &mul = neg.expr();
+    return FmaExpr<L, R, C, Fnms>(mul.lhs(), mul.rhs(), rhs.derived());
+}
+
+// -(A * scalar) - C → Fnms
+template <typename L, typename T1, typename T2, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &&
+             algebra::is_vector_space_v<C>)
+ScalarFmaExpr<L, T1, C, Fnms>
+operator-(const BaseExpr<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (-(A*scalar) - C) triggered" << std::endl;
+    // return 42;
+    const auto &neg = lhs.derived();
+    const auto &mul = neg.expr();
+    return ScalarFmaExpr<L, T1, C, Fnms>(mul.expr(), mul.scalar(), rhs.derived());
+}
+
+// (A * scalar) - C → Fms
+template <typename L, typename T, typename C>
+    requires(algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>> &&
+             algebra::is_vector_space_v<C>)
+ScalarFmaExpr<L, T, C, Fms>
+operator-(const BaseExpr<ScalarExprRHS<L, T, Mul>> &lhs,
+          const BaseExpr<C> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (A*scalar - C) triggered" << std::endl;
+    // return 42;
+    const auto &mul = lhs.derived();
+    return ScalarFmaExpr<L, T, C, Fms>(mul.expr(), mul.scalar(), rhs.derived());
+}
+
+// C - (A * scalar) → Fnma
+template <typename C, typename L, typename T>
+    requires(algebra::is_vector_space_v<C> &&
+             algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>>)
+ScalarFmaExpr<L, T, C, Fnma>
+operator-(const BaseExpr<C> &lhs,
+          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) noexcept
+{
+    // std::cout << "operator- for FMA pattern (C - A*scalar) triggered" << std::endl;
+    // return 42;
+    const auto &mul = rhs.derived();
+    return ScalarFmaExpr<L, T, C, Fnma>(mul.expr(), mul.scalar(), lhs.derived());
+}
+
+// ===============================
+// binary detection: operator+
+// ===============================
+
 template <typename LHS, typename RHS>
     requires(algebra::is_vector_space_v<LHS> && algebra::is_vector_space_v<RHS>)
 BinaryExpr<LHS, RHS, Add>
-operator+(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+operator+(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator+");
@@ -25,7 +210,7 @@ operator+(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: condition
 template <typename LHS, typename RHS>
     requires(algebra::is_vector_space_v<LHS> && algebra::is_vector_space_v<RHS>)
 BinaryExpr<LHS, RHS, Sub>
-operator-(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+operator-(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator-");
@@ -40,7 +225,7 @@ template <typename LHS, typename RHS>
         !algebra::is_algebra_v<LHS> &&
         !algebra::is_algebra_v<RHS>)
 BinaryExpr<LHS, RHS, Mul>
-operator*(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+operator*(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator*");
@@ -55,7 +240,7 @@ template <typename LHS, typename RHS>
         !algebra::is_algebra_v<LHS> &&
         !algebra::is_algebra_v<RHS>)
 BinaryExpr<LHS, RHS, Div>
-operator/(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+operator/(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
     checkDimsMatch(lhs.derived(), rhs.derived(), "operator/");

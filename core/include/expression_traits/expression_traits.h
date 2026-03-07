@@ -8,3 +8,4 @@
 #include "expression_traits/fused_vector_traits.h"
 #include "expression_traits/permuted_view_traits.h"
 #include "expression_traits/permuted_view_constexpr_traits.h"
+#include "expression_traits/fma_expr_traits.h"
