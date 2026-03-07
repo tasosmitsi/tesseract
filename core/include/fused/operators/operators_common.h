@@ -1,20 +1,19 @@
 #pragma once
 #include "config.h"
-#include <string>
 
 template <typename Expr1, typename Expr2>
-void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const std::string &opName) TESSERACT_CONDITIONAL_NOEXCEPT
+void checkDimsMatch(const Expr1 &lhs, const Expr2 &rhs, const char *opName) TESSERACT_CONDITIONAL_NOEXCEPT
 {
 #ifdef RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH
-    if (lhs.getNumDims() != rhs.getNumDims())
-        MyErrorHandler::error(opName + ": dimension count mismatch");
+    if (lhs.getNumDims() != rhs.getNumDims()) [[unlikely]]
+        MyErrorHandler::error(opName, ": dimension count mismatch");
 #endif
 
 #ifdef RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH
     for (my_size_t i = 0; i < lhs.getNumDims(); ++i)
     {
-        if (lhs.getDim(i) != rhs.getDim(i))
-            MyErrorHandler::error(opName + ": dimension size mismatch at dimension " + std::to_string(i));
+        if (lhs.getDim(i) != rhs.getDim(i)) [[unlikely]]
+            MyErrorHandler::error(opName, ": dimension size mismatch at dimension ", i);
     }
 #endif
 }

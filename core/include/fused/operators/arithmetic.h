@@ -16,16 +16,18 @@
 // FMA detection: operator+
 // ===============================
 
+#ifdef TESSERACT_USE_FMAD
 // (A * B) + C → Fma
 template <typename L, typename R, typename C>
     requires(algebra::is_vector_space_v<BinaryExpr<L, R, Mul>> &&
              algebra::is_vector_space_v<C>)
 FmaExpr<L, R, C, Fma>
 operator+(const BaseExpr<BinaryExpr<L, R, Mul>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (A*B + C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (A*B + C)");
+#endif
     const auto &mul = lhs.derived();
     return FmaExpr<L, R, C, Fma>(mul.lhs(), mul.rhs(), rhs.derived());
 }
@@ -36,10 +38,11 @@ template <typename C, typename L, typename R>
              algebra::is_vector_space_v<BinaryExpr<L, R, Mul>>)
 FmaExpr<L, R, C, Fma>
 operator+(const BaseExpr<C> &lhs,
-          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) noexcept
+          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (C + A*B) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (C + A*B)");
+#endif
     const auto &mul = rhs.derived();
     return FmaExpr<L, R, C, Fma>(mul.lhs(), mul.rhs(), lhs.derived());
 }
@@ -50,10 +53,11 @@ template <typename L, typename T, typename C>
              algebra::is_vector_space_v<C>)
 ScalarFmaExpr<L, T, C, Fma>
 operator+(const BaseExpr<ScalarExprRHS<L, T, Mul>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (A*scalar + C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (A*scalar + C)");
+#endif
     const auto &mul = lhs.derived();
     return ScalarFmaExpr<L, T, C, Fma>(mul.expr(), mul.scalar(), rhs.derived());
 }
@@ -64,10 +68,11 @@ template <typename C, typename L, typename T>
              algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>>)
 ScalarFmaExpr<L, T, C, Fma>
 operator+(const BaseExpr<C> &lhs,
-          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) noexcept
+          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (C + A*scalar) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (C + A*scalar)");
+#endif
     const auto &mul = rhs.derived();
     return ScalarFmaExpr<L, T, C, Fma>(mul.expr(), mul.scalar(), lhs.derived());
 }
@@ -78,10 +83,11 @@ template <typename L, typename R, typename T, typename C>
              algebra::is_vector_space_v<C>)
 FmaExpr<L, R, C, Fnma>
 operator+(const BaseExpr<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (-(A*B) + C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (-(A*B) + C)");
+#endif
     const auto &neg = lhs.derived();
     const auto &mul = neg.expr(); // the BinaryExpr<L, R, Mul>
     return FmaExpr<L, R, C, Fnma>(mul.lhs(), mul.rhs(), rhs.derived());
@@ -93,10 +99,11 @@ template <typename L, typename T1, typename T2, typename C>
              algebra::is_vector_space_v<C>)
 ScalarFmaExpr<L, T1, C, Fnma>
 operator+(const BaseExpr<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator+ for FMA pattern (-(A*scalar) + C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator+ for FMA pattern (-(A*scalar) + C)");
+#endif
     const auto &neg = lhs.derived();
     const auto &mul = neg.expr();
     return ScalarFmaExpr<L, T1, C, Fnma>(mul.expr(), mul.scalar(), rhs.derived());
@@ -112,10 +119,11 @@ template <typename L, typename R, typename C>
              algebra::is_vector_space_v<C>)
 FmaExpr<L, R, C, Fms>
 operator-(const BaseExpr<BinaryExpr<L, R, Mul>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (A*B - C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (A*B - C)");
+#endif
     const auto &mul = lhs.derived();
     return FmaExpr<L, R, C, Fms>(mul.lhs(), mul.rhs(), rhs.derived());
 }
@@ -126,10 +134,11 @@ template <typename C, typename L, typename R>
              algebra::is_vector_space_v<BinaryExpr<L, R, Mul>>)
 FmaExpr<L, R, C, Fnma>
 operator-(const BaseExpr<C> &lhs,
-          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) noexcept
+          const BaseExpr<BinaryExpr<L, R, Mul>> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (C - A*B) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (C - A*B)");
+#endif
     const auto &mul = rhs.derived();
     return FmaExpr<L, R, C, Fnma>(mul.lhs(), mul.rhs(), lhs.derived());
 }
@@ -140,10 +149,11 @@ template <typename L, typename R, typename T, typename C>
              algebra::is_vector_space_v<C>)
 FmaExpr<L, R, C, Fnms>
 operator-(const BaseExpr<ScalarExprLHS<BinaryExpr<L, R, Mul>, T, Sub>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (-(A*B) - C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (-(A*B) - C)");
+#endif
     const auto &neg = lhs.derived();
     const auto &mul = neg.expr();
     return FmaExpr<L, R, C, Fnms>(mul.lhs(), mul.rhs(), rhs.derived());
@@ -155,10 +165,11 @@ template <typename L, typename T1, typename T2, typename C>
              algebra::is_vector_space_v<C>)
 ScalarFmaExpr<L, T1, C, Fnms>
 operator-(const BaseExpr<ScalarExprLHS<ScalarExprRHS<L, T1, Mul>, T2, Sub>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (-(A*scalar) - C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (-(A*scalar) - C)");
+#endif
     const auto &neg = lhs.derived();
     const auto &mul = neg.expr();
     return ScalarFmaExpr<L, T1, C, Fnms>(mul.expr(), mul.scalar(), rhs.derived());
@@ -170,10 +181,11 @@ template <typename L, typename T, typename C>
              algebra::is_vector_space_v<C>)
 ScalarFmaExpr<L, T, C, Fms>
 operator-(const BaseExpr<ScalarExprRHS<L, T, Mul>> &lhs,
-          const BaseExpr<C> &rhs) noexcept
+          const BaseExpr<C> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (A*scalar - C) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (A*scalar - C)");
+#endif
     const auto &mul = lhs.derived();
     return ScalarFmaExpr<L, T, C, Fms>(mul.expr(), mul.scalar(), rhs.derived());
 }
@@ -184,13 +196,15 @@ template <typename C, typename L, typename T>
              algebra::is_vector_space_v<ScalarExprRHS<L, T, Mul>>)
 ScalarFmaExpr<L, T, C, Fnma>
 operator-(const BaseExpr<C> &lhs,
-          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) noexcept
+          const BaseExpr<ScalarExprRHS<L, T, Mul>> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
-    // std::cout << "operator- for FMA pattern (C - A*scalar) triggered" << std::endl;
-    // return 42;
+#if defined(RUNTIME_CHECK_DIMENSIONS_COUNT_MISMATCH) || defined(RUNTIME_CHECK_DIMENSIONS_SIZE_MISMATCH)
+    checkDimsMatch(lhs.derived(), rhs.derived(), "operator- for FMA pattern (C - A*scalar)");
+#endif
     const auto &mul = rhs.derived();
     return ScalarFmaExpr<L, T, C, Fnma>(mul.expr(), mul.scalar(), lhs.derived());
 }
+#endif // TESSERACT_USE_FMAD
 
 // ===============================
 // binary detection: operator+

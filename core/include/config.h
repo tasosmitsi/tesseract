@@ -65,4 +65,6 @@ using MyErrorHandler = ErrorHandler<PCErrorHandler>;
 // Define the type for size_t, can be uint32_t or uint64_t
 #define my_size_t size_t
 
+#define TESSERACT_USE_FMAD
+
 #endif // CONFIG_H
