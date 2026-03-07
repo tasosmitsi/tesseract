@@ -33,6 +33,11 @@ struct Microkernel<T, Bits, GENERICARCH>
     FORCE_INLINE static VecType sub(VecType a, VecType b) noexcept { return a - b; }
     FORCE_INLINE static VecType div(VecType a, VecType b) noexcept { return a / b; }
 
+    FORCE_INLINE static VecType fmadd(VecType a, VecType b, VecType c) noexcept { return a * b + c; }
+    FORCE_INLINE static VecType fmsub(VecType a, VecType b, VecType c) noexcept { return a * b - c; }
+    FORCE_INLINE static VecType fnmadd(VecType a, VecType b, VecType c) noexcept { return -(a * b) + c; }
+    FORCE_INLINE static VecType fnmsub(VecType a, VecType b, VecType c) noexcept { return -(a * b) - c; }
+
     FORCE_INLINE static VecType min(VecType a, VecType b) noexcept { return a < b ? a : b; }
     FORCE_INLINE static VecType max(VecType a, VecType b) noexcept { return a > b ? a : b; }
 
