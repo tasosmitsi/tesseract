@@ -39,8 +39,12 @@ public:
     static constexpr const my_size_t *Dim = LHS::Dim;
     static constexpr my_size_t TotalSize = LHS::TotalSize;
     using value_type = typename LHS::value_type;
+    using Layout = typename LHS::Layout;
 
     BinaryExpr(const LHS &lhs, const RHS &rhs) : _lhs(lhs), _rhs(rhs) {}
+
+    const LHS &lhs() const noexcept { return _lhs; }
+    const RHS &rhs() const noexcept { return _rhs; }
 
     template <typename Output>
     bool may_alias(const Output &output) const noexcept
@@ -63,6 +67,14 @@ public:
             _rhs.template evalu<T, Bits, Arch>(flat));
     }
 
+    template <typename T, my_size_t Bits, typename Arch>
+    typename Op<T, Bits, Arch>::type logical_evalu(my_size_t logical_flat) const noexcept
+    {
+        return Op<T, Bits, Arch>::apply(
+            _lhs.template logical_evalu<T, Bits, Arch>(logical_flat),
+            _rhs.template logical_evalu<T, Bits, Arch>(logical_flat));
+    }
+
     // Forward getNumDims to _lhs
     inline my_size_t getNumDims() const noexcept
     {
@@ -80,10 +92,10 @@ public:
         return _lhs.getTotalSize();
     }
 
-protected:
-    inline auto operator()(const my_size_t *indices) const noexcept
-    {
-        using T = std::decay_t<decltype(_lhs(indices))>; // TODO: get rid of std
-        return Op<T, 0, GENERICARCH>::apply(_lhs(indices), _rhs(indices));
-    }
+// protected:
+    // inline auto operator()(const my_size_t *indices) const noexcept
+    // {
+    //     using T = std::decay_t<decltype(_lhs(indices))>; // TODO: get rid of std
+    //     return Op<T, 0, GENERICARCH>::apply(_lhs(indices), _rhs(indices));
+    // }
 };

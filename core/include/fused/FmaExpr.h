@@ -83,13 +83,13 @@ public:
     inline my_size_t getDim(my_size_t i) const { return _a.getDim(i); }
     my_size_t getTotalSize() const noexcept { return _a.getTotalSize(); }
 
-protected:
-    inline auto operator()(const my_size_t *indices) const noexcept
-    {
-        using T = std::decay_t<decltype(_a(indices))>;
-        return Op<T, 0, GENERICARCH>::apply(
-            _a(indices), _b(indices), _c(indices));
-    }
+// protected:
+//     inline auto operator()(const my_size_t *indices) const noexcept
+//     {
+//         using T = std::decay_t<decltype(_a(indices))>;
+//         return Op<T, 0, GENERICARCH>::apply(
+//             _a(indices), _b(indices), _c(indices));
+//     }
 };
 
 // ===============================
@@ -169,11 +169,11 @@ public:
     inline my_size_t getDim(my_size_t i) const { return _expr.getDim(i); }
     my_size_t getTotalSize() const noexcept { return _expr.getTotalSize(); }
 
-protected:
-    inline auto operator()(const my_size_t *indices) const noexcept
-    {
-        using T = std::decay_t<decltype(_expr(indices))>;
-        return Op<T, 0, GENERICARCH>::apply(
-            _expr(indices), _scalar, _c(indices));
-    }
+// protected:
+//     inline auto operator()(const my_size_t *indices) const noexcept
+//     {
+//         using T = std::decay_t<decltype(_expr(indices))>;
+//         return Op<T, 0, GENERICARCH>::apply(
+//             _expr(indices), _scalar, _c(indices));
+//     }
 };

@@ -24,8 +24,12 @@ public:
     static constexpr const my_size_t *Dim = EXPR::Dim;
     static constexpr my_size_t TotalSize = EXPR::TotalSize;
     using value_type = typename EXPR::value_type;
+    using Layout = typename EXPR::Layout;
 
     ScalarExprRHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
+
+    const EXPR &expr() const noexcept { return _expr; }
+    ScalarT scalar() const noexcept { return _scalar; }
 
     template <typename Output>
     bool may_alias(const Output &output) const noexcept
@@ -47,6 +51,14 @@ public:
     {
         return Op<T, Bits, Arch>::apply(
             _expr.template evalu<T, Bits, Arch>(flat),
+            _scalar);
+    }
+
+    template <typename T, my_size_t Bits, typename Arch>
+    inline typename Op<T, Bits, Arch>::type logical_evalu(my_size_t logical_flat) const noexcept
+    {
+        return Op<T, Bits, Arch>::apply(
+            _expr.template logical_evalu<T, Bits, Arch>(logical_flat),
             _scalar);
     }
 
@@ -93,8 +105,12 @@ public:
     static constexpr const my_size_t *Dim = EXPR::Dim;
     static constexpr my_size_t TotalSize = EXPR::TotalSize;
     using value_type = typename EXPR::value_type;
+    using Layout = typename EXPR::Layout;
 
     ScalarExprLHS(const EXPR &expr, ScalarT scalar) : _expr(expr), _scalar(scalar) {}
+
+    const EXPR &expr() const noexcept { return _expr; }
+    ScalarT scalar() const noexcept { return _scalar; }
 
     template <typename Output>
     bool may_alias(const Output &output) const noexcept
@@ -119,6 +135,14 @@ public:
             _expr.template evalu<T, Bits, Arch>(flat));
     }
 
+    template <typename T, my_size_t Bits, typename Arch>
+    inline typename Op<T, Bits, Arch>::type logical_evalu(my_size_t logical_flat) const noexcept
+    {
+        return Op<T, Bits, Arch>::apply(
+            _scalar,
+            _expr.template logical_evalu<T, Bits, Arch>(logical_flat));
+    }
+
     my_size_t getNumDims() const noexcept
     {
         return _expr.getNumDims();
@@ -134,12 +158,12 @@ public:
         return _expr.getTotalSize();
     }
 
-protected:
-    inline auto operator()(const my_size_t *indices) const noexcept
-    {
-        using T = std::decay_t<decltype(_expr(indices))>;
-        return Op<T, 0, GENERICARCH>::apply(
-            _scalar,
-            _expr(indices));
-    }
+// protected:
+//     inline auto operator()(const my_size_t *indices) const noexcept
+//     {
+//         using T = std::decay_t<decltype(_expr(indices))>;
+//         return Op<T, 0, GENERICARCH>::apply(
+//             _scalar,
+//             _expr(indices));
+//     }
 };
