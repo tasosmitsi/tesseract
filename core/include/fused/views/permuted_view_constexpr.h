@@ -134,6 +134,13 @@ public:
         return K::gather(t_.data_.data(), idxList);
     }
 
+    template <typename T, my_size_t Bits, typename Arch>
+    FORCE_INLINE typename Microkernel<T, Bits, Arch>::VecType logical_evalu(my_size_t logical_flat) const noexcept
+    {
+        // evalu already expects logical flat for permuted views
+        return evalu<T, Bits, Arch>(logical_flat);
+    }
+
     FORCE_INLINE static constexpr my_size_t getDim(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         return Layout::logical_dim(i);
@@ -177,13 +184,16 @@ public:
         return shape;
     }
 
+    FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data_.data(); }
+    FORCE_INLINE constexpr value_type *data() noexcept { return t_.data_.data(); }
+
 private:
     const Tensor &t_;
 
-    FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data_.data(); }
+    // FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data_.data(); }
 
-    template <typename, my_size_t, typename>
-    friend struct KernelOps;
+    // template <typename, my_size_t, typename>
+    // friend struct KernelOps;
 };
 
 #endif // FUSED_PERMUTED_VIEW_CONSTEXPR_H
