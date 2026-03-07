@@ -4,7 +4,7 @@
 
 TEST_CASE("Test Sparse FusedTensorND", "[sparse]")
 {
-    FusedTensorND<double, 10, 10> fmat1(7.1), fmat2(8.2), fmat3, fmat4;
+    // FusedTensorND<double, 10, 10> fmat1(7.1), fmat2(8.2), fmat3, fmat4;
 
     SECTION("General")
     {
