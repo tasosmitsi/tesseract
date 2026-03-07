@@ -26,14 +26,82 @@ struct Add
     {
         return microkernel::add(a, scalar);
     }
+};
 
-    // template <typename Vec = type>
-    //     requires(!is_same_v<Vec, T>)
-    // FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
-    // {
-    //     std::cout << " lol Add::apply Scalar-Vec types: " << typeid(scalar).name() << ", " << typeid(a).name() << std::endl;
-    //     return microkernel::add(scalar, a);
-    // }
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Fma // a*b + c
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b, type c) noexcept
+    {
+        return microkernel::fmadd(a, b, c);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T b, Vec c) noexcept
+    {
+        return microkernel::fmadd(a, b, c);
+    }
+};
+
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Fms // a*b - c
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b, type c) noexcept
+    {
+        return microkernel::fmsub(a, b, c);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T b, Vec c) noexcept
+    {
+        return microkernel::fmsub(a, b, c);
+    }
+};
+
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Fnma // -(a*b) + c
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b, type c) noexcept
+    {
+        return microkernel::fnmadd(a, b, c);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T b, Vec c) noexcept
+    {
+        return microkernel::fnmadd(a, b, c);
+    }
+};
+
+template <typename T, my_size_t Bits, typename Arch = DefaultArch>
+struct Fnms // -(a*b) - c
+{
+    using microkernel = Microkernel<T, Bits, Arch>;
+    using type = typename microkernel::VecType;
+
+    FORCE_INLINE static type apply(type a, type b, type c) noexcept
+    {
+        return microkernel::fnmsub(a, b, c);
+    }
+
+    template <typename Vec = type>
+        requires(!is_same_v<Vec, T>)
+    FORCE_INLINE static Vec apply(Vec a, T b, Vec c) noexcept
+    {
+        return microkernel::fnmsub(a, b, c);
+    }
 };
 
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
@@ -79,14 +147,6 @@ struct Mul
     {
         return microkernel::mul(a, scalar);
     }
-
-    // template <typename Vec = type>
-    //     requires(!is_same_v<Vec, T>)
-    // FORCE_INLINE static Vec apply(T scalar, Vec a) noexcept
-    // {
-    //     std::cout << "Mul::apply Scalar-Vec types: " << typeid(scalar).name() << ", " << typeid(a).name() << std::endl;
-    //     return microkernel::mul(a, scalar);
-    // }
 };
 
 template <typename T, my_size_t Bits, typename Arch = DefaultArch>
