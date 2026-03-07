@@ -180,6 +180,22 @@ template <typename T>
 }
 
 // ===============================
+// std::forward Replacement
+// ===============================
+
+template <typename T>
+constexpr T &&forward(remove_reference_t<T> &t) noexcept
+{
+    return static_cast<T &&>(t);
+}
+
+template <typename T>
+constexpr T &&forward(remove_reference_t<T> &&t) noexcept
+{
+    return static_cast<T &&>(t);
+}
+
+// ===============================
 // Compile-time Base Class Check
 // ===============================
 
