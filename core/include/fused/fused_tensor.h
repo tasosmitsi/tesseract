@@ -15,11 +15,14 @@
 #include "fused/kernel_ops/kernel_ops.h"
 #include "fused/storage/static_storage.h"
 #include "fused/storage/dynamic_storage.h"
+#include "fused/padding_policies/simd_padding_policy.h"
+#include "fused/padding_policies/no_padding_policy.h"
 #include "fused/access/dense_access.h"
 #include "fused/access/sparse_access.h"
-#include "fused/views/permuted_view.h"
+// #include "fused/views/permuted_view.h"
 #include "fused/views/permuted_view_constexpr.h"
-#include "fused/layouts/strided_layout.h"
+// #include "fused/layouts/strided_layout.h"
+#include "fused/layouts/strided_layout_constexpr.h"
 #include "algebra/algebraic_traits.h"
 
 // Base class: FusedTensorND
@@ -32,21 +35,18 @@ public:
     static constexpr my_size_t Dim[] = {Dims...};
     static constexpr my_size_t TotalSize = (Dims * ...);
     using value_type = T;
-    // ----------------------
     using Self = FusedTensorND<T, Dims...>;
-    static constexpr my_size_t N = sizeof...(Dims); // TODO: use NumDims instead
 
     // Default constructors
-    FusedTensorND() noexcept // TODO make explicit if needed?, use Dim
-        : layout_(dims) {}
+    FusedTensorND() noexcept = default;
 
     // Constructor to initialize all elements to a specific value
-    FusedTensorND(T initValue) noexcept // TODO make explicit, use Dim
-        : data_(initValue), layout_(dims) {}
+    explicit FusedTensorND(T initValue) noexcept
+        : data_(initValue) {}
 
     // Copy constructor
     FusedTensorND(const FusedTensorND &other) noexcept
-        : data_(other.data_), layout_(other.layout_) // invoke copy constructor of AccessPolicy
+        : data_(other.data_) // invoke copy constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Copy constructor called", ErrorLevel::Info);
@@ -62,7 +62,7 @@ public:
 
     // Move constructor
     FusedTensorND(FusedTensorND &&other) noexcept
-        : data_(move(other.data_)), layout_(move(other.layout_)) // invoke move constructor of AccessPolicy
+        : data_(move(other.data_)) // invoke move constructor of AccessPolicy
     {
 #ifdef DEBUG_FUSED_TENSOR
         MyErrorHandler::log("Move constructor called", ErrorLevel::Info);
@@ -114,31 +114,54 @@ public:
             MyErrorHandler::error("Dimensions size mismatch in assignment operator");
         }
 
-        KernelOps<Expr, BITS, DefaultArch>::eval_vectorized_contiguous(
+        KernelOps<T, BITS, DefaultArch>::eval(
             data_.data(), e);
 
         return *this;
     }
 
+    // ========================================================================
+    // FusedTensorND::evalu — physical flat ONLY, K::load
+    // ========================================================================
+    // Treats flat as a PHYSICAL offset into the padded buffer.
+    // Used by the contiguous kernel path which iterates physical slices.
+    //
+    // WARNING: Do NOT pass logical flat indices to this function when
+    // padding exists (lastDim != paddedLastDim). Use logical_evalu instead.
     template <typename T_, my_size_t Bits, typename Arch>
     typename Microkernel<T_, Bits, Arch>::VecType evalu(my_size_t flat) const noexcept
     {
         using K = Microkernel<T_, Bits, Arch>;
-        // TODO: add assert to check alignment if needed
-        // assert((flat % K::simdWidth) == 0 && "baseIdx must be multiple of K::simdWidth for aligned load!");
         return K::load(data_.data() + flat);
     }
 
-    // This algorithm means to gather which means that it reads from non-continuous memmory
-    // typename Microkernel<T, BITS, DefaultArch>::VecType evaluGather(my_size_t flat) const
-    // {
-    //     std::cout << "evaluGather" << std::endl;
-    //     using K = Microkernel<T, BITS, DefaultArch>;
-    //     my_size_t idxList[K::simdWidth];
-    //     for (int i = 0; i < K::simdWidth; ++i)
-    //         idxList[i] = remapFlatIndex(flat + i, transposeOrder_);
-    //     return K::gather(data_.data(), idxList);
-    // }
+    /**
+     * @brief Evaluate at a LOGICAL flat index.
+     *
+     * Unlike evalu (which takes physical offsets), this converts
+     * logical flat → physical flat via Layout, handling padding gaps.
+     * Uses gather for SIMD widths > 1 since consecutive logical flats
+     * are not contiguous in physical memory when padding exists.
+     */
+    template <typename T_, my_size_t Bits, typename Arch>
+    FORCE_INLINE typename Microkernel<T_, Bits, Arch>::VecType
+    logical_evalu(my_size_t logical_flat) const noexcept
+    {
+        using K = Microkernel<T_, Bits, Arch>;
+
+        if constexpr (K::simdWidth == 1)
+        {
+            return K::load(data_.data() +
+                           Layout::logical_flat_to_physical_flat(logical_flat));
+        }
+        else
+        {
+            my_size_t idxList[K::simdWidth];
+            for (my_size_t i = 0; i < K::simdWidth; ++i)
+                idxList[i] = Layout::logical_flat_to_physical_flat(logical_flat + i);
+            return K::gather(data_.data(), idxList);
+        }
+    }
 
     FusedTensorND &operator=(const FusedTensorND &other) noexcept
     {
@@ -152,9 +175,6 @@ public:
 #endif
             return *this; // Handle self-assignment
         }
-
-        // Copy the layout
-        layout_ = other.layout_; // calls the copy assignment of StridedLayout
 
         // Copy the data
         data_ = other.data_; // calls the copy assignment of AccessPolicy
@@ -175,9 +195,6 @@ public:
             return *this; // Handle self-assignment
         }
 
-        // Copy the layout
-        layout_ = move(other.layout_); // calls the move assignment of StridedLayout
-
         // Move the data
         data_ = move(other.data_); // calls the move assignment of AccessPolicy
         return *this;
@@ -185,55 +202,50 @@ public:
 
     // Variadic access operator for accessing tensor elements with separate indices
     template <typename... Indices>
-        requires(sizeof...(Indices) == N)
-    inline T &operator()(Indices... indices) noexcept
+        requires(sizeof...(Indices) == NumDims)
+    inline T &operator()(Indices... indices) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...}; // Convert indices to an array
-        return data_[layout_.compute_flat_index(idxArray)];
+        return data_[Layout::logical_coords_to_physical_flat(idxArray)];
     }
 
     // Const version of the variadic access operator
     template <typename... Indices>
-        requires(sizeof...(Indices) == N)
-    inline const T &operator()(Indices... indices) const noexcept
+        requires(sizeof...(Indices) == NumDims)
+    inline const T &operator()(Indices... indices) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-        return data_[layout_.compute_flat_index(idxArray)];
+        return data_[Layout::logical_coords_to_physical_flat(idxArray)];
     }
 
     // version of passing a pointer to indices array eg _tensor1(indices1), indices1 is a pointer to an array of known size
-    inline T &operator()(const my_size_t *indices) noexcept
+    inline T &operator()(const my_size_t *indices) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return data_[layout_.compute_flat_index(indices)];
+        // Unsafe — caller must guarantee NumDims elements.
+        return data_[Layout::logical_coords_to_physical_flat(indices)];
     }
 
-    inline const T &operator()(const my_size_t *indices) const noexcept
+    inline const T &operator()(const my_size_t *indices) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return data_[layout_.compute_flat_index(indices)];
+        // Unsafe — caller must guarantee NumDims elements.
+        return data_[Layout::logical_coords_to_physical_flat(indices)];
     }
 
     // version of passing a array of indices eg _tensor1(indices1), indices1 is an array of known size use template
-    inline T &operator()(my_size_t (&indices)[N]) noexcept
+    inline T &operator()(my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return data_[layout_.compute_flat_index(indices)];
+        return data_[Layout::logical_coords_to_physical_flat(indices)];
     }
 
-    inline const T &operator()(my_size_t (&indices)[N]) const noexcept
+    inline const T &operator()(my_size_t (&indices)[NumDims]) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return data_[layout_.compute_flat_index(indices)];
+        return data_[Layout::logical_coords_to_physical_flat(indices)];
     }
 
     // check if all dimensions are the same at compile time
-    constexpr bool areDimsEqual() const
+    static constexpr bool areDimsEqual()
     {
-        for (my_size_t i = 0; i < getNumDims(); ++i)
-        {
-            if (dims[i] != dims[0])
-            {
-                return false;
-            }
-        }
-        return true;
+        return all_equal<Dims...>();
     }
 
     bool isIdentity() const
@@ -303,21 +315,19 @@ public:
         return PermutedViewConstExpr<Self, 1, 0>(*this);
     }
 
-    FORCE_INLINE auto transpose_view(const my_size_t perm[NumDims]) const noexcept
-    {
-        return PermutedView<Self, NumDims>(*this, perm);
-    }
+    // FORCE_INLINE auto transpose_view(const my_size_t perm[NumDims]) const noexcept
+    // {
+    //     return PermutedView<Self, NumDims>(*this, perm);
+    // }
 
-    // Utility function to retrieve total number of elements
-    FORCE_INLINE constexpr my_size_t getTotalSize() const noexcept
+    FORCE_INLINE static constexpr my_size_t getTotalSize() noexcept
     {
         return TotalSize;
     }
 
-    // Utility function to retrieve the number of dimensions
-    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept
+    FORCE_INLINE static constexpr my_size_t getNumDims() noexcept
     {
-        return sizeof...(Dims);
+        return NumDims;
     }
 
     // Utility function to retrieve the shape of the tensor as (1,5,6) for a 3D tensor use the getNumDims
@@ -336,25 +346,23 @@ public:
 
     FusedTensorND &setToZero(void) noexcept
     {
-        for (my_size_t i = 0; i < TotalSize; ++i)
-        {
+        // Safe to fill entire physical buffer — padding stays 0 too
+        for (my_size_t i = 0; i < Layout::PhysicalSize; ++i)
             data_[i] = T{};
-        }
         return *this;
     }
 
     FusedTensorND &setHomogen(T _val) noexcept
     {
-        for (my_size_t i = 0; i < TotalSize; ++i)
-        {
+        /// Safe to fill entire physical buffer with the same value
+        for (my_size_t i = 0; i < Layout::PhysicalSize; ++i)
             data_[i] = _val;
-        }
         return *this;
     }
 
     FusedTensorND &setRandom(my_size_t _maxRand, my_size_t _minRand)
     {
-
+        // Only set logical elements — padding must stay uninitialized
         std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr))); // Mersenne Twister RNG
         std::uniform_real_distribution<T> dist(_minRand, _maxRand);
 
@@ -363,7 +371,7 @@ public:
             // TODO: seed the random number generator
             // std::srand(static_cast<unsigned int>(std::time(nullptr)));
             // data_[i] = static_cast<T>((rand()));
-            data_[i] = static_cast<T>(dist(rng));
+            data_[Layout::logical_flat_to_physical_flat(i)] = static_cast<T>(dist(rng));
         }
         return *this;
     }
@@ -377,8 +385,8 @@ public:
         setToZero();
 
         // Calculate the minimum dimension
-        my_size_t minDim = std::min({Dims...}); // Using initializer list to find the minimum
-        my_size_t indices[NumDims] = {0};       // Initialize all indices to zero
+        constexpr my_size_t minDim = min_value<Dims...>();
+        my_size_t indices[NumDims] = {0}; // Initialize all indices to zero
 
         for (my_size_t i = 0; i < minDim; ++i)
         {
@@ -389,7 +397,7 @@ public:
             }
 
             // Calculate the index in the flat array and set the value
-            data_[layout_.compute_flat_index(indices)] = _val;
+            data_[Layout::logical_coords_to_physical_flat(indices)] = _val;
         }
         return *this;
     }
@@ -403,22 +411,23 @@ public:
         return *this;
     }
 
-    static FusedTensorND I(void)
-    {
-        static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
+    // static FusedTensorND I(void)
+    // {
+    //     static_assert(sizeof...(Dims) >= 2, "Identity requires at least 2 dimensions.");
 
-        static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
+    //     static_assert(all_equal<Dims...>(), "All dimensions must be equal for an identity tensor");
 
-        FusedTensorND<T, Dims...> _outp;
-        _outp.setDiagonal(1);
-        return _outp;
-    }
+    //     FusedTensorND<T, Dims...> _outp;
+    //     _outp.setDiagonal(1);
+    //     return _outp;
+    // }
 
     FusedTensorND &setSequencial(void)
     {
+        // Only set logical elements — padding must stay uninitialized
         for (my_size_t i = 0; i < TotalSize; ++i)
         {
-            data_[i] = i;
+            data_[Layout::logical_flat_to_physical_flat(i)] = static_cast<T>(i);
         }
         return *this;
     }
@@ -440,179 +449,407 @@ public:
             }
 
             // Calculate the index in the flat array and set the value
-            diagonalEntries(i, 0) = data_[layout_.compute_flat_index(indices)];
+            diagonalEntries(i, 0) = data_[Layout::logical_coords_to_physical_flat(indices)];
         }
     }
 
-    // contract two expression along a specific dimension (axis) and return the result
+    /**
+     * @brief Contract two tensors along specified axes using SIMD dot products.
+     *
+     * For 2D tensors, always dispatches to register-blocked GEMM by
+     * materializing transposed copies when needed. The O(N²) transpose
+     * cost is negligible vs O(N³) multiply, and the materialized tensor
+     * has proper SIMD-aligned padding for aligned K::load in the micro-kernel.
+     *
+     * For higher-dimensional tensors, falls back to generic stride-mapped
+     * per-element dot products.
+     *
+     * ============================================================================
+     * 2D GEMM — 4 CASES (contract axis a from tensor1, axis b from tensor2)
+     * ============================================================================
+     *
+     *   a=1, b=0: C[M,N] = A[M,K] × B[K,N]   — favorable, no transpose
+     *   a=0, b=0: C[K,N] = A^T[K,M] × B[M,N]  — transpose A
+     *   a=1, b=1: C[M,K] = A[M,N] × B^T[N,K]  — transpose B
+     *   a=0, b=1: C[K,K'] = A^T × B^T           — transpose both
+     *
+     * ============================================================================
+     */
     template <typename LeftExpr, typename RightExpr>
-        requires(
-            algebra::is_tensor_v<LeftExpr> &&
-            algebra::is_tensor_v<RightExpr>)
-    static FusedTensorND einsum(const BaseExpr<LeftExpr> &_tensor1, const BaseExpr<RightExpr> &_tensor2, const my_size_t a, const my_size_t b)
+        requires(expression::traits<LeftExpr>::IsPhysical &&
+                 expression::traits<RightExpr>::IsPhysical)
+    static FusedTensorND einsum(
+        const BaseExpr<LeftExpr> &_tensor1,
+        const BaseExpr<RightExpr> &_tensor2,
+        const my_size_t a,
+        const my_size_t b)
     {
-        static const my_size_t Dims1 = LeftExpr::NumDims;
-        static const my_size_t Dims2 = RightExpr::NumDims;
+        static constexpr my_size_t Dims1 = LeftExpr::NumDims;
+        static constexpr my_size_t Dims2 = RightExpr::NumDims;
 
-        // static_assert(Dims1 >= 2, "Tensor 1 must have at least 2 dimension");
-        // static_assert(Dims2 >= 2, "Tensor 2 must have at least 2 dimension");
+        static_assert(Dims1 >= 2, "Tensor 1 must have at least 2 dimensions");
+        static_assert(Dims2 >= 2, "Tensor 2 must have at least 2 dimensions");
 
-        if constexpr (Dims1 < 2)
-        {
-            MyErrorHandler::error("Tensor 1 must have at least 2 dimension");
-        }
-        if constexpr (Dims2 < 2)
-        {
-            MyErrorHandler::error("Tensor 2 must have at least 2 dimension");
-        }
-
-        // check if a and b are valid dimensions at runtime
+        // Runtime validation
         if (a >= Dims1 || b >= Dims2)
-        {
-            MyErrorHandler::error("Invalid dimensions");
-        }
+            MyErrorHandler::error("Invalid contraction axis");
 
-        // check if the a axis of tensor1 is equal to the b axis of tensor2 at runtime
         if (_tensor1.derived().getDim(a) != _tensor2.derived().getDim(b))
+            MyErrorHandler::error("Contraction dimensions mismatch");
+
+        using Layout1 = typename LeftExpr::Layout;
+        using Layout2 = typename RightExpr::Layout;
+        using OutputLayout = Layout;
+        using Kern = KernelOps<T, BITS, DefaultArch>;
+
+        const my_size_t K_len = _tensor1.derived().getDim(a);
+        const my_size_t contract_stride1 = Layout1::stride(a);
+        const my_size_t contract_stride2 = Layout2::stride(b);
+
+        // ====================================================================
+        // Build and validate output dimensions
+        // ====================================================================
+
+        static constexpr my_size_t n_newDims = Dims1 + Dims2 - 2;
+        my_size_t out_dims[n_newDims];
+
+        my_size_t d = 0;
+        for (my_size_t i = 0; i < Dims1; ++i)
+            if (i != a)
+                out_dims[d++] = _tensor1.derived().getDim(i);
+        for (my_size_t i = 0; i < Dims2; ++i)
+            if (i != b)
+                out_dims[d++] = _tensor2.derived().getDim(i);
+
+        FusedTensorND _outp;
+        for (my_size_t i = 0; i < n_newDims; ++i)
         {
-            MyErrorHandler::error("Dimensions mismatch between tensors for einsum operation");
+            if (out_dims[i] != _outp.getDim(i))
+                MyErrorHandler::error("Output dimensions mismatch");
         }
 
-        // ------------------------------------------------------
-        // TODO: all this inside the ----- can be done at compile time only
-        // calculate the new dimensions
-        constexpr my_size_t n_newDims = Dims1 + Dims2 - 2;
-        my_size_t newDims[n_newDims];
-        my_size_t k = 0;
+        // ====================================================================
+        // 2D GEMM path — always favorable after optional transpose
+        // ====================================================================
+
+        if constexpr (Dims1 == 2 && Dims2 == 2)
+        {
+            // Lambda: run GEMM given ready-to-go tensors and their axes
+            // A_ready has contraction on its last dim (stride 1)
+            // B_ready has free dim on its last dim (stride 1)
+            auto run_gemm = [&](const auto &A_ready, const auto &B_ready)
+            {
+                using LayoutA = typename std::remove_cvref_t<decltype(A_ready)>::Layout;
+                using LayoutB = typename std::remove_cvref_t<decltype(B_ready)>::Layout;
+
+                const my_size_t M = A_ready.getDim(0);
+                const my_size_t N = B_ready.getDim(1);
+
+                detail::KernelGemm<T, BITS, DefaultArch>::gemm(
+                    A_ready.data(), M, K_len, LayoutA::stride(0),
+                    B_ready.data(), N, LayoutB::stride(0),
+                    _outp.data(), OutputLayout::stride(0));
+            };
+
+            auto make_transposed = [](const auto &expr)
+            {
+                using E = remove_cvref_t<decltype(expr)>;
+                if constexpr (!requires { expr.transpose(); })
+                {
+                    // FusedTensorND: materialize transpose_view
+                    FusedTensorND<typename E::value_type, E::Dim[1], E::Dim[0]> dst;
+                    dst = expr.transpose_view();
+                    return dst;
+                }
+                else if constexpr (expression::traits<E>::IsPermuted)
+                {
+                    // Real permuted view (e.g. <1,0>): .transpose() returns the
+                    // base tensor, whose physical layout IS the transposed data
+                    return expr.transpose();
+                }
+                else
+                {
+                    // Identity permuted view (e.g. <0,1>): .transpose() returns
+                    // the base tensor with SAME dims — need to actually transpose
+                    auto &base = expr.transpose();
+                    FusedTensorND<typename E::value_type, E::Dim[1], E::Dim[0]> dst;
+                    dst = base.transpose_view();
+                    return dst;
+                }
+            };
+
+            auto ensure_materialized = [](const auto &expr)
+            {
+                using E = remove_cvref_t<decltype(expr)>;
+                if constexpr (!requires { expr.transpose(); })
+                {
+                    // FusedTensorND: physical layout already correct
+                    return expr;
+                }
+                else if constexpr (!expression::traits<E>::IsPermuted)
+                {
+                    // Identity view: base tensor has matching physical layout
+                    return expr.transpose();
+                }
+                else
+                {
+                    // Real permuted view: physical layout doesn't match logical dims
+                    FusedTensorND<typename E::value_type, E::Dim[0], E::Dim[1]> dst;
+                    dst = expr;
+                    return dst;
+                }
+            };
+
+            if (a == 1 && b == 0)
+            {
+                if constexpr (requires { _tensor1.derived().transpose(); } || requires { _tensor2.derived().transpose(); })
+                {
+                    // At least one input is a PermutedViewConstExpr —
+                    // materialize to fix physical layout
+                    run_gemm(ensure_materialized(_tensor1.derived()),
+                             ensure_materialized(_tensor2.derived()));
+                }
+                else
+                {
+                    // Both are FusedTensorND — physical layout guaranteed favorable
+                    run_gemm(_tensor1.derived(), _tensor2.derived());
+                }
+            }
+            else if (a == 0 && b == 0)
+            {
+                // std::cout << "Running GEMM with A transposed\n";
+                auto A_t = make_transposed(_tensor1.derived());
+                run_gemm(A_t, _tensor2.derived());
+            }
+            else if (a == 1 && b == 1)
+            {
+                // std::cout << "Running GEMM with B transposed\n";
+                auto B_t = make_transposed(_tensor2.derived());
+                run_gemm(_tensor1.derived(), B_t);
+            }
+            else
+            {
+                // std::cout << "Running GEMM with both A and B transposed\n";
+                auto A_t = make_transposed(_tensor1.derived());
+                auto B_t = make_transposed(_tensor2.derived());
+                run_gemm(A_t, B_t);
+            }
+
+            return _outp;
+        }
+
+        // ====================================================================
+        // Generic fallback: stride-mapped per-element dot products
+        // ====================================================================
+
+        my_size_t strides1_map[n_newDims];
+        my_size_t strides2_map[n_newDims];
+
+        d = 0;
         for (my_size_t i = 0; i < Dims1; ++i)
         {
             if (i != a)
             {
-                newDims[k++] = _tensor1.derived().getDim(i);
+                strides1_map[d] = Layout1::stride(i);
+                strides2_map[d] = 0;
+                ++d;
             }
         }
-
         for (my_size_t i = 0; i < Dims2; ++i)
         {
             if (i != b)
             {
-                newDims[k++] = _tensor2.derived().getDim(i);
+                strides1_map[d] = 0;
+                strides2_map[d] = Layout2::stride(i);
+                ++d;
             }
         }
 
-        // create a new tensor with the new dimensions
-        FusedTensorND<T, Dims...> _outp;
-
-        //  check if the new dimensions one by one are the same as the dimensions of the new tensor
+        my_size_t out_strides[n_newDims];
         for (my_size_t i = 0; i < n_newDims; ++i)
+            out_strides[i] = OutputLayout::stride(i);
+
+        T *out_ptr = _outp.data();
+
+        static constexpr my_size_t total_elements = (1 * ... * Dims);
+
+        for (my_size_t flat = 0; flat < total_elements; ++flat)
         {
-            if (newDims[i] != _outp.getDim(i))
+            my_size_t coords[n_newDims];
+            my_size_t tmp = flat;
+            for (my_size_t i = n_newDims; i-- > 0;)
             {
-                MyErrorHandler::error("Dimensions mismatch in output tensor");
+                coords[i] = tmp % out_dims[i];
+                tmp /= out_dims[i];
             }
-        }
-        // ------------------------------------------------------
 
-        // calculate the total number of combinations and create a 2D array to store them
-        constexpr my_size_t total_combinations = (1 * ... * Dims);
-        my_size_t combinations[total_combinations][n_newDims];
-
-        // generate all the combinations
-        generate_combinations(newDims, combinations);
-
-        // calculate the contraction
-        for (my_size_t comb = 0; comb < total_combinations; ++comb)
-        {
-            T sum = 0;
-            my_size_t K = _tensor1.derived().getDim(a); // or _tensor2.derived().getDim(b) since they are equal
-            for (my_size_t k = 0; k < K; ++k)
+            my_size_t base1 = 0;
+            my_size_t base2 = 0;
+            my_size_t out_phys = 0;
+            for (my_size_t i = 0; i < n_newDims; ++i)
             {
-                my_size_t indices1[Dims1] = {0};
-                my_size_t indices2[Dims2] = {0};
-
-                my_size_t l = 0;
-                for (my_size_t i = 0; i < Dims1; ++i)
-                {
-                    if (i != a)
-                    {
-                        indices1[i] = combinations[comb][l++];
-                    }
-                    else
-                    {
-                        indices1[i] = k;
-                    }
-                }
-
-                l = Dims1 - 1;
-                for (my_size_t i = 0; i < Dims2; ++i)
-                {
-                    if (i != b)
-                    {
-                        indices2[i] = combinations[comb][l++];
-                    }
-                    else
-                    {
-                        indices2[i] = k;
-                    }
-                }
-                sum += _tensor1.derived()(indices1) * _tensor2.derived()(indices2);
+                base1 += coords[i] * strides1_map[i];
+                base2 += coords[i] * strides2_map[i];
+                out_phys += coords[i] * out_strides[i];
             }
-            _outp(combinations[comb]) = sum;
+
+            out_ptr[out_phys] = Kern::dot(
+                _tensor1.derived(), base1, contract_stride1,
+                _tensor2.derived(), base2, contract_stride2,
+                K_len);
         }
+
         return _outp;
     }
 
     // Function to print the contents of the tensor
-    void print() const
+    void print(bool with_padding = false) const
     {
-        // data_.print();
-        static_assert(sizeof...(Dims) <= 4, "Printing not supported for tensors with more than 4 dimensions");
+        printND(with_padding);
+    }
 
-        if constexpr (sizeof...(Dims) == 1)
+    /**
+     * @brief Print tensor of arbitrary dimensions.
+     *
+     * Convention: last 2 dims are (rows, cols), earlier dims are slice indices.
+     * For 1D: prints a single row.
+     * For 2D: prints a matrix.
+     * For 3D+: prints labeled 2D slices.
+     *
+     * @param showPadding If true, show padding elements after a '|' separator.
+     */
+    void printND(bool showPadding = false) const
+    {
+        static constexpr my_size_t ND = Layout::NumDims;
+
+        my_size_t coords[ND] = {};
+
+        // Number of 2D slices = product of dims 0..ND-3
+        my_size_t numSlices = 1;
+        for (my_size_t d = 0; d + 2 < ND; ++d)
+            numSlices *= getDim(d);
+
+        const my_size_t rowDim = (ND >= 2) ? getDim(ND - 2) : 1;
+        const my_size_t colDim = getDim(ND - 1);
+        const my_size_t physColDim = Layout::PadPolicyType::PhysicalDims.at(ND - 1);
+
+        for (my_size_t s = 0; s < numSlices; ++s)
         {
-            print1D();
-        }
-        else if constexpr (sizeof...(Dims) == 2)
-        {
-            print2D();
-        }
-        else if constexpr (sizeof...(Dims) == 3)
-        {
-            print3D();
-        }
-        else if constexpr (sizeof...(Dims) == 4)
-        {
-            print4D();
-        }
-        else
-        {
-            MyErrorHandler::error("Printing not supported for tensors with more than 4 dimensions");
+            // Print slice header for 3D+
+            if constexpr (ND > 2)
+            {
+                MyErrorHandler::log("Slice [");
+                for (my_size_t d = 0; d + 2 < ND; ++d)
+                {
+                    if (d > 0)
+                        MyErrorHandler::log(", ");
+                    MyErrorHandler::log(coords[d]);
+                }
+                MyErrorHandler::log("]:\n");
+            }
+
+            // Print 2D matrix
+            for (my_size_t i = 0; i < rowDim; ++i)
+            {
+                if constexpr (ND >= 2)
+                    coords[ND - 2] = i;
+
+                // Logical elements
+                for (my_size_t j = 0; j < colDim; ++j)
+                {
+                    coords[ND - 1] = j;
+                    my_size_t offset = Layout::logical_coords_to_physical_flat(coords);
+                    MyErrorHandler::log(data_[offset]);
+                    MyErrorHandler::log(" ");
+                }
+
+                // Padding elements
+                if (showPadding && physColDim > colDim)
+                {
+                    MyErrorHandler::log("| ");
+                    // Get base offset for this row (col = 0)
+                    coords[ND - 1] = 0;
+                    my_size_t rowBase = Layout::logical_coords_to_physical_flat(coords);
+                    // Last dim has stride 1, so padding is at rowBase + colDim..physColDim-1
+                    for (my_size_t j = colDim; j < physColDim; ++j)
+                    {
+                        MyErrorHandler::log(data_[rowBase + j]);
+                        MyErrorHandler::log(" ");
+                    }
+                }
+
+                MyErrorHandler::log("\n");
+            }
+            MyErrorHandler::log("\n");
+
+            // Increment outer coordinates (odometer, right-to-left over dims 0..ND-3)
+            if constexpr (ND > 2)
+            {
+                for (my_size_t d = ND - 3;; --d)
+                {
+                    coords[d]++;
+                    if (coords[d] < getDim(d))
+                        break;
+                    coords[d] = 0;
+                    if (d == 0)
+                        break;
+                }
+            }
         }
     }
 
-    // getter for dims
-    my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
+    FORCE_INLINE static constexpr my_size_t getDim(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return layout_.getDim(i);
+        return Layout::logical_dim(i);
     }
 
-    // getter for strides
-    my_size_t getStride(my_size_t i) const // TODO: conditionally noexcept
+    FORCE_INLINE static constexpr my_size_t getStride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return layout_.getStride(i);
+        return Layout::stride(i);
+    }
+
+    // print layout info
+    void printLayoutInfo() const
+    {
+        MyErrorHandler::log("Tensor Layout Info:", ErrorLevel::Info);
+        MyErrorHandler::log("Number of Dimensions: " + std::to_string(NumDims), ErrorLevel::Info);
+        MyErrorHandler::log("Shape: " + getShape(), ErrorLevel::Info);
+        MyErrorHandler::log("Strides: ", ErrorLevel::Info);
+        for (my_size_t i = 0; i < NumDims; ++i)
+            MyErrorHandler::log(std::to_string(getStride(i)) + " ", ErrorLevel::Info);
+        MyErrorHandler::log("\n", ErrorLevel::Info);
+    }
+
+    void print_access_policy_info() const
+    {
+        MyErrorHandler::log("Access Policy Info:", ErrorLevel::Info);
+        MyErrorHandler::log("Physical Size: " + std::to_string(AccessPolicy::PadPolicy::PhysicalSize), ErrorLevel::Info);
+        MyErrorHandler::log("Logical Size: " + std::to_string(AccessPolicy::PadPolicy::LogicalSize), ErrorLevel::Info);
+        MyErrorHandler::log("SIMD Width: " + std::to_string(AccessPolicy::PadPolicy::SimdWidth), ErrorLevel::Info);
+        MyErrorHandler::log("\n", ErrorLevel::Info);
+    }
+
+    void print_flat_data() const
+    {
+        MyErrorHandler::log("Flat Data:", ErrorLevel::Info);
+        for (my_size_t i = 0; i < AccessPolicy::PhysicalSize; ++i)
+        {
+            MyErrorHandler::log(std::to_string(data_[i]) + " ", ErrorLevel::Info);
+        }
+        MyErrorHandler::log("\n", ErrorLevel::Info);
     }
 
 private:
-    // Calculate total number of elements at compile time
-    static constexpr my_size_t dims[] = {Dims...}; // Fixed array of original dimensions TODO: can be replace by Dim[] compile time constant
-
     // Example of using different access and storage policies
-    // using AccessPolicy = DenseAccess<T, TotalSize, StaticStorage>; // tested
-    // using AccessPolicy = DenseAccess<T, TotalSize, DynamicStorage>; // tested
+    using AccessPolicy = DenseAccess<T, SimdPaddingPolicy, StaticStorage, Dims...>;
+    // using AccessPolicy = DenseAccess<T, NoPaddingPolicy, StaticStorage, Dims...>; // works only for GENERICARCH
+
+    // using AccessPolicy = DenseAccess<T, SimdPaddingPolicy, DynamicStorage, Dims...>; // works
+    // using AccessPolicy = DenseAccess<T, NoPaddingPolicy, DynamicStorage, Dims...>; // bad alloc
+
     // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, DynamicStorage, DynamicStorage>; // something is wrong here
     // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t, StaticStorage, StaticStorage>; // something is wrong here
     // using AccessPolicy = SparseAccess<T, TotalSize, my_size_t>; // default is static storage // something is wrong here
-    using AccessPolicy = DenseAccess<T, TotalSize>; // default is static storage
     AccessPolicy data_;
 
     template <my_size_t... Dims1>
@@ -628,31 +865,31 @@ private:
         }
     }
 
-    template <my_size_t N, my_size_t M>
-    static void print_combinations(const my_size_t (&combinations)[M][N])
+    template <my_size_t NumDims, my_size_t M>
+    [[deprecated]] static void print_combinations(const my_size_t (&combinations)[M][NumDims])
     {
         for (my_size_t i = 0; i < M; ++i)
         {
             MyErrorHandler::log("{ ");
-            for (my_size_t j = 0; j < N; ++j)
+            for (my_size_t j = 0; j < NumDims; ++j)
             {
                 MyErrorHandler::log(combinations[i][j]);
-                MyErrorHandler::log(j < N - 1 ? ", " : " ");
+                MyErrorHandler::log(j < NumDims - 1 ? ", " : " ");
             }
             MyErrorHandler::log("}\n");
         }
     }
 
     // Template function to generate all combinations and store them in a 2D array
-    template <my_size_t N, my_size_t M>
-    static void generate_combinations(const my_size_t (&max_values)[N], my_size_t (&combinations)[M][N])
+    template <my_size_t NumDims, my_size_t M>
+    [[deprecated]] static void generate_combinations(const my_size_t (&max_values)[NumDims], my_size_t (&combinations)[M][NumDims])
     {
-        my_size_t combination[N] = {0}; // Initialize the first combination with all 0s
+        my_size_t combination[NumDims] = {0}; // Initialize the first combination with all 0s
 
         // Fill each row in `combinations` with the next combination
         for (my_size_t row = 0; row < M; ++row)
         {
-            for (my_size_t i = 0; i < N; ++i)
+            for (my_size_t i = 0; i < NumDims; ++i)
             {
                 combinations[row][i] = combination[i];
             }
@@ -662,14 +899,14 @@ private:
             // if you don't want to store all the combinations
             // you can calculate the contraction here
             // for now comment this print statement
-            // for (my_size_t i = 0; i < N; ++i)
+            // for (my_size_t i = 0; i < NumDims; ++i)
             // {
             //     std::cout << combination[i] << ", ";
             // }
             // std::cout << std::endl;
 
             // Increment combination like a counter with custom max values
-            int position = N - 1; // TODO: do not use int. Make the loop safe -> to not overflow
+            int position = NumDims - 1; // TODO: do not use int. Make the loop safe -> to not overflow
             while (position >= 0)
             {
                 ++combination[position];
@@ -684,7 +921,7 @@ private:
     }
 
     // 1D print function
-    void print1D() const
+    [[deprecated]] void print1D() const
     {
         for (my_size_t i = 0; i < getDim(0); ++i)
         {
@@ -695,14 +932,29 @@ private:
     }
 
     // 2D print function
-    void print2D() const
+    [[deprecated]] void print2D(bool with_padding) const
     {
-        // account for the trnaspose order as well
-        for (my_size_t i = 0; i < getDim(0); ++i)
+        const my_size_t rows = getDim(0);
+        const my_size_t cols = with_padding
+                                   ? AccessPolicy::PadPolicy::PhysicalDims[1]
+                                   : getDim(1);
+
+        for (my_size_t i = 0; i < rows; ++i)
         {
-            for (my_size_t j = 0; j < getDim(1); ++j)
+            for (my_size_t j = 0; j < cols; ++j)
             {
-                MyErrorHandler::log((*this)(i, j));
+                if (!with_padding)
+                {
+                    MyErrorHandler::log((*this)(i, j));
+                }
+                else
+                {
+                    // Direct physical access: row * physical_stride + col
+                    MyErrorHandler::log(data_[Layout::base_stride(0) * i + j]);
+                }
+
+                if (with_padding && j == getDim(1) - 1)
+                    MyErrorHandler::log(" |"); // visual separator before padding
                 MyErrorHandler::log(" ");
             }
             MyErrorHandler::log("\n");
@@ -710,15 +962,15 @@ private:
     }
 
     // 3D print function
-    void print3D() const
+    [[deprecated]] void print3D() const
     {
-        for (my_size_t k = 0; k < getDim(2); ++k)
+        for (my_size_t s = 0; s < getDim(0); ++s)
         {
-            for (my_size_t i = 0; i < getDim(0); ++i)
+            for (my_size_t i = 0; i < getDim(1); ++i)
             {
-                for (my_size_t j = 0; j < getDim(1); ++j)
+                for (my_size_t j = 0; j < getDim(2); ++j)
                 {
-                    MyErrorHandler::log((*this)(i, j, k));
+                    MyErrorHandler::log((*this)(s, i, j));
                     MyErrorHandler::log(" ");
                 }
                 MyErrorHandler::log("\n");
@@ -727,43 +979,44 @@ private:
         }
     }
 
-    void print4D() const
+    [[deprecated]] void print4D() const
     {
-        for (my_size_t l = 0; l < getDim(3); ++l)
+        for (my_size_t b = 0; b < getDim(0); ++b)
         {
-            MyErrorHandler::log("Slice [");
-            MyErrorHandler::log(l);
+            MyErrorHandler::log("Batch [");
+            MyErrorHandler::log(b);
             MyErrorHandler::log("]:\n");
-            for (my_size_t k = 0; k < getDim(2); ++k)
+            for (my_size_t s = 0; s < getDim(1); ++s)
             {
-                MyErrorHandler::log("  Sub-Slice [");
-                MyErrorHandler::log(k);
+                MyErrorHandler::log("  Slice [");
+                MyErrorHandler::log(s);
                 MyErrorHandler::log("]:\n");
-                for (my_size_t i = 0; i < getDim(0); ++i)
+                for (my_size_t i = 0; i < getDim(2); ++i)
                 {
                     MyErrorHandler::log("    [ ");
-                    for (my_size_t j = 0; j < getDim(1); ++j)
+                    for (my_size_t j = 0; j < getDim(3); ++j)
                     {
-                        MyErrorHandler::log(operator()(i, j, k, l));
+                        MyErrorHandler::log(operator()(b, s, i, j));
                         MyErrorHandler::log(" ");
                     }
-                    MyErrorHandler::log("]");
+                    MyErrorHandler::log("]\n");
                 }
-                MyErrorHandler::log("\n");
             }
             MyErrorHandler::log("\n");
         }
     }
 
-protected:
-    using Layout = StridedLayout<N>;
-    Layout layout_;
-
-    template <typename, my_size_t>
-    friend class PermutedView;
+    // template <typename, my_size_t>
+    // friend class PermutedView;
 
     template <typename, my_size_t...>
     friend class PermutedViewConstExpr;
+
+public:
+    FORCE_INLINE constexpr const T *data() const noexcept { return data_.data(); }
+    FORCE_INLINE constexpr T *data() noexcept { return data_.data(); }
+
+    using Layout = StridedLayoutConstExpr<typename AccessPolicy::PadPolicy>;
 };
 
 #endif // FUSEDTENSORND_H

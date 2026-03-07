@@ -1,3 +1,122 @@
+    // // contract two expression along a specific dimension (axis) and return the result
+    // template <typename LeftExpr, typename RightExpr>
+    //     requires(
+    //         algebra::is_tensor_v<LeftExpr> &&
+    //         algebra::is_tensor_v<RightExpr>)
+    // static FusedTensorND einsum_old(const BaseExpr<LeftExpr> &_tensor1, const BaseExpr<RightExpr> &_tensor2, const my_size_t a, const my_size_t b)
+    // {
+    //     static const my_size_t Dims1 = LeftExpr::NumDims;
+    //     static const my_size_t Dims2 = RightExpr::NumDims;
+
+    //     // static_assert(Dims1 >= 2, "Tensor 1 must have at least 2 dimension");
+    //     // static_assert(Dims2 >= 2, "Tensor 2 must have at least 2 dimension");
+
+    //     if constexpr (Dims1 < 2)
+    //     {
+    //         MyErrorHandler::error("Tensor 1 must have at least 2 dimension");
+    //     }
+    //     if constexpr (Dims2 < 2)
+    //     {
+    //         MyErrorHandler::error("Tensor 2 must have at least 2 dimension");
+    //     }
+
+    //     // check if a and b are valid dimensions at runtime
+    //     if (a >= Dims1 || b >= Dims2)
+    //     {
+    //         MyErrorHandler::error("Invalid dimensions");
+    //     }
+
+    //     // check if the a axis of tensor1 is equal to the b axis of tensor2 at runtime
+    //     if (_tensor1.derived().getDim(a) != _tensor2.derived().getDim(b))
+    //     {
+    //         MyErrorHandler::error("Dimensions mismatch between tensors for einsum operation");
+    //     }
+
+    //     // ------------------------------------------------------
+    //     // TODO: all this inside the ----- can be done at compile time only
+    //     // calculate the new dimensions
+    //     constexpr my_size_t n_newDims = Dims1 + Dims2 - 2;
+    //     my_size_t newDims[n_newDims];
+    //     my_size_t k = 0;
+    //     for (my_size_t i = 0; i < Dims1; ++i)
+    //     {
+    //         if (i != a)
+    //         {
+    //             newDims[k++] = _tensor1.derived().getDim(i);
+    //         }
+    //     }
+
+    //     for (my_size_t i = 0; i < Dims2; ++i)
+    //     {
+    //         if (i != b)
+    //         {
+    //             newDims[k++] = _tensor2.derived().getDim(i);
+    //         }
+    //     }
+
+    //     // create a new tensor with the new dimensions
+    //     FusedTensorND<T, Dims...> _outp;
+
+    //     //  check if the new dimensions one by one are the same as the dimensions of the new tensor
+    //     for (my_size_t i = 0; i < n_newDims; ++i)
+    //     {
+    //         if (newDims[i] != _outp.getDim(i))
+    //         {
+    //             MyErrorHandler::error("Dimensions mismatch in output tensor");
+    //         }
+    //     }
+    //     // ------------------------------------------------------
+
+    //     // calculate the total number of combinations and create a 2D array to store them
+    //     constexpr my_size_t total_combinations = (1 * ... * Dims);
+    //     my_size_t combinations[total_combinations][n_newDims];
+
+    //     // generate all the combinations
+    //     generate_combinations(newDims, combinations);
+
+    //     // calculate the contraction
+    //     for (my_size_t comb = 0; comb < total_combinations; ++comb)
+    //     {
+    //         T sum = 0;
+    //         my_size_t K = _tensor1.derived().getDim(a); // or _tensor2.derived().getDim(b) since they are equal
+    //         for (my_size_t k = 0; k < K; ++k)
+    //         {
+    //             my_size_t indices1[Dims1] = {0};
+    //             my_size_t indices2[Dims2] = {0};
+
+    //             my_size_t l = 0;
+    //             for (my_size_t i = 0; i < Dims1; ++i)
+    //             {
+    //                 if (i != a)
+    //                 {
+    //                     indices1[i] = combinations[comb][l++];
+    //                 }
+    //                 else
+    //                 {
+    //                     indices1[i] = k;
+    //                 }
+    //             }
+
+    //             l = Dims1 - 1;
+    //             for (my_size_t i = 0; i < Dims2; ++i)
+    //             {
+    //                 if (i != b)
+    //                 {
+    //                     indices2[i] = combinations[comb][l++];
+    //                 }
+    //                 else
+    //                 {
+    //                     indices2[i] = k;
+    //                 }
+    //             }
+    //             sum += _tensor1.derived()(indices1) * _tensor2.derived()(indices2);
+    //         }
+    //         _outp(combinations[comb]) = sum;
+    //     }
+    //     return _outp;
+    // }
+
+
 // /**
     //  * @brief Contract two tensors along specified axes using SIMD dot products.
     //  *
