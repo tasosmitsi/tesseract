@@ -310,6 +310,63 @@ namespace expr_diag
                                               : " ? ";
             return "(" + scalar + sym + expr + ")";
         }
+        else if (name == "FmaExpr")
+        {
+            pos++; // skip '<'
+            std::string a = parse_expr(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            std::string b = parse_expr(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            std::string c = parse_expr(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            skip_ws(s, pos);
+            std::string op = read_ident(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip '>'
+
+            if (op == "Fma")
+                return "⟨" + a + " · " + b + " + " + c + "⟩";
+            else if (op == "Fms")
+                return "⟨" + a + " · " + b + " − " + c + "⟩";
+            else if (op == "Fnma")
+                return "⟨−(" + a + " · " + b + ") + " + c + "⟩";
+            else if (op == "Fnms")
+                return "⟨−(" + a + " · " + b + ") − " + c + "⟩";
+            return "?";
+        }
+        else if (name == "ScalarFmaExpr")
+        {
+            pos++; // skip '<'
+            std::string expr = parse_expr(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            skip_ws(s, pos);
+            std::string scalar_type = read_ident(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            std::string c = parse_expr(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip ','
+            skip_ws(s, pos);
+            std::string op = read_ident(s, pos);
+            skip_ws(s, pos);
+            pos++; // skip '>'
+
+            std::string scalar = make_scalar(scalar_type);
+
+            if (op == "Fma")
+                return "⟨" + expr + " · " + scalar + " + " + c + "⟩";
+            else if (op == "Fms")
+                return "⟨" + expr + " · " + scalar + " − " + c + "⟩";
+            else if (op == "Fnma")
+                return "⟨−(" + expr + " · " + scalar + ") + " + c + "⟩";
+            else if (op == "Fnms")
+                return "⟨−(" + expr + " · " + scalar + ") − " + c + "⟩";
+            return "?";
+        }
 
         return "?";
     }
@@ -353,6 +410,8 @@ namespace expr_diag
         std::cout << "  Views:    ᵀ = transpose (permutation 1,0)\n";
         std::cout << "            ⁽ⁱ'ʲ'ᵏ⁾ = general permutation\n";
         std::cout << "  Ops:      + − · /\n";
+        std::cout << "  FMA:      ⟨a·b+c⟩  ⟨a·b−c⟩  ⟨−(a·b)+c⟩  ⟨−(a·b)−c⟩\n";
+        std::cout << "            ⟨ ⟩ = fused (single instruction)\n";
         std::cout << "═══════════════════════════════════════════════\n";
     }
 
