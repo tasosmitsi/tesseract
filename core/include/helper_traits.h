@@ -70,7 +70,13 @@ consteval bool packs_are_identical(Pack<A...>, Pack<B...>)
     }
 }
 
-// Compare two `my_size_t` packs at compile time
+/**
+ * @brief Check if two packs have the same min and max values, regardless of order.
+ * 
+ * @tparam A 
+ * @tparam B 
+ * @return bool True if min and max match, false otherwise. 
+ */
 template <my_size_t... A, my_size_t... B>
 consteval bool min_max_equal(Pack<A...>, Pack<B...>)
 {
