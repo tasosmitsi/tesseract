@@ -32,6 +32,10 @@ else
 	OPT = -O3 -march=native -flto -mllvm -inline-threshold=500000 -Wall -Wextra -Winline -Rpass-missed=inline
 endif
 
+# other flags that can be used:
+# -DTESSERACT_ARM_UARCH_A76
+# -DTESSERACT_ARM_UARCH_A72 
+# -DTESSERACT_ARM_UARCH_A55
 CXXFLAGS = -std=c++23 -Icore/include -Iexamples/include $(THIRD_PARTY_FLAGS) $(DEPFLAGS) $(OPT)
 CFLAGS = -Icore/include -Iexamples/include $(DEPFLAGS) $(OPT)
 

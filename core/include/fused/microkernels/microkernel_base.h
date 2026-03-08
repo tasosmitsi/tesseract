@@ -81,8 +81,9 @@ struct Microkernel
 // struct X86_SSE {};       // 128-bit SSE/SSE2
 // struct X86_AVX {};       // 256-bit AVX/AVX2
 // struct X86_AVX512 {};    // 512-bit AVX-512
-// struct NEONArch {};      // 128-bit ARM NEON
-// struct SVEArch {};       // Scalable ARM SVE
+// struct ARM_NEON_A76 {};  // 128-bit NEON on Cortex-A76 and newer (RPi5, Graviton)
+// struct ARM_NEON_A72 {};  // 128-bit NEON on Cortex-A72 and newer (RPi4)
+// struct ARM_NEON_A55 {};  // 128-bit NEON on Cortex-A55 and older (many ARMv8 phones)
 
 // Include all architecture implementations
 #include "fused/microkernels/generic/generic_microkernel.h"
@@ -108,6 +109,32 @@ using DefaultArch = X86_AVX;
 #pragma message "[COMPILE-TIME] Using X86_SSE2 arch"
 constexpr my_size_t BITS = 128;
 using DefaultArch = X86_SSE;
+
+#elif defined(__ARM_NEON) || defined(__ARM_NEON__)
+#include "fused/microkernels/neon/neon_microkernel.h"
+constexpr my_size_t BITS = 128;
+
+    // User override takes priority
+    #if defined(TESSERACT_ARM_UARCH_A76)
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A76 arch (user override)"
+        using DefaultArch = ARM_NEON_A76;
+    #elif defined(TESSERACT_ARM_UARCH_A72)
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A72 arch (user override)"
+        using DefaultArch = ARM_NEON_A72;
+    #elif defined(TESSERACT_ARM_UARCH_A55)
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A55 arch (user override)"
+        using DefaultArch = ARM_NEON_A55;
+    // Auto-detection fallback
+    #elif defined(__ARM_FEATURE_DOTPROD)
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A76 arch (auto-detected)"
+        using DefaultArch = ARM_NEON_A76;
+    #elif defined(__ARM_ARCH) && (__ARM_ARCH >= 8)
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A72 arch (auto-detected)"
+        using DefaultArch = ARM_NEON_A72;
+    #else
+        #pragma message "[COMPILE-TIME] Using ARM_NEON_A55 arch (auto-detected)"
+        using DefaultArch = ARM_NEON_A55;
+    #endif
 
 #else
 #pragma message "[COMPILE-TIME] Using GENERICARCH arch"
