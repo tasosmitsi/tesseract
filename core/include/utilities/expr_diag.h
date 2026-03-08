@@ -119,11 +119,11 @@ namespace expr_diag
 
         // Read type
         std::string type_name = read_ident(s, pos);
-        std::string type_char = (type_name == "double")  ? "d"
-                                : (type_name == "float") ? "f"
-                                : (type_name == "int")   ? "i"
-                                : (type_name == "long")  ? "l"
-                                                         : "?";
+        std::string type_char = (type_name == "double")                                                       ? "d"
+                                : (type_name == "float")                                                      ? "f"
+                                : (type_name == "int" || type_name == "int32_t")                              ? "i32"
+                                : (type_name == "long" || type_name == "int64_t" || type_name == "long long") ? "i64"
+                                                                                                              : "?";
 
         // Read dimensions
         std::vector<std::string> dims;

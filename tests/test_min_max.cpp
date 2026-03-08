@@ -6,7 +6,7 @@
 #include "utilities/expr_diag.h"
 #include "utilities/cycle_counter/cycle_counter.h"
 
-TEMPLATE_TEST_CASE("Min/Max", "[min_max]", double, float)
+TEMPLATE_TEST_CASE("Min/Max", "[min_max]", double, float, int32_t, int64_t)
 {
     using T = TestType;
     CycleCounter cc;
