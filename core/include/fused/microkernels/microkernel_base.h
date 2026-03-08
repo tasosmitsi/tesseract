@@ -144,13 +144,4 @@ using DefaultArch = GENERICARCH;
 
 constexpr my_size_t DATA_ALIGNAS = BITS / 8;
 
-// #ifdef __ARM_NEON
-// #include "neon/neon_microkernel.h"
-// // #include "neon/neon_complex_microkernel.h"
-// #endif
-
-// Add more architecture-specific includes here
-// #if defined(__ARM_NEON)
-// using DefaultArch = ARM_NEON;
-
 #endif // MICROKERNEL_BASE_H
