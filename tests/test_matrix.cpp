@@ -396,7 +396,7 @@ TEST_CASE("Matrix class", "[matrix]")
 
     SECTION("Matrix transpose")
     {
-        mat1.setRandom(-10, 10);
+        mat1.setRandom(10, -10);
         mat2 = mat1;
 
         // check inplace transpose first
@@ -411,7 +411,7 @@ TEST_CASE("Matrix class", "[matrix]")
         }
 
         // check non-inplace transpose
-        mat1.setRandom(-10, 10);
+        mat1.setRandom(10, -10);
         mat2 = mat1.transposed();
 
         for (size_t i = 0; i < mat1.getDim(0); ++i)

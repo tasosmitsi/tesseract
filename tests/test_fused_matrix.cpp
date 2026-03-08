@@ -491,7 +491,7 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
 
     SECTION("FusedMatrix transpose")
     {
-        mat1.setRandom(-10, 10);
+        mat1.setRandom(10, -10);
         mat2 = mat1;
 
         // check transpose view first

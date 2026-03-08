@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_tensor.h"
 
-TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
+TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32_t, int64_t)
 {
     using T = TestType; 
 
@@ -462,7 +462,7 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float)
     SECTION("FusedTensorND transpose")
     {
         FusedTensorND<T, 10, 10> ten1, ten2, ten3, ten4;
-        ten1.setRandom(-10, 10);
+        ten1.setRandom(10, -10);
         ten2 = ten1;
 
         for (size_t i = 0; i < ten1.getDim(0); ++i)

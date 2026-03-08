@@ -7,7 +7,7 @@
 
 #define EIGEN_NO_MALLOC
 
-TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float)
+TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float, int32_t, int64_t)
 {
     CycleCounter cc;
 
@@ -16,47 +16,6 @@ TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float)
     FusedTensorND<T, 100, 100> fmat1, fmat2, fmat3, fmat4, fmat5; // It can work with FusedMatrix amd FusedVector too
     FusedMatrix<T, 100, 100> matrix1, matrix2, res;
     Eigen::Matrix<T, 100, 100> mat1, mat2, mat3, mat4, mat5;
-
-    T init_inverse_values[4][4] = {
-        {2.0, -1, 2.0, -1},
-        {4, 5.0, 2.5, -17},
-        {2.0, -1, 2.43, -30},
-        {4, 5.0, 245, -10}};
-
-    T init_cholesky_values[3][3] = {
-        {4, 12, -16},
-        {12, 37, -43},
-        {-16, -43, 98}};
-
-    // Init FusedMatrix
-    FusedMatrix<T, 4, 4> inv_matrix = init_inverse_values;
-    FusedMatrix<T, 4, 4> inv_res;
-
-    FusedMatrix<T, 3, 3> pre_cholesky = init_cholesky_values;
-    FusedMatrix<T, 3, 3> cholesky;
-    // --------------------------
-
-    // Init Eigen Matrix
-    Eigen::Matrix<T, 4, 4> inv_eigen_matrix;
-    Eigen::Matrix<T, 4, 4> inv_eigen_res;
-    for (size_t i = 0; i < 4; ++i)
-    {
-        for (size_t j = 0; j < 4; ++j)
-        {
-            inv_eigen_matrix(i, j) = init_inverse_values[i][j];
-        }
-    }
-
-    Eigen::Matrix<T, 3, 3> pre_eigen_cholesky;
-    for (size_t i = 0; i < 3; ++i)
-    {
-        for (size_t j = 0; j < 3; ++j)
-        {
-            pre_eigen_cholesky(i, j) = init_cholesky_values[i][j];
-        }
-    }
-    Eigen::Matrix<T, 3, 3> cholesky_eigen;
-    // --------------------------
 
     mat1.setRandom();
     mat2.setRandom();
@@ -128,6 +87,54 @@ TEMPLATE_TEST_CASE("Benchmarks", "[benchmarks]", double, float)
               << cc.avg_cycles() << " cycles/call" << std::endl;
     cc.reset();
     std::cout << "------------------------------------------------\n";
+}
+
+TEMPLATE_TEST_CASE("Benchmarks - floating point", "[benchmarks]", double, float)
+{
+    CycleCounter cc;
+
+    using T = TestType;
+
+    T init_inverse_values[4][4] = {
+        {2.0, -1, 2.0, -1},
+        {4, 5.0, 2.5, -17},
+        {2.0, -1, 2.43, -30},
+        {4, 5.0, 245, -10}};
+
+    T init_cholesky_values[3][3] = {
+        {4, 12, -16},
+        {12, 37, -43},
+        {-16, -43, 98}};
+
+    // Init FusedMatrix
+    FusedMatrix<T, 4, 4> inv_matrix = init_inverse_values;
+    FusedMatrix<T, 4, 4> inv_res;
+
+    FusedMatrix<T, 3, 3> pre_cholesky = init_cholesky_values;
+    FusedMatrix<T, 3, 3> cholesky;
+    // --------------------------
+
+    // Init Eigen Matrix
+    Eigen::Matrix<T, 4, 4> inv_eigen_matrix;
+    Eigen::Matrix<T, 4, 4> inv_eigen_res;
+    for (size_t i = 0; i < 4; ++i)
+    {
+        for (size_t j = 0; j < 4; ++j)
+        {
+            inv_eigen_matrix(i, j) = init_inverse_values[i][j];
+        }
+    }
+
+    Eigen::Matrix<T, 3, 3> pre_eigen_cholesky;
+    for (size_t i = 0; i < 3; ++i)
+    {
+        for (size_t j = 0; j < 3; ++j)
+        {
+            pre_eigen_cholesky(i, j) = init_cholesky_values[i][j];
+        }
+    }
+    Eigen::Matrix<T, 3, 3> cholesky_eigen;
+    // --------------------------
 
     BENCHMARK("FusedMatrix inverse")
     {

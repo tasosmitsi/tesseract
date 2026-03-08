@@ -360,18 +360,21 @@ public:
         return *this;
     }
 
-    FusedTensorND &setRandom(my_size_t _maxRand, my_size_t _minRand)
+    FusedTensorND &setRandom(T _maxRand, T _minRand)
     {
-        // Only set logical elements — padding must stay uninitialized
-        std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr))); // Mersenne Twister RNG
-        std::uniform_real_distribution<T> dist(_minRand, _maxRand);
+        std::mt19937 rng(static_cast<unsigned int>(std::time(nullptr)));
 
-        for (my_size_t i = 0; i < TotalSize; ++i)
+        if constexpr (std::is_floating_point<T>::value)
         {
-            // TODO: seed the random number generator
-            // std::srand(static_cast<unsigned int>(std::time(nullptr)));
-            // data_[i] = static_cast<T>((rand()));
-            data_[Layout::logical_flat_to_physical_flat(i)] = static_cast<T>(dist(rng));
+            std::uniform_real_distribution<T> dist(_minRand, _maxRand);
+            for (my_size_t i = 0; i < TotalSize; ++i)
+                data_[Layout::logical_flat_to_physical_flat(i)] = dist(rng);
+        }
+        else
+        {
+            std::uniform_int_distribution<T> dist(_minRand, _maxRand);
+            for (my_size_t i = 0; i < TotalSize; ++i)
+                data_[Layout::logical_flat_to_physical_flat(i)] = dist(rng);
         }
         return *this;
     }
