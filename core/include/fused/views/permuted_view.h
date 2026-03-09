@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
-#include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout.h"
 
 #include <algorithm> // for std::max_element, std::min_element

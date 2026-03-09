@@ -3,7 +3,7 @@
 
 #include <random>
 
-#include "copy_n_optimized.h"
+#include "memory/mem_utils.h"
 
 #include "config.h"
 #include "helper_traits.h"

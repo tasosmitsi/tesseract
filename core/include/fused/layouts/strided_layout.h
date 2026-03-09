@@ -2,8 +2,7 @@
 #define FUSED_STRIDED_LAYOUT_H
 
 #include "config.h"
-#include "fill_n_optimized.h"
-#include "copy_n_optimized.h"
+#include "memory/mem_utils.h"
 
 template <my_size_t NumberOfDims>
 struct StridedLayout

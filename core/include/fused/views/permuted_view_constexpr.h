@@ -3,7 +3,6 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
-#include "copy_n_optimized.h"
 #include "fused/layouts/strided_layout_constexpr.h"
 #include "helper_traits.h"
 

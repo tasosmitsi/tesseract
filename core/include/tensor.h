@@ -4,8 +4,7 @@
 #include <algorithm> // for std::fill_n and std::copy
 #include <utility>   // for std::move
 
-#include "fill_n_optimized.h"
-#include "copy_n_optimized.h"
+#include "memory/mem_utils.h"
 
 #include "config.h"
 #include "helper_traits.h"

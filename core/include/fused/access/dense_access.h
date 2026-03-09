@@ -2,7 +2,7 @@
 #define DENSE_ACCESS_H
 
 #include "config.h"
-#include "fill_n_optimized.h"
+#include "memory/mem_utils.h"
 
 /**
  * @brief Dense storage access with padding policy.
