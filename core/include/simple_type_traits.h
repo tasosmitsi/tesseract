@@ -79,6 +79,31 @@ template <typename T>
 inline constexpr bool is_pod_v = is_pod<T>::value;
 
 // ===============================
+// Compile-time Is Floating Point Check
+// ===============================
+
+template <typename T>
+struct is_floating_point
+{
+    static constexpr bool value = false;
+};
+
+template <>
+struct is_floating_point<float>
+{
+    static constexpr bool value = true;
+};
+
+template <>
+struct is_floating_point<double>
+{
+    static constexpr bool value = true;
+};
+
+template <typename T>
+inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
+
+// ===============================
 // Compile-time Type Comparison
 // ===============================
 
