@@ -1,23 +1,38 @@
 #ifndef MATRIX_ALGORITHMS_H
 #define MATRIX_ALGORITHMS_H
 
-#include <cmath>
+#include "math/math_utils.h" // For math::sqrt
+
+/**
+ * @file MatrixAlgorithms.h
+ * @brief Numerical algorithms operating on FusedMatrix types.
+ */
 
 namespace matrix_algorithms
 {
+
+    /**
+     * @brief Compute the Cholesky decomposition of a symmetric positive-definite matrix.
+     *
+     * Decomposes @p matrix into a lower-triangular matrix L such that
+     * A = L · Lᵀ. Triggers an error via MyErrorHandler if the input
+     * is not symmetric or not positive definite.
+     *
+     * @tparam MatrixType A square FusedMatrix type exposing `isSymmetric()`,
+     *                    `getDim()`, `operator()`, and `value_type`.
+     * @param matrix Symmetric positive-definite input matrix.
+     * @return Lower-triangular factor L.
+     */
     template <typename MatrixType>
     MatrixType choleskyDecomposition(const MatrixType &matrix)
     {
-        // Check if the matrix is symmetric, checking if it's square has been done in the isSymmetric function
         if (!matrix.isSymmetric())
         {
             MyErrorHandler::error("Matrix is not symmetric");
         }
 
-        // Create a new zero-initialized matrix to store the result
         MatrixType result(0);
 
-        // Perform the Cholesky decomposition
         for (my_size_t i = 0; i < matrix.getDim(0); ++i)
         {
             for (my_size_t j = 0; j <= i; ++j)
@@ -28,25 +43,25 @@ namespace matrix_algorithms
                     sum += result(i, k) * result(j, k);
                 }
 
-                if (i == j) // Diagonal element
+                if (i == j)
                 {
                     typename MatrixType::value_type diag = matrix(i, i) - sum;
                     if (diag <= typename MatrixType::value_type(PRECISION_TOLERANCE))
                     {
                         MyErrorHandler::error("Matrix is not positive definite");
                     }
-                    result(i, j) = std::sqrt(diag);
+                    result(i, j) = math::sqrt(diag);
                 }
-                else // Off-diagonal element
+                else
                 {
-                    // static_assert(std::is_same_v<decltype(matrix(j, j)), double>, "result(j, j) is not double");
-                    result(i, j) = (matrix(i, j) - sum) / result(j, j); //<-- this line
+                    result(i, j) = (matrix(i, j) - sum) / result(j, j);
                 }
             }
         }
 
-        return result; // Result is lower triangular
+        return result;
     }
+
 } // namespace matrix_algorithms
 
 #endif // MATRIX_ALGORITHMS_H
