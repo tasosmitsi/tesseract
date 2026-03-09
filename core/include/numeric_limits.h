@@ -1,8 +1,22 @@
 #pragma once
 
+/**
+ * @file NumericLimits.hpp
+ * @brief STL-free replacement for std::numeric_limits.
+ *
+ * Provides compile-time min/max/infinity queries for fundamental
+ * types using compiler built-in macros. Only the types needed by
+ * the library are specialized.
+ */
+
+/**
+ * @brief Compile-time numeric limits for a given type.
+ * @tparam T Arithmetic type (must be explicitly specialized).
+ */
 template <typename T>
 struct NumericLimits;
 
+/// @cond
 template <>
 struct NumericLimits<float>
 {
@@ -39,3 +53,4 @@ struct NumericLimits<unsigned int>
     static constexpr unsigned int max() noexcept { return __INT_MAX__ * 2U + 1U; }
     static constexpr unsigned int lowest() noexcept { return 0; }
 };
+/// @endcond
