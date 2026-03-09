@@ -64,5 +64,6 @@
         "cinttypes": "cpp",
         "cassert": "cpp"
     },
-    "makefile.configureOnOpen": false
+    "makefile.configureOnOpen": false,
+    "files.insertFinalNewline": true
 }
