@@ -1,140 +1,106 @@
 #ifndef SIMPLE_TYPE_TRAITS_HPP
 #define SIMPLE_TYPE_TRAITS_HPP
 
-// ===============================
-// POD Type Traits
-// ===============================
+/**
+ * @file SimpleTypeTraits.hpp
+ * @brief STL-free type traits and utility functions.
+ *
+ * Provides lightweight, zero-dependency replacements for common
+ * `<type_traits>` and `<utility>` facilities, suitable for
+ * freestanding / embedded targets where the standard library
+ * is unavailable.
+ */
 
-// Check if a type is POD (Plain Old Data)
-// Default case: not POD
+/**
+ * @brief Compile-time check for Plain Old Data types.
+ * @tparam T Type to test.
+ *
+ * The primary template yields `false`; explicit specializations
+ * below whitelist the fundamental arithmetic types.
+ */
 template <typename T>
 struct is_pod
 {
     static constexpr bool value = false;
 };
 
-// // Specializations for fundamental types — define each type exactly once here:
-template <>
-struct is_pod<char>
-{
-    static constexpr bool value = true;
-};
+// clang-format off
+/// @cond
+template <> struct is_pod<char>           { static constexpr bool value = true; };
+template <> struct is_pod<unsigned char>  { static constexpr bool value = true; };
+template <> struct is_pod<short>          { static constexpr bool value = true; };
+template <> struct is_pod<unsigned short> { static constexpr bool value = true; };
+template <> struct is_pod<int>            { static constexpr bool value = true; };
+template <> struct is_pod<unsigned int>   { static constexpr bool value = true; };
+template <> struct is_pod<long>           { static constexpr bool value = true; };
+template <> struct is_pod<unsigned long>  { static constexpr bool value = true; };
+template <> struct is_pod<float>          { static constexpr bool value = true; };
+template <> struct is_pod<double>         { static constexpr bool value = true; };
+/// @endcond
+// clang-format on
 
-template <>
-struct is_pod<unsigned char>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<short>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<unsigned short>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<int>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<unsigned int>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<long>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<unsigned long>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<float>
-{
-    static constexpr bool value = true;
-};
-
-template <>
-struct is_pod<double>
-{
-    static constexpr bool value = true;
-};
-
-// Helper variable for easier usage in if constexpr
+/** @brief Helper variable template for is_pod. */
 template <typename T>
 inline constexpr bool is_pod_v = is_pod<T>::value;
 
-// ===============================
-// Compile-time Is Floating Point Check
-// ===============================
-
+/**
+ * @brief Compile-time floating-point type check.
+ * @tparam T Type to test.
+ *
+ * The primary template yields `false`; explicit specializations
+ * below whitelist `float` and `double`.
+ */
 template <typename T>
 struct is_floating_point
 {
     static constexpr bool value = false;
 };
 
-template <>
-struct is_floating_point<float>
-{
-    static constexpr bool value = true;
-};
+// clang-format off
+/// @cond
+template <> struct is_floating_point<float>  { static constexpr bool value = true; };
+template <> struct is_floating_point<double> { static constexpr bool value = true; };
+/// @endcond
+// clang-format on
 
-template <>
-struct is_floating_point<double>
-{
-    static constexpr bool value = true;
-};
-
+/** @brief Helper variable template for is_floating_point. */
 template <typename T>
 inline constexpr bool is_floating_point_v = is_floating_point<T>::value;
 
-// ===============================
-// Compile-time Type Comparison
-// ===============================
-
-// Default: types are not the same
+/**
+ * @brief Compile-time type equality check (replacement for std::is_same).
+ * @tparam A First type.
+ * @tparam B Second type.
+ */
 template <typename A, typename B>
 struct is_same
 {
     static constexpr bool value = false;
 };
 
-// Specialization: types are the same
+/// @cond
 template <typename T>
 struct is_same<T, T>
 {
     static constexpr bool value = true;
 };
+/// @endcond
 
-// Helper variable for easier usage in if constexpr
+/** @brief Helper variable template for is_same. */
 template <typename A, typename B>
 inline constexpr bool is_same_v = is_same<A, B>::value;
 
-// ===============================
-// Remove Reference Qualifiers
-// ===============================
-
+/**
+ * @brief Strip lvalue/rvalue reference qualifiers from a type.
+ * @tparam T Possibly-referenced type.
+ */
 template <typename T>
 struct remove_reference
 {
     using type = T;
 };
 
+/// @cond
 template <typename T>
 struct remove_reference<T &>
 {
@@ -146,20 +112,23 @@ struct remove_reference<T &&>
 {
     using type = T;
 };
+/// @endcond
 
+/** @brief Alias template for remove_reference. */
 template <typename T>
 using remove_reference_t = typename remove_reference<T>::type;
 
-// ===============================
-// Remove CV Qualifiers
-// ===============================
-
+/**
+ * @brief Strip const/volatile qualifiers from a type.
+ * @tparam T Possibly cv-qualified type.
+ */
 template <typename T>
 struct remove_cv
 {
     using type = T;
 };
 
+/// @cond
 template <typename T>
 struct remove_cv<const T>
 {
@@ -177,105 +146,113 @@ struct remove_cv<const volatile T>
 {
     using type = T;
 };
+/// @endcond
 
+/** @brief Alias template for remove_cv. */
 template <typename T>
 using remove_cv_t = typename remove_cv<T>::type;
 
-// ===============================
-// Remove CV and Reference Qualifiers
-// ===============================
+/**
+ * @brief Strip cv-qualifiers and references in one step.
+ * @tparam T Input type.
+ *
+ * Equivalent to `remove_cv_t<remove_reference_t<T>>`.
+ */
 template <typename T>
 struct remove_cvref
 {
     using type = remove_cv_t<remove_reference_t<T>>;
 };
 
-// Helper type alias
+/** @brief Alias template for remove_cvref. */
 template <typename T>
 using remove_cvref_t = typename remove_cvref<T>::type;
 
-// ===============================
-// std::move Replacement
-// ===============================
-
+/**
+ * @brief Cast to rvalue reference (replacement for std::move).
+ * @tparam T Deduced argument type.
+ * @param t Value to move from.
+ * @return An xvalue reference to @p t.
+ */
 template <typename T>
 [[nodiscard]] constexpr remove_reference_t<T> &&move(T &&t) noexcept
 {
     return static_cast<remove_reference_t<T> &&>(t);
 }
 
-// ===============================
-// std::forward Replacement
-// ===============================
-
+/**
+ * @brief Perfect-forward an lvalue (replacement for std::forward).
+ * @tparam T Forwarding reference type.
+ * @param t Lvalue reference to forward.
+ */
 template <typename T>
 constexpr T &&forward(remove_reference_t<T> &t) noexcept
 {
     return static_cast<T &&>(t);
 }
 
+/**
+ * @brief Perfect-forward an rvalue (replacement for std::forward).
+ * @tparam T Forwarding reference type.
+ * @param t Rvalue reference to forward.
+ */
 template <typename T>
 constexpr T &&forward(remove_reference_t<T> &&t) noexcept
 {
     return static_cast<T &&>(t);
 }
 
-// ===============================
-// Compile-time Base Class Check
-// ===============================
-
+/**
+ * @brief Compile-time inheritance check (replacement for std::is_base_of).
+ * @tparam Base    Candidate base class.
+ * @tparam Derived Candidate derived class.
+ *
+ * Uses the compiler intrinsic `__is_base_of` when available,
+ * otherwise falls back to a pointer-conversion SFINAE check.
+ *
+ * @note The fallback does not detect private/ambiguous inheritance
+ *       (the intrinsic does). This is acceptable for the library's
+ *       use cases where inheritance is always public.
+ */
 template <typename Base, typename Derived>
 struct is_base_of
 {
-#if defined(__has_builtin)
-#if __has_builtin(__is_base_of)
+#if defined(__has_builtin) && __has_builtin(__is_base_of)
     static constexpr bool value = __is_base_of(Base, Derived);
-#else
-    // fallback implementation
-#endif
 #elif defined(__GNUC__) || defined(__clang__) || defined(_MSC_VER)
     static constexpr bool value = __is_base_of(Base, Derived);
 #else
-    // fallback implementation
+    // Fallback implementation (not fully standards-compliant)
+    static constexpr bool value = detail::is_base_of_impl<Base, Derived>::value;
 #endif
 };
 
+/** @brief Helper variable template for is_base_of. */
 template <typename Base, typename Derived>
 inline constexpr bool is_base_of_v = is_base_of<Base, Derived>::value;
 
-/*
-Usage examples:
+namespace detail
+{
 
-// 1. Check POD at compile-time
-static_assert(is_pod<int>::value, "int is POD");
-static_assert(!is_pod<void*>::value, "void* is not specialized POD");
+    /**
+     * @brief Fallback implementation for is_base_of using pointer conversion.
+     * @tparam Base    Candidate base class.
+     * @tparam Derived Candidate derived class.
+     *
+     * Exploits implicit `Derived* → Base*` conversion to detect inheritance.
+     * Does not handle private or ambiguous inheritance.
+     */
+    template <typename Base, typename Derived>
+    struct is_base_of_impl
+    {
+    private:
+        static constexpr bool check(Base *) { return true; }
+        static constexpr bool check(...) { return false; }
 
-// 2. Type comparison
-static_assert(is_same<int, int>::value, "int == int");
-static_assert(!is_same<int, float>::value, "int != float");
+    public:
+        static constexpr bool value = check(static_cast<Derived *>(nullptr));
+    };
 
-// 3. Using the helper variable
-if constexpr (is_same_v<int, float>) {
-    // This block won't compile/run
-}
-
-// 4. Generic usage in templates
-template <typename T>
-void foo() {
-    if constexpr (is_pod_v<T>) {
-        // Only for POD types
-    }
-}
-
-// 5. Remove CV and Reference qualifiers
-using CleanType = remove_cvref_t<const volatile int&>; // CleanType is int
-
-// 6. Check base class relationship
-static_assert(is_base_of_v<std::exception, std::runtime_error>, "std::exception is base of std::runtime_error");
-
-// 7. Using move
-std::string str = "Hello";
-std::string newStr = move(str); // Transfers ownership
-*/
+} // namespace detail
 
 #endif // SIMPLE_TYPE_TRAITS_HPP
