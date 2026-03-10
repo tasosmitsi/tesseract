@@ -3,7 +3,7 @@
 
 #include "simple_type_traits.h"
 #include "fused/fused_tensor.h"
-#include "matrix_algorithms.h"
+#include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"
 
 template <typename T, my_size_t Rows, my_size_t Cols>
@@ -543,37 +543,37 @@ public:
         return true;
     }
 
-    matrix_traits::Definiteness isPositiveDefinite(bool verbose = false)
+    /**
+     * @brief Determine if the matrix is positive definite, semi-definite, or neither.
+     *
+     * Uses a two-pass Cholesky approach:
+     *   1. Strict pass (tol = PRECISION_TOLERANCE): if it succeeds, matrix is positive definite.
+     *   2. Relaxed pass (tol = -PRECISION_TOLERANCE): if it succeeds, matrix is positive semi-definite
+     *      (zero diagonals allowed, truly negative rejected).
+     *   3. Both fail: matrix is not positive definite.
+     *
+     * @return Definiteness::PositiveDefinite, Definiteness::PositiveSemiDefinite,
+     *         or Definiteness::NotPositiveDefinite.
+     */
+    matrix_traits::Definiteness isPositiveDefinite() const
     {
-        // since the choleskyDecomposition checks if the matrix is symmetric
-        // and isSymmetric checks if the matrix is square, we don't need to check
-        // if the matrix is square or symmetric here
-        try
+        // Strict: rejects near-zero diagonals
+        auto strict = matrix_algorithms::cholesky(*this);
+        if (strict.has_value())
         {
-            // Attempt to perform the Cholesky decomposition
-            FusedMatrix<T, Rows, Cols> L = matrix_algorithms::choleskyDecomposition(*this);
-
-            // Check the diagonal of the decomposition
-            for (my_size_t i = 0; i < this->getDim(0); i++)
-            {
-                if (std::abs(L(i, i)) < T(PRECISION_TOLERANCE))
-                {
-                    return matrix_traits::Definiteness::PositiveSemiDefinite; // FusedMatrix is positive semi-definite
-                }
-            }
-
-            // Return positive definite if the matrix is positive definite
             return matrix_traits::Definiteness::PositiveDefinite;
         }
-        catch (const std::runtime_error &e)
+
+        // Relaxed: allows zero diagonals (semi-definite)
+        // Negative tolerance lets exact-zero diagonals pass while
+        // still rejecting truly negative ones.
+        auto relaxed = matrix_algorithms::cholesky(*this, T(-PRECISION_TOLERANCE));
+        if (relaxed.has_value())
         {
-            // If an exception is thrown, the matrix is neither positive definite nor semi-definite
-            if (verbose)
-            {
-                std::cerr << "Error: " << e.what() << std::endl;
-            }
-            return matrix_traits::Definiteness::NotPositiveDefinite; // FusedMatrix is not positive definite
+            return matrix_traits::Definiteness::PositiveSemiDefinite;
         }
+
+        return matrix_traits::Definiteness::NotPositiveDefinite;
     }
 };
 

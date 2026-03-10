@@ -2,7 +2,7 @@
 
 #include "fused/fused_matrix.h"
 #include "utilities.h"
-#include "matrix_algorithms.h"
+#include "algorithms/decomposition/cholesky.h"
 #include <Dense>
 
 TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
@@ -586,74 +586,62 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
 
     SECTION("Test Cholesky Decomposition")
     {
-        // init the matrix
         T initValues[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        FusedMatrix<T, 3, 3> matrix3 = initValues;
+        FusedMatrix<T, 3, 3> matrix3(initValues);
 
-        T cholesky_values[3][3] = {
+        T expected_vals[3][3] = {
             {2, 0, 0},
             {6, 1, 0},
             {-8, 5, 3}};
-        FusedMatrix<T, 3, 3> cholesky_matrix = cholesky_values;
-        FusedMatrix<T, 3, 3> cholesky;
+        FusedMatrix<T, 3, 3> L_expected(expected_vals);
 
-        // using tessaract
-        cholesky = matrix_algorithms::choleskyDecomposition(matrix3);
+        auto result = matrix_algorithms::cholesky(matrix3);
+        REQUIRE(result.has_value());
 
-        CHECK(cholesky == cholesky_matrix);
+        auto &L = result.value();
+        CHECK(L == L_expected);
 
-        // using Eigen for validation
+        // Cross-validate against Eigen
         Eigen::Matrix<T, 3, 3> eigen_matrix;
         for (size_t i = 0; i < 3; ++i)
-        {
             for (size_t j = 0; j < 3; ++j)
-            {
                 eigen_matrix(i, j) = initValues[i][j];
-            }
-        }
-        Eigen::LLT<Eigen::Matrix<T, 3, 3>> lltOfA(eigen_matrix);
-        Eigen::Matrix<T, 3, 3> L = lltOfA.matrixL();
-        // check if the cholesky is correct
+
+        Eigen::LLT<Eigen::Matrix<T, 3, 3>> llt(eigen_matrix);
+        Eigen::Matrix<T, 3, 3> L_eigen = llt.matrixL();
+
         for (size_t i = 0; i < 3; ++i)
-        {
             for (size_t j = 0; j < 3; ++j)
-            {
-                CHECK_THAT(cholesky(i, j), Catch::Matchers::WithinRel(L(i, j), (T)1e-3));
-            }
-        }
+                CHECK_THAT(L(i, j), Catch::Matchers::WithinRel(L_eigen(i, j), (T)1e-3));
     }
 
     SECTION("Is matrix positive definite or semi-definite")
     {
-        // init the matrix
-        T initValues[3][3] = {
+        // Positive definite
+        T vals_pd[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        FusedMatrix<T, 3, 3> matrix = initValues;
-        auto result = matrix.isPositiveDefinite();
-        CHECK(result == matrix_traits::Definiteness::PositiveDefinite);
+        FusedMatrix<T, 3, 3> matrix(vals_pd);
+        CHECK(matrix.isPositiveDefinite() == matrix_traits::Definiteness::PositiveDefinite);
 
-        // TODO: test semi definite matrix
-        // T initValues1[2][2] = {
-        //     {3, 4},
-        //     {4, 16/3}};
+        // Positive semi-definite: rank-deficient, eigenvalues are {8, 0}
+        T vals_psd[2][2] = {
+            {4, 4},
+            {4, 4}};
+        FusedMatrix<T, 2, 2> matrix_psd(vals_psd);
+        CHECK(matrix_psd.isPositiveDefinite() == matrix_traits::Definiteness::PositiveSemiDefinite);
 
-        // FusedMatrix<T, 2, 2> matrix1 = initValues1;
-        // auto result = matrix1.isPositiveDefinite(true);
-        // CHECK(result == matrix_traits::Definiteness::PositiveSemiDefinite);
-
-        // Not positive definite matrix
-        T initValues2[3][3] = {
+        // Not positive definite
+        T vals_npd[3][3] = {
             {1, 0, 0},
             {0, 0, 1},
             {0, 1, 0}};
-        matrix = initValues2;
-        result = matrix.isPositiveDefinite();
-        CHECK(result == matrix_traits::Definiteness::NotPositiveDefinite);
+        FusedMatrix<T, 3, 3> matrix_npd(vals_npd);
+        CHECK(matrix_npd.isPositiveDefinite() == matrix_traits::Definiteness::NotPositiveDefinite);
     }
 
     SECTION("Is matrix orthogonal")

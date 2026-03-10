@@ -3,7 +3,7 @@
 
 #include "matrix.h"
 #include "utilities.h"
-#include "matrix_algorithms.h"
+#include "algorithms/decomposition/cholesky.h"
 
 TEST_CASE("Matrix class", "[matrix]")
 {
@@ -574,55 +574,50 @@ output_string = output.getvalue()
 
     SECTION("Test Cholesky Decomposition")
     {
-        // init the matrix
         double initValues[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        Matrix<double, 3, 3> matrix3 = initValues;
+        Matrix<double, 3, 3> matrix3(initValues);
 
-        double cholesky_values[3][3] = {
+        double expected_vals[3][3] = {
             {2, 0, 0},
             {6, 1, 0},
             {-8, 5, 3}};
-        Matrix<double, 3, 3> cholesky_matrix = cholesky_values;
+        Matrix<double, 3, 3> L_expected(expected_vals);
 
-        // using tessaract
         tick();
-        auto cholesky = matrix_algorithms::choleskyDecomposition(matrix3);
+        auto result = matrix_algorithms::cholesky(matrix3);
         tock("C++ Cholesky Decomposition");
 
-        CHECK(cholesky == cholesky_matrix);
+        REQUIRE(result.has_value());
+        CHECK(result.value() == L_expected);
     }
 
     SECTION("Is matrix positive definite or semi-definite")
     {
-        // init the matrix
-        double initValues[3][3] = {
+        // Positive definite
+        double vals_pd[3][3] = {
             {4, 12, -16},
             {12, 37, -43},
             {-16, -43, 98}};
-        Matrix<double, 3, 3> matrix = initValues;
-        auto result = matrix.isPositiveDefinite();
-        CHECK(result == matrix_traits::Definiteness::PositiveDefinite);
+        Matrix<double, 3, 3> matrix(vals_pd);
+        CHECK(matrix.isPositiveDefinite() == matrix_traits::Definiteness::PositiveDefinite);
 
-        // TODO: test semi definite matrix
-        // double initValues1[2][2] = {
-        //     {3, 4},
-        //     {4, 16/3}};
+        // Positive semi-definite: rank-deficient, eigenvalues are {8, 0}
+        double vals_psd[2][2] = {
+            {4, 4},
+            {4, 4}};
+        Matrix<double, 2, 2> matrix_psd(vals_psd);
+        CHECK(matrix_psd.isPositiveDefinite() == matrix_traits::Definiteness::PositiveSemiDefinite);
 
-        // Matrix<double, 2, 2> matrix1 = initValues1;
-        // auto result = matrix1.isPositiveDefinite(true);
-        // CHECK(result == matrix_traits::Definiteness::PositiveSemiDefinite);
-
-        // Not positive definite matrix
-        double initValues2[3][3] = {
+        // Not positive definite
+        double vals_npd[3][3] = {
             {1, 0, 0},
             {0, 0, 1},
             {0, 1, 0}};
-        matrix = initValues2;
-        result = matrix.isPositiveDefinite();
-        CHECK(result == matrix_traits::Definiteness::NotPositiveDefinite);
+        Matrix<double, 3, 3> matrix_npd(vals_npd);
+        CHECK(matrix_npd.isPositiveDefinite() == matrix_traits::Definiteness::NotPositiveDefinite);
     }
 
     SECTION("Is matrix orthogonal")

@@ -2,7 +2,7 @@
 #define MATRIX_H
 
 #include "tensor.h"
-#include "matrix_algorithms.h"
+#include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"
 
 // Derived class: Matrix
@@ -21,7 +21,7 @@ public:
     Matrix(T initValue)
         : TensorND<T, Rows, Cols>(initValue) {}
 
-        // Copy constructor from another Matrix
+    // Copy constructor from another Matrix
     Matrix(const Matrix &other)
         : TensorND<T, Rows, Cols>(other) {}
 
@@ -34,10 +34,10 @@ public:
         : TensorND<T, Rows, Cols>(std::move(other)) {}
 
     // Move constructor from base class
-    Matrix(TensorND<T, Rows, Cols>&& baseTensor) noexcept
+    Matrix(TensorND<T, Rows, Cols> &&baseTensor) noexcept
         : TensorND<T, Rows, Cols>(std::move(baseTensor)) {}
 
-    static constexpr Matrix fromTensor(TensorND<T, Rows, Cols>&& tensor)
+    static constexpr Matrix fromTensor(TensorND<T, Rows, Cols> &&tensor)
     {
         return Matrix(std::move(tensor));
     }
@@ -223,7 +223,7 @@ public:
     }
 
     // Override setToZero to return a Matrix
-    Matrix& setToZero(void)
+    Matrix &setToZero(void)
     {
         // Call the base class setToZero to set all elements to zero
         TensorND<T, Rows, Cols>::setToZero();
@@ -233,7 +233,7 @@ public:
     }
 
     // Override setHomogen to return a Matrix
-    Matrix& setHomogen(T _val)
+    Matrix &setHomogen(T _val)
     {
         // Call the base class setHomogen to set all elements to a specific value
         TensorND<T, Rows, Cols>::setHomogen(_val);
@@ -243,7 +243,7 @@ public:
     }
 
     // Override setRandom to return a Matrix
-    Matrix& setRandom(my_size_t _maxRand, my_size_t _minRand)
+    Matrix &setRandom(my_size_t _maxRand, my_size_t _minRand)
     {
         // Call the base class setRandom to set all elements to random values
         TensorND<T, Rows, Cols>::setRandom(_maxRand, _minRand);
@@ -253,7 +253,7 @@ public:
     }
 
     // Override setDiagonal to return a Matrix
-    Matrix& setDiagonal(T _val)
+    Matrix &setDiagonal(T _val)
     {
         // Call the base class setDiagonal
         TensorND<T, Rows, Cols>::setDiagonal(_val);
@@ -263,7 +263,7 @@ public:
     }
 
     // Override setIdentity to return a Matrix
-    Matrix& setIdentity(void)
+    Matrix &setIdentity(void)
     {
         // Call the base class setIdentity
         TensorND<T, Rows, Cols>::setIdentity();
@@ -273,7 +273,7 @@ public:
     }
 
     // Override setSequencial to return a Matrix
-    Matrix& setSequencial(void)
+    Matrix &setSequencial(void)
     {
         // Call the base class setSequencial
         TensorND<T, Rows, Cols>::setSequencial();
@@ -393,7 +393,8 @@ public:
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
 
-        if (!inplace) {
+        if (!inplace)
+        {
             // Create a copy and modify it
             // std::cout << "Setting matrix to upper triangular" << std::endl;
             Matrix result = *this;
@@ -417,7 +418,7 @@ public:
                     (*this)(i, j) = T(0);
                 }
             }
-            return *this;  // Returning the modified matrix itself
+            return *this; // Returning the modified matrix itself
         }
     }
 
@@ -431,7 +432,8 @@ public:
 
         my_size_t matrix_size = this->getDim(0); // Assuming the matrix is square the number of rows and columns are equal
 
-        if (!inplace) {
+        if (!inplace)
+        {
             // Create a copy and modify it
             // std::cout << "Setting matrix to lower triangular" << std::endl;
             Matrix result = *this;
@@ -455,7 +457,7 @@ public:
                     (*this)(i, j) = T(0);
                 }
             }
-            return *this;  // Returning the modified matrix itself
+            return *this; // Returning the modified matrix itself
         }
     }
 
@@ -569,7 +571,8 @@ public:
         _outp.setIdentity();
 
         // Function to swap rows
-        auto swapRows = [&_outp, cols](my_size_t i, my_size_t j) {
+        auto swapRows = [&_outp, cols](my_size_t i, my_size_t j)
+        {
             for (my_size_t k = 0; k < cols; k++)
             {
                 std::swap(_outp(i, k), _outp(j, k));
@@ -586,7 +589,7 @@ public:
                 {
                     if (std::abs(_outp(i, j)) > std::abs(_outp(j, j)))
                     {
-                        swapRows(i, j);  // Swap rows to ensure numerical stability
+                        swapRows(i, j); // Swap rows to ensure numerical stability
                         swapped = true;
                         break;
                     }
@@ -599,7 +602,8 @@ public:
             }
 
             T pivot = _outp(j, j);
-            if (std::abs(pivot) < T(PRECISION_TOLERANCE)) {
+            if (std::abs(pivot) < T(PRECISION_TOLERANCE))
+            {
                 MyErrorHandler::error("Matrix is non-invertible: pivot is zero.");
             }
 
@@ -653,37 +657,25 @@ public:
         return true;
     }
 
-    matrix_traits::Definiteness isPositiveDefinite(bool verbose = false)
+    matrix_traits::Definiteness isPositiveDefinite() const
     {
-        // since the choleskyDecomposition checks if the matrix is symmetric
-        // and isSymmetric checks if the matrix is square, we don't need to check
-        // if the matrix is square or symmetric here
-        try
+        // Strict: rejects near-zero diagonals
+        auto strict = matrix_algorithms::cholesky(*this);
+        if (strict.has_value())
         {
-            // Attempt to perform the Cholesky decomposition
-            Matrix<T, Rows, Cols> L = matrix_algorithms::choleskyDecomposition(*this);
-
-            // Check the diagonal of the decomposition
-            for (my_size_t i = 0; i < this->getDim(0); i++)
-            {
-                if (std::abs(L(i, i)) < T(PRECISION_TOLERANCE))
-                {
-                    return matrix_traits::Definiteness::PositiveSemiDefinite; // Matrix is positive semi-definite
-                }
-            }
-
-            // Return positive definite if the matrix is positive definite
             return matrix_traits::Definiteness::PositiveDefinite;
         }
-        catch (const std::runtime_error& e)
+
+        // Relaxed: allows zero diagonals (semi-definite)
+        // Negative tolerance lets exact-zero diagonals pass while
+        // still rejecting truly negative ones.
+        auto relaxed = matrix_algorithms::cholesky(*this, T(-PRECISION_TOLERANCE));
+        if (relaxed.has_value())
         {
-            // If an exception is thrown, the matrix is neither positive definite nor semi-definite
-            if (verbose)
-            {
-                std::cerr << "Error: " << e.what() << std::endl;
-            }
-            return matrix_traits::Definiteness::NotPositiveDefinite; // Matrix is not positive definite
+            return matrix_traits::Definiteness::PositiveSemiDefinite;
         }
+
+        return matrix_traits::Definiteness::NotPositiveDefinite;
     }
 };
 

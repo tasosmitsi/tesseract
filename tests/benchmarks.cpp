@@ -2,6 +2,7 @@
 #include <Dense>
 
 #include "fused/fused_vector.h"
+#include "algorithms/decomposition/cholesky.h"
 #include "utilities.h"
 #include "utilities/cycle_counter/cycle_counter.h"
 
@@ -111,7 +112,6 @@ TEMPLATE_TEST_CASE("Benchmarks - floating point", "[benchmarks]", double, float)
     FusedMatrix<T, 4, 4> inv_res;
 
     FusedMatrix<T, 3, 3> pre_cholesky = init_cholesky_values;
-    FusedMatrix<T, 3, 3> cholesky;
     // --------------------------
 
     // Init Eigen Matrix
@@ -171,10 +171,10 @@ TEMPLATE_TEST_CASE("Benchmarks - floating point", "[benchmarks]", double, float)
         for (int i = 0; i < 100; ++i)
         {
             cc.start();
-            cholesky = matrix_algorithms::choleskyDecomposition(pre_cholesky);
+            auto result = matrix_algorithms::cholesky(pre_cholesky);
             cc.stop();
         }
-        return cholesky;
+        return matrix_algorithms::cholesky(pre_cholesky);
     };
     std::cout << "\n"
               << cc.avg_cycles() << " cycles/call" << std::endl;
@@ -191,6 +191,59 @@ TEMPLATE_TEST_CASE("Benchmarks - floating point", "[benchmarks]", double, float)
             cc.stop();
         }
         return cholesky_eigen;
+    };
+    std::cout << "\n"
+              << cc.avg_cycles() << " cycles/call" << std::endl;
+    cc.reset();
+    std::cout << "------------------------------------------------\n";
+
+    // Add after the 3x3 Cholesky benchmarks:
+
+    // --- 20x20 Cholesky ---
+    FusedMatrix<T, 20, 20> pre_cholesky_20(0);
+    Eigen::Matrix<T, 20, 20> pre_eigen_cholesky_20;
+
+    // Build SPD: M * Mᵀ + εI
+    {
+        FusedMatrix<T, 20, 20> M(0);
+        for (my_size_t i = 0; i < 20; ++i)
+        {
+            M(i, i) = T(i + 2);
+            for (my_size_t j = 0; j < i; ++j)
+                M(i, j) = T(1) / T(i - j + 1);
+        }
+        pre_cholesky_20 = FusedMatrix<T, 20, 20>::matmul(M, M.transpose_view());
+
+        for (my_size_t i = 0; i < 20; ++i)
+            for (my_size_t j = 0; j < 20; ++j)
+                pre_eigen_cholesky_20(i, j) = pre_cholesky_20(i, j);
+    }
+
+    BENCHMARK("FusedMatrix Cholesky 20x20")
+    {
+        for (int i = 0; i < 100; ++i)
+        {
+            cc.start();
+            auto result = matrix_algorithms::cholesky(pre_cholesky_20);
+            cc.stop();
+        }
+        return matrix_algorithms::cholesky(pre_cholesky_20);
+    };
+    std::cout << "\n"
+              << cc.avg_cycles() << " cycles/call" << std::endl;
+    cc.reset();
+    std::cout << "------------------------------------------------\n";
+
+    BENCHMARK("Eigen Cholesky 20x20")
+    {
+        for (int i = 0; i < 100; ++i)
+        {
+            cc.start();
+            Eigen::LLT<Eigen::Matrix<T, 20, 20>> llt(pre_eigen_cholesky_20);
+            auto L = llt.matrixL();
+            cc.stop();
+        }
+        return pre_eigen_cholesky_20;
     };
     std::cout << "\n"
               << cc.avg_cycles() << " cycles/call" << std::endl;
