@@ -255,4 +255,53 @@ namespace detail
 
 } // namespace detail
 
+/**
+ * @brief Compile-time check for trivially destructible types.
+ *
+ * Uses the compiler intrinsic `__is_trivially_destructible` (available on
+ * GCC, Clang, and MSVC) to avoid depending on \<type_traits\>.
+ *
+ * @tparam T Type to test.
+ */
+template <typename T>
+struct is_trivially_destructible
+{
+    static constexpr bool value = __has_trivial_destructor(T);
+};
+
+/** @brief Helper variable template for is_trivially_destructible. */
+template <typename T>
+inline constexpr bool is_trivially_destructible_v = is_trivially_destructible<T>::value;
+
+/**
+ * @brief Compile-time check for nothrow move constructibility.
+ *
+ * Uses the compiler intrinsic `__is_nothrow_constructible` (available on
+ * GCC, Clang, and MSVC) to avoid depending on \<type_traits\>.
+ *
+ * @tparam T Type to test.
+ */
+template <typename T>
+struct is_nothrow_move_constructible
+{
+    static constexpr bool value = __is_nothrow_constructible(T, T &&);
+};
+
+/** @brief Helper variable template for is_nothrow_move_constructible. */
+template <typename T>
+inline constexpr bool is_nothrow_move_constructible_v = is_nothrow_move_constructible<T>::value;
+
+/**
+ * @brief Placement new for constructing objects at an existing address.
+ *
+ * On freestanding targets (where \<new\> is unavailable), this provides
+ * the placement new operator directly. On hosted targets, we include
+ * \<new\> to avoid redefinition conflicts with the standard library.
+ */
+#if defined(__STDC_HOSTED__) && __STDC_HOSTED__ == 0
+inline void *operator new(decltype(sizeof(0)), void *ptr) noexcept { return ptr; }
+#else
+#include <new>
+#endif
+
 #endif // SIMPLE_TYPE_TRAITS_HPP
