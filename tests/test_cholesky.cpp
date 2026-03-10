@@ -46,7 +46,7 @@ using matrix_traits::MatrixStatus;
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: 3x3 known-answer SPD matrix",
-                   "[cholesky][known_answer][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -90,7 +90,7 @@ TEMPLATE_TEST_CASE("cholesky: 3x3 known-answer SPD matrix",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: 2x2 known-answer SPD matrix",
-                   "[cholesky][known_answer][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -127,7 +127,7 @@ TEMPLATE_TEST_CASE("cholesky: 2x2 known-answer SPD matrix",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: 1x1 matrix",
-                   "[cholesky][edge][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 1, 1>;
@@ -146,7 +146,7 @@ TEMPLATE_TEST_CASE("cholesky: 1x1 matrix",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: identity matrix returns identity",
-                   "[cholesky][edge][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -169,7 +169,7 @@ TEMPLATE_TEST_CASE("cholesky: identity matrix returns identity",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: diagonal SPD matrix",
-                   "[cholesky][edge][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -201,7 +201,7 @@ TEMPLATE_TEST_CASE("cholesky: diagonal SPD matrix",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: non-symmetric matrix returns NotSymmetric",
-                   "[cholesky][error][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -223,7 +223,7 @@ TEMPLATE_TEST_CASE("cholesky: non-symmetric matrix returns NotSymmetric",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: non-positive-definite matrix returns error",
-                   "[cholesky][error][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -241,7 +241,7 @@ TEMPLATE_TEST_CASE("cholesky: non-positive-definite matrix returns error",
 }
 
 TEMPLATE_TEST_CASE("cholesky: zero matrix returns NotPositiveDefinite",
-                   "[cholesky][error][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -255,7 +255,7 @@ TEMPLATE_TEST_CASE("cholesky: zero matrix returns NotPositiveDefinite",
 }
 
 TEMPLATE_TEST_CASE("cholesky: negative diagonal returns NotPositiveDefinite",
-                   "[cholesky][error][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -276,7 +276,7 @@ TEMPLATE_TEST_CASE("cholesky: negative diagonal returns NotPositiveDefinite",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: 4x4 reconstruction property",
-                   "[cholesky][property][test_cholesky]", double, float)
+                   "[cholesky]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 4, 4>;
@@ -336,7 +336,7 @@ TEMPLATE_TEST_CASE("cholesky: 4x4 reconstruction property",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("cholesky: 20x20 reconstruction property",
-                   "[cholesky][property][large][test_cholesky]", double)
+                   "[cholesky]", double)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 20, 20>;
