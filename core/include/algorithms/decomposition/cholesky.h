@@ -4,7 +4,7 @@
 #include "config.h"
 #include "utilities/expected.h"
 #include "matrix_traits.h"
-#include "math/math_utils.h" // math::sqrt
+#include "math/math_utils.h"    // math::sqrt
 #include "simple_type_traits.h" // for move
 
 /**
@@ -37,8 +37,13 @@
  * ============================================================================
  *
  * - MatrixStatus::NotSymmetric        — input fails isSymmetric() check
- * - MatrixStatus::NotPositiveDefinite — a diagonal element ≤ PRECISION_TOLERANCE
+ * - MatrixStatus::NotPositiveDefinite — a diagonal element ≤ tol
  *                                       during factorization
+ *
+ * The tolerance parameter @p tol controls the diagonal threshold:
+ *   - tol = PRECISION_TOLERANCE (default): strict, rejects near-zero diagonals
+ *   - tol = 0: relaxed, allows exact-zero diagonals (semi-definite matrices)
+ *   - tol < 0: permissive, allows slightly negative diagonals (numerical noise)
  *
  * ============================================================================
  */
@@ -59,7 +64,9 @@ namespace matrix_algorithms
      *         - `operator()(i, j)` — element access
      *         - `value_type` — scalar type (float, double)
      *
-     * @param A Symmetric positive-definite input matrix.
+     * @param A   Symmetric positive-definite input matrix.
+     * @param tol Diagonal tolerance. Elements ≤ tol are rejected as non-positive-definite.
+     *            Defaults to PRECISION_TOLERANCE.
      * @return Expected containing the lower-triangular factor L on success,
      *         or MatrixStatus::NotSymmetric / MatrixStatus::NotPositiveDefinite on failure.
      *
@@ -68,16 +75,18 @@ namespace matrix_algorithms
      *   FusedMatrix<double, 3, 3> A;
      *   // ... fill A as SPD ...
      *   auto result = matrix_algorithms::cholesky(A);
-     *   if (!result) {
+     *   if (!result.has_value()) {
      *       // handle result.error()
      *       return;
      *   }
-     *   auto& L = *result;
+     *   auto& L = result.value();
      *   // L * L^T ≈ A
      * @endcode
      */
     template <typename MatrixType>
-    Expected<MatrixType, MatrixStatus> cholesky(const MatrixType &A)
+    Expected<MatrixType, MatrixStatus> cholesky(
+        const MatrixType &A,
+        typename MatrixType::value_type tol = typename MatrixType::value_type(PRECISION_TOLERANCE))
     {
         if (!A.isSymmetric())
         {
@@ -101,7 +110,7 @@ namespace matrix_algorithms
                 {
                     typename MatrixType::value_type diag = A(i, i) - sum;
 
-                    if (diag <= typename MatrixType::value_type(PRECISION_TOLERANCE))
+                    if (diag <= tol)
                     {
                         return Unexpected{MatrixStatus::NotPositiveDefinite};
                     }
@@ -134,12 +143,12 @@ namespace matrix_algorithms
     {
         auto result = cholesky(A);
 
-        if (!result)
+        if (!result.has_value())
         {
             MyErrorHandler::error("cholesky decomposition failed");
         }
 
-        return move(*result);
+        return move(result.value());
     }
 
 } // namespace matrix_algorithms
