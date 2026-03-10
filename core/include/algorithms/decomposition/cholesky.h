@@ -88,6 +88,8 @@ namespace matrix_algorithms
         const MatrixType &A,
         typename MatrixType::value_type tol = typename MatrixType::value_type(PRECISION_TOLERANCE))
     {
+        static_assert(is_floating_point_v<typename MatrixType::value_type>,
+                      "Cholesky requires a floating-point scalar type");
         if (!A.isSymmetric())
         {
             return Unexpected{MatrixStatus::NotSymmetric};
