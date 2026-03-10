@@ -397,6 +397,376 @@ TEMPLATE_TEST_CASE("back_substitute: multi-RHS 3x3 x 2",
 }
 
 // ============================================================================
+// FORWARD SUBSTITUTION — 6×6 (hits unrolled path)
+// ============================================================================
+
+TEMPLATE_TEST_CASE("forward_substitute: 6x6 known answer",
+                   "[forward_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 6, 6>;
+    using Vector = FusedVector<T, 6>;
+
+    // L: lower-triangular with strong diagonal
+    T L_vals[6][6] = {
+        {2, 0, 0, 0, 0, 0},
+        {1, 3, 0, 0, 0, 0},
+        {0, 1, 2, 0, 0, 0},
+        {1, 0, 1, 4, 0, 0},
+        {0, 1, 0, 1, 3, 0},
+        {1, 0, 0, 1, 0, 2}};
+    Matrix L(L_vals);
+
+    // x = [1, -1, 2, 0, 3, -2]
+    // b = L*x computed manually:
+    //   row0: 2*1 = 2
+    //   row1: 1*1 + 3*(-1) = -2
+    //   row2: 0 + 1*(-1) + 2*2 = 3
+    //   row3: 1*1 + 0 + 1*2 + 4*0 = 3
+    //   row4: 0 + 1*(-1) + 0 + 1*0 + 3*3 = 8
+    //   row5: 1*1 + 0 + 0 + 1*0 + 0 + 2*(-2) = -3
+    T b_vals[6][1] = {{2}, {-2}, {3}, {3}, {8}, {-3}};
+    Vector b(b_vals);
+
+    T x_expected_vals[6][1] = {{1}, {-1}, {2}, {0}, {3}, {-2}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::forward_substitute(L, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// BACK SUBSTITUTION — 6×6 (hits unrolled path)
+// ============================================================================
+
+TEMPLATE_TEST_CASE("back_substitute: 6x6 known answer",
+                   "[back_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 6, 6>;
+    using Vector = FusedVector<T, 6>;
+
+    // U: upper-triangular with strong diagonal
+    T U_vals[6][6] = {
+        {2, 1, 0, 1, 0, 1},
+        {0, 3, 1, 0, 1, 0},
+        {0, 0, 2, 1, 0, 0},
+        {0, 0, 0, 4, 1, 1},
+        {0, 0, 0, 0, 3, 0},
+        {0, 0, 0, 0, 0, 2}};
+    Matrix U(U_vals);
+
+    // x = [1, -1, 2, 0, 3, -2]
+    // b = U*x computed manually:
+    //   row5: 2*(-2) = -4
+    //   row4: 3*3 + 0 = 9
+    //   row3: 4*0 + 1*3 + 1*(-2) = 1
+    //   row2: 2*2 + 1*0 + 0 + 0 = 4
+    //   row1: 3*(-1) + 1*2 + 0 + 1*3 + 0 = 2
+    //   row0: 2*1 + 1*(-1) + 0 + 1*0 + 0 + 1*(-2) = -1
+    T b_vals[6][1] = {{-1}, {2}, {4}, {1}, {9}, {-4}};
+    Vector b(b_vals);
+
+    T x_expected_vals[6][1] = {{1}, {-1}, {2}, {0}, {3}, {-2}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::back_substitute(U, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// FORWARD SUBSTITUTION — UNIT DIAGONAL 4×4
+// ============================================================================
+
+TEMPLATE_TEST_CASE("forward_substitute: 4x4 unit diagonal",
+                   "[forward_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+    using Vector = FusedVector<T, 4>;
+
+    T L_vals[4][4] = {
+        {999, 0, 0, 0},
+        {2, 999, 0, 0},
+        {1, 3, 999, 0},
+        {0, 2, 1, 999}};
+    Matrix L(L_vals);
+
+    // x = [1, 2, -1, 3]
+    // UnitDiag: x(0)=b(0), x(1)=b(1)-2*x(0), x(2)=b(2)-1*x(0)-3*x(1), x(3)=b(3)-2*x(1)-1*x(2)
+    // b(0)=1, b(1)=2+2*1=4, b(2)=-1+1+6=6, b(3)=3+4-1=6
+    T b_vals[4][1] = {{1}, {4}, {6}, {6}};
+    Vector b(b_vals);
+
+    T x_expected_vals[4][1] = {{1}, {2}, {-1}, {3}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::forward_substitute<true>(L, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// FORWARD SUBSTITUTION — UNIT DIAGONAL 6×6
+// ============================================================================
+
+TEMPLATE_TEST_CASE("forward_substitute: 6x6 unit diagonal",
+                   "[forward_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 6, 6>;
+    using Vector = FusedVector<T, 6>;
+
+    // L with unit diagonal (diagonal values ignored)
+    T L_vals[6][6] = {
+        {999, 0, 0, 0, 0, 0},
+        {1, 999, 0, 0, 0, 0},
+        {0, 1, 999, 0, 0, 0},
+        {1, 0, 1, 999, 0, 0},
+        {0, 1, 0, 1, 999, 0},
+        {1, 0, 0, 1, 0, 999}};
+    Matrix L(L_vals);
+
+    // x = [1, -1, 2, 0, 3, -2]
+    // b computed with unit diagonal:
+    //   b(0) = 1
+    //   b(1) = -1 + 1*1 = 0
+    //   b(2) = 2 + 0 + 1*(-1) = 1
+    //   b(3) = 0 + 1*1 + 0 + 1*2 = 3
+    //   b(4) = 3 + 0 + 1*(-1) + 0 + 1*0 = 2
+    //   b(5) = -2 + 1*1 + 0 + 0 + 1*0 + 0 = -1
+    T b_vals[6][1] = {{1}, {0}, {1}, {3}, {2}, {-1}};
+    Vector b(b_vals);
+
+    T x_expected_vals[6][1] = {{1}, {-1}, {2}, {0}, {3}, {-2}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::forward_substitute<true>(L, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// BACK SUBSTITUTION — UNIT DIAGONAL 4×4
+// ============================================================================
+
+TEMPLATE_TEST_CASE("back_substitute: 4x4 unit diagonal",
+                   "[back_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+    using Vector = FusedVector<T, 4>;
+
+    T U_vals[4][4] = {
+        {999, 2, 1, 0},
+        {0, 999, 3, 2},
+        {0, 0, 999, 1},
+        {0, 0, 0, 999}};
+    Matrix U(U_vals);
+
+    // x = [1, 2, -1, 3]
+    // UnitDiag: x(3)=b(3), x(2)=b(2)-1*x(3), x(1)=b(1)-3*x(2)-2*x(3), x(0)=b(0)-2*x(1)-1*x(2)
+    // b(3)=3, b(2)=-1+1*3=2, b(1)=2+3*(-1)+2*3=5, b(0)=1+2*2+1*(-1)=4
+    T b_vals[4][1] = {{4}, {5}, {2}, {3}};
+    Vector b(b_vals);
+
+    T x_expected_vals[4][1] = {{1}, {2}, {-1}, {3}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::back_substitute<true>(U, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// BACK SUBSTITUTION — UNIT DIAGONAL 6×6
+// ============================================================================
+
+TEMPLATE_TEST_CASE("back_substitute: 6x6 unit diagonal",
+                   "[back_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 6, 6>;
+    using Vector = FusedVector<T, 6>;
+
+    T U_vals[6][6] = {
+        {999, 1, 0, 1, 0, 1},
+        {0, 999, 1, 0, 1, 0},
+        {0, 0, 999, 1, 0, 0},
+        {0, 0, 0, 999, 1, 1},
+        {0, 0, 0, 0, 999, 0},
+        {0, 0, 0, 0, 0, 999}};
+    Matrix U(U_vals);
+
+    // x = [1, -1, 2, 0, 3, -2]
+    // b computed with unit diagonal:
+    //   b(5) = -2
+    //   b(4) = 3 + 0 = 3
+    //   b(3) = 0 + 1*3 + 1*(-2) = 1
+    //   b(2) = 2 + 1*0 + 0 + 0 = 2
+    //   b(1) = -1 + 1*2 + 0 + 1*3 + 0 = 4
+    //   b(0) = 1 + 1*(-1) + 0 + 1*0 + 0 + 1*(-2) = -2
+    T b_vals[6][1] = {{-2}, {4}, {2}, {1}, {3}, {-2}};
+    Vector b(b_vals);
+
+    T x_expected_vals[6][1] = {{1}, {-1}, {2}, {0}, {3}, {-2}};
+    Vector x_expected(x_expected_vals);
+
+    auto result = matrix_algorithms::back_substitute<true>(U, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_expected);
+}
+
+// ============================================================================
+// FORWARD SUBSTITUTION — UNIT DIAGONAL GENERIC (7×7)
+// ============================================================================
+
+TEST_CASE("forward_substitute: 7x7 unit diagonal generic path",
+          "[forward_substitute][triangular_solve]")
+{
+    using T = double;
+    using Matrix = FusedMatrix<T, 7, 7>;
+    using Vector = FusedVector<T, 7>;
+
+    Matrix L(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        L(i, i) = T(999); // ignored with UnitDiag
+        for (my_size_t j = 0; j < i; ++j)
+        {
+            L(i, j) = T(1) / T(i - j + 1);
+        }
+    }
+
+    Vector x_true(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        x_true(i) = T(i + 1);
+    }
+
+    // b = L * x_true with unit diagonal
+    Vector b(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        T sum = x_true(i); // unit diagonal contribution
+        for (my_size_t k = 0; k < i; ++k)
+        {
+            sum += L(i, k) * x_true(k);
+        }
+        b(i) = sum;
+    }
+
+    auto result = matrix_algorithms::forward_substitute<true>(L, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_true);
+}
+
+// ============================================================================
+// BACK SUBSTITUTION — UNIT DIAGONAL GENERIC (7×7)
+// ============================================================================
+
+TEST_CASE("back_substitute: 7x7 unit diagonal generic path",
+          "[back_substitute][triangular_solve]")
+{
+    using T = double;
+    using Matrix = FusedMatrix<T, 7, 7>;
+    using Vector = FusedVector<T, 7>;
+
+    Matrix U(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        U(i, i) = T(999); // ignored with UnitDiag
+        for (my_size_t j = i + 1; j < 7; ++j)
+        {
+            U(i, j) = T(1) / T(j - i + 1);
+        }
+    }
+
+    Vector x_true(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        x_true(i) = T(i + 1);
+    }
+
+    // b = U * x_true with unit diagonal
+    Vector b(T(0));
+    for (my_size_t i = 0; i < 7; ++i)
+    {
+        T sum = x_true(i); // unit diagonal contribution
+        for (my_size_t k = i + 1; k < 7; ++k)
+        {
+            sum += U(i, k) * x_true(k);
+        }
+        b(i) = sum;
+    }
+
+    auto result = matrix_algorithms::back_substitute<true>(U, b);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == x_true);
+}
+
+// ============================================================================
+// MULTI-RHS — SINGULAR ERROR
+// ============================================================================
+
+TEMPLATE_TEST_CASE("forward_substitute: multi-RHS singular returns Singular",
+                   "[forward_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 2, 2>;
+    using RHS = FusedMatrix<T, 2, 2>;
+
+    T L_vals[2][2] = {
+        {1, 0},
+        {3, 0} // zero diagonal
+    };
+    Matrix L(L_vals);
+
+    T B_vals[2][2] = {
+        {1, 2},
+        {3, 4}};
+    RHS B(B_vals);
+
+    auto result = matrix_algorithms::forward_substitute(L, B);
+
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error() == MatrixStatus::Singular);
+}
+
+TEMPLATE_TEST_CASE("back_substitute: multi-RHS singular returns Singular",
+                   "[back_substitute][triangular_solve]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 2, 2>;
+    using RHS = FusedMatrix<T, 2, 2>;
+
+    T U_vals[2][2] = {
+        {0, 3}, // zero diagonal
+        {0, 1}};
+    Matrix U(U_vals);
+
+    T B_vals[2][2] = {
+        {1, 2},
+        {3, 4}};
+    RHS B(B_vals);
+
+    auto result = matrix_algorithms::back_substitute(U, B);
+
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error() == MatrixStatus::Singular);
+}
+
+// ============================================================================
 // GENERIC PATH — 7×7 FORWARD SUBSTITUTION (not unrolled)
 // ============================================================================
 
