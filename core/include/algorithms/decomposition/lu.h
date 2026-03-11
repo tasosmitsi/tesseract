@@ -23,7 +23,7 @@
  * ============================================================================
  * ALGORITHM
  * ============================================================================
- *
+ * @code
  * For each column j = 0 … N−1:
  *   1. Find pivot: row p ≥ j with max |A(p,j)|
  *   2. Swap rows j and p in LU and record in perm; flip sign
@@ -32,7 +32,7 @@
  *        factor = LU(i,j) / LU(j,j)
  *        LU(i,j) = factor                        (stored in L part)
  *        LU(i,k) -= factor * LU(j,k)  for k > j  (update U part)
- *
+ * @endcode
  * Complexity: O(2N³/3) multiply-adds, O(N) comparisons for pivoting.
  *
  * ============================================================================

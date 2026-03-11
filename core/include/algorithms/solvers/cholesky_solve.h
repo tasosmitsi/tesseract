@@ -18,11 +18,12 @@
  * ============================================================================
  * ALGORITHM
  * ============================================================================
- *
+ * Cholesky solve (Ax = b, A symmetric positive-definite):
+ * @code
  *   1. Decompose A = LLᵀ via cholesky(A)
  *   2. Solve Ly = b via forward substitution
  *   3. Solve Lᵀx = y via back substitution (accessing L transposed in-place)
- *
+ * @endcode
  * Complexity: O(N³/3 + N²) — dominated by Cholesky for large N.
  *
  * ============================================================================

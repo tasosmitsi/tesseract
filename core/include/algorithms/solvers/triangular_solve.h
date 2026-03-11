@@ -22,24 +22,18 @@
  * ============================================================================
  *
  * Forward substitution (Lx = b, L lower-triangular):
- *
+ * @code
  *   For i = 0 … N−1:
  *     x(i) = ( b(i) − Σ_{k=0}^{i-1} L(i,k)·x(k) ) / L(i,i)
  *     (division skipped when UnitDiag = true)
- *
+ * @endcode
  * Back substitution (Ux = b, U upper-triangular):
- *
+ * @code
  *   For i = N−1 … 0:
  *     x(i) = ( b(i) − Σ_{k=i+1}^{N-1} U(i,k)·x(k) ) / U(i,i)
  *     (division skipped when UnitDiag = true)
- *
- * Cholesky solve (Ax = b, A symmetric positive-definite):
- *
- *   1. Decompose A = LLᵀ via cholesky(A)
- *   2. Solve Ly = b via forward substitution
- *   3. Solve Lᵀx = y via back substitution (accessing L transposed)
- *
- * Complexity: O(N²/2) per substitution, O(N³/3 + N²) for cholesky_solve.
+ * @endcode
+ * Complexity: O(N²/2) per substitution.
  *
  * ============================================================================
  * FAILURE MODES
