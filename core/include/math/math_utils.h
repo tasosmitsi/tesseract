@@ -34,6 +34,31 @@ namespace math
         return is_same_v<T, float> ? __builtin_sqrtf(x) : __builtin_sqrt(x);
     }
 
+    /**
+     * @brief Compute the absolute value of a numeric value.
+     *
+     * Maps to hardware instructions via compiler builtins for
+     * float, double, int, and long. Falls back to branch for other types.
+     *
+     * @tparam T Numeric type.
+     * @param x Input value.
+     * @return Absolute value of @p x.
+     */
+    template <typename T>
+    constexpr T abs(T x) noexcept
+    {
+        if constexpr (is_same_v<T, float>)
+            return __builtin_fabsf(x);
+        else if constexpr (is_same_v<T, double>)
+            return __builtin_fabs(x);
+        else if constexpr (is_same_v<T, int>)
+            return __builtin_abs(x);
+        else if constexpr (is_same_v<T, long>)
+            return __builtin_labs(x);
+        else
+            return x < T(0) ? -x : x;
+    }
+
 } // namespace math
 
 #endif // MATH_UTILS_H
