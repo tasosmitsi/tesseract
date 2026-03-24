@@ -40,7 +40,7 @@ TEMPLATE_TEST_CASE("inverse: 2x2 known answer",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: 3x3 known answer",
-                   "[inverse]", double)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -178,7 +178,7 @@ TEMPLATE_TEST_CASE("inverse: zero matrix returns Singular",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: A * A_inv = I",
-                   "[inverse]", double)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 4, 4>;
@@ -205,7 +205,7 @@ TEMPLATE_TEST_CASE("inverse: A * A_inv = I",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: A_inv * A = I",
-                   "[inverse]", double)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 4, 4>;
@@ -231,10 +231,10 @@ TEMPLATE_TEST_CASE("inverse: A_inv * A = I",
 // PROPERTY: (A⁻¹)⁻¹ = A
 // ============================================================================
 
-TEST_CASE("inverse: (A_inv)_inv = A",
-          "[inverse]")
+TEMPLATE_TEST_CASE("inverse: (A_inv)_inv = A",
+          "[inverse]", double, float)
 {
-    using T = double;
+    using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
 
     T A_vals[3][3] = {
@@ -256,10 +256,10 @@ TEST_CASE("inverse: (A_inv)_inv = A",
 // PROPERTY: (A·B)⁻¹ = B⁻¹ · A⁻¹
 // ============================================================================
 
-TEST_CASE("inverse: (AB)_inv = B_inv * A_inv",
-          "[inverse]")
+TEMPLATE_TEST_CASE("inverse: (AB)_inv = B_inv * A_inv",
+          "[inverse]", double, float)
 {
-    using T = double;
+    using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
 
     T A_vals[3][3] = {
@@ -293,10 +293,10 @@ TEST_CASE("inverse: (AB)_inv = B_inv * A_inv",
 // PROPERTY: det(A⁻¹) = 1/det(A)
 // ============================================================================
 
-TEST_CASE("inverse: det(A_inv) = 1/det(A)",
-          "[inverse]")
+TEMPLATE_TEST_CASE("inverse: det(A_inv) = 1/det(A)",
+          "[inverse]", double, float)
 {
-    using T = double;
+    using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
 
     T A_vals[3][3] = {
@@ -318,10 +318,10 @@ TEST_CASE("inverse: det(A_inv) = 1/det(A)",
 // GENERIC PATH — 7×7
 // ============================================================================
 
-TEST_CASE("inverse: 7x7 A * A_inv = I",
-          "[inverse]")
+TEMPLATE_TEST_CASE("inverse: 7x7 A * A_inv = I",
+          "[inverse]", double, float)
 {
-    using T = double;
+    using T = TestType;
     using Matrix = FusedMatrix<T, 7, 7>;
 
     // Diagonally dominant → well-conditioned

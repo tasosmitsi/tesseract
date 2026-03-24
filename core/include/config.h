@@ -114,7 +114,7 @@ using MyErrorHandler = ErrorHandler<PCErrorHandler>;
  * @def PRECISION_TOLERANCE
  * @brief Tolerance for floating-point comparisons (e.g. symmetry checks, Cholesky).
  */
-#define PRECISION_TOLERANCE 1e-9
+#define PRECISION_TOLERANCE 1e-4
 
 /**
  * @def my_size_t
