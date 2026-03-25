@@ -203,7 +203,7 @@ TEMPLATE_TEST_CASE("qr_householder: apply_Qt matches Q^T * b",
 
     // Method 2: form Q explicitly, then multiply
     auto Q = qr.Q();
-    Vector Qtb_explicit(T(0));
+    Vector Qtb_explicit;
     for (my_size_t i = 0; i < 3; ++i)
     {
         T sum = T(0);
@@ -243,7 +243,7 @@ TEMPLATE_TEST_CASE("qr_householder: apply_Qt rectangular",
     auto Qtb_fast = qr.apply_Qt(b);
 
     auto Q = qr.Q(); // 4×4
-    Vector Qtb_explicit(T(0));
+    Vector Qtb_explicit;
     for (my_size_t i = 0; i < 4; ++i)
     {
         T sum = T(0);
@@ -469,7 +469,7 @@ TEST_CASE("qr_householder: apply_Qt 7x5 generic path",
 
     // Method 2: explicit Q^T * b
     auto Q = qr.Q();
-    Vector Qtb_explicit(T(0));
+    Vector Qtb_explicit;
     for (my_size_t i = 0; i < 7; ++i)
     {
         T sum = T(0);
