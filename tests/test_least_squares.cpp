@@ -279,7 +279,7 @@ TEST_CASE("least_squares: 7x3 satisfies normal equations",
     using Vector7 = FusedVector<T, 7>;
 
     // Well-conditioned rectangular — use varied structure to ensure full rank
-    Matrix73 A(T(0));
+    Matrix73 A;
     for (my_size_t i = 0; i < 7; ++i)
     {
         A(i, 0) = T(1);                 // constant term
@@ -287,7 +287,7 @@ TEST_CASE("least_squares: 7x3 satisfies normal equations",
         A(i, 2) = T((i + 1) * (i + 1)); // quadratic term
     }
 
-    Vector7 b(T(0));
+    Vector7 b;
     for (my_size_t i = 0; i < 7; ++i)
     {
         b(i) = T(i * i + 1);
