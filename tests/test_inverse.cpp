@@ -116,6 +116,44 @@ TEMPLATE_TEST_CASE("inverse: 4x4 known answer",
 }
 
 // ============================================================================
+// IDENTITY — 1×1
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 1x1 identity inverse is identity",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 1, 1>;
+
+    Matrix I(T(0));
+    I.setIdentity();
+
+    auto result = matrix_algorithms::inverse(I);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().isIdentity());
+}
+
+// ============================================================================
+// IDENTITY — 2×2
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 2x2 identity inverse is identity",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 2, 2>;
+
+    Matrix I(T(0));
+    I.setIdentity();
+
+    auto result = matrix_algorithms::inverse(I);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value().isIdentity());
+}
+
+// ============================================================================
 // IDENTITY — 3×3
 // ============================================================================
 
@@ -151,6 +189,51 @@ TEMPLATE_TEST_CASE("inverse: 4x4 identity inverse is identity",
 
     REQUIRE(result.has_value());
     REQUIRE(result.value().isIdentity());
+}
+
+// ============================================================================
+// DIAGONAL — 1×1
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 1x1 diagonal",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 1, 1>;
+
+    T A_vals[1][1] = {{8}};
+    Matrix A(A_vals);
+
+    auto result = matrix_algorithms::inverse(A);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value()(0, 0) == Approx(T(0.125)));
+}
+
+// ============================================================================
+// DIAGONAL — 2×2
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 2x2 diagonal",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 2, 2>;
+
+    T A_vals[2][2] = {
+        {2, 0},
+        {0, 5}};
+    Matrix A(A_vals);
+
+    T Ainv_expected_vals[2][2] = {
+        {T(0.5), 0},
+        {0, T(0.2)}};
+    Matrix Ainv_expected(Ainv_expected_vals);
+
+    auto result = matrix_algorithms::inverse(A);
+
+    REQUIRE(result.has_value());
+    REQUIRE(result.value() == Ainv_expected);
 }
 
 // ============================================================================
@@ -212,11 +295,29 @@ TEMPLATE_TEST_CASE("inverse: 4x4 diagonal",
 }
 
 // ============================================================================
+// SINGULAR — 1×1
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 1x1 singular returns Singular",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 1, 1>;
+
+    Matrix A(T(0));
+
+    auto result = matrix_algorithms::inverse(A);
+
+    REQUIRE_FALSE(result.has_value());
+    REQUIRE(result.error() == MatrixStatus::Singular);
+}
+
+// ============================================================================
 // SINGULAR — 2×2 ZERO MATRIX
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: zero matrix returns Singular",
-                   "[inverse][error]", double, float)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -234,7 +335,7 @@ TEMPLATE_TEST_CASE("inverse: zero matrix returns Singular",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: 3x3 singular returns Singular",
-                   "[inverse][error]", double, float)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -257,7 +358,7 @@ TEMPLATE_TEST_CASE("inverse: 3x3 singular returns Singular",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("inverse: 4x4 singular returns Singular",
-                   "[inverse][error]", double, float)
+                   "[inverse]", double, float)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 4, 4>;
@@ -274,6 +375,52 @@ TEMPLATE_TEST_CASE("inverse: 4x4 singular returns Singular",
 
     REQUIRE_FALSE(result.has_value());
     REQUIRE(result.error() == MatrixStatus::Singular);
+}
+
+// ============================================================================
+// PROPERTY: A · A⁻¹ = I — 1×1
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 1x1 A * A_inv = I",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 1, 1>;
+
+    T A_vals[1][1] = {{7}};
+    Matrix A(A_vals);
+
+    auto result = matrix_algorithms::inverse(A);
+
+    REQUIRE(result.has_value());
+
+    auto product = Matrix::matmul(A, result.value());
+
+    REQUIRE(product.isIdentity());
+}
+
+// ============================================================================
+// PROPERTY: A · A⁻¹ = I — 2×2
+// ============================================================================
+
+TEMPLATE_TEST_CASE("inverse: 2x2 A * A_inv = I",
+                   "[inverse]", double, float)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 2, 2>;
+
+    T A_vals[2][2] = {
+        {4, 7},
+        {2, 6}};
+    Matrix A(A_vals);
+
+    auto result = matrix_algorithms::inverse(A);
+
+    REQUIRE(result.has_value());
+
+    auto product = Matrix::matmul(A, result.value());
+
+    REQUIRE(product.isIdentity());
 }
 
 // ============================================================================
