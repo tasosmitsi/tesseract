@@ -6,31 +6,26 @@
 #include "matrix_traits.h"
 #include "algorithms/decomposition/lu.h"
 #include "algorithms/solvers/triangular_solve.h"
+#include "math/math_utils.h"
 
 /**
  * @file inverse.h
- * @brief Matrix inverse via LU decomposition.
+ * @brief Matrix inverse with compile-time dispatch.
  *
- * Computes A⁻¹ by solving A·X = I using LU factorization with partial
- * pivoting and multi-RHS triangular substitution. Never forms the adjugate.
+ * Small sizes (1×1, 2×2, 3×3) use direct adjugate/det formulas — O(1),
+ * fully unrolled, no LU overhead.
  *
- * ============================================================================
- * ALGORITHM
- * ============================================================================
- *
+ * Generic path (N>3) uses LU decomposition:
  *   1. Decompose P·A = L·U via lu(A)
- *   2. Build P·I (permuted identity from perm vector)
- *   3. Solve L·Y = P·I via forward substitution (UnitDiag=true, multi-RHS)
- *   4. Solve U·X = Y via back substitution (multi-RHS)
- *   5. X = A⁻¹
+ *   2. Solve L·Y = P·I, then U·X = Y
  *
- * Complexity: O(2N³/3) for LU + O(N³) for the two substitutions = O(5N³/3).
+ * Complexity: O(1) for N≤3, O(5N³/3) for N>3.
  *
  * ============================================================================
  * FAILURE MODES
  * ============================================================================
  *
- * - MatrixStatus::Singular — forwarded from lu() if A is singular
+ * - MatrixStatus::Singular — matrix is not invertible (det ≈ 0 or LU fails)
  *
  * ============================================================================
  */
@@ -41,7 +36,7 @@ namespace matrix_algorithms
     using matrix_traits::MatrixStatus;
 
     /**
-     * @brief Compute the inverse of a square matrix via LU decomposition.
+     * @brief Compute the inverse of a square matrix.
      *
      * @tparam T  Scalar type (deduced).
      * @tparam N  Matrix dimension (deduced).
@@ -68,47 +63,113 @@ namespace matrix_algorithms
         static_assert(is_floating_point_v<T>,
                       "inverse requires a floating-point scalar type");
 
-        // 1. Decompose P·A = L·U
-        auto lu_result = lu(A);
-
-        if (!lu_result.has_value())
+        if constexpr (N == 1)
         {
-            return Unexpected{lu_result.error()};
+            if (math::abs(A(0, 0)) <= T(PRECISION_TOLERANCE))
+            {
+                return Unexpected{MatrixStatus::Singular};
+            }
+
+            FusedMatrix<T, 1, 1> result(T(0));
+            result(0, 0) = T(1) / A(0, 0);
+            return move(result);
         }
-
-        auto &decomp = lu_result.value();
-
-        // 2. Build P·I (permuted identity)
-        FusedMatrix<T, N, N> PI(T(0));
-
-        for (my_size_t i = 0; i < N; ++i)
+        else if constexpr (N == 2)
         {
-            PI(i, decomp.perm(i)) = T(1);
+            T det = A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0);
+
+            if (math::abs(det) <= T(PRECISION_TOLERANCE))
+            {
+                return Unexpected{MatrixStatus::Singular};
+            }
+
+            T inv_det = T(1) / det;
+
+            FusedMatrix<T, 2, 2> result(T(0));
+            result(0, 0) = A(1, 1) * inv_det;
+            result(0, 1) = -A(0, 1) * inv_det;
+            result(1, 0) = -A(1, 0) * inv_det;
+            result(1, 1) = A(0, 0) * inv_det;
+            return move(result);
         }
-
-        // 3. Extract L and U for substitution
-        auto L = decomp.L();
-        auto U = decomp.U();
-
-        // 4. Solve L·Y = P·I (forward substitution, unit diagonal)
-        auto fwd_result = forward_substitute<true>(L, PI);
-
-        if (!fwd_result.has_value())
+        else if constexpr (N == 3)
         {
-            return Unexpected{fwd_result.error()};
+            // Cofactors
+            T c00 = A(1, 1) * A(2, 2) - A(1, 2) * A(2, 1);
+            T c01 = A(1, 2) * A(2, 0) - A(1, 0) * A(2, 2);
+            T c02 = A(1, 0) * A(2, 1) - A(1, 1) * A(2, 0);
+
+            T det = A(0, 0) * c00 + A(0, 1) * c01 + A(0, 2) * c02;
+
+            if (math::abs(det) <= T(PRECISION_TOLERANCE))
+            {
+                return Unexpected{MatrixStatus::Singular};
+            }
+
+            T inv_det = T(1) / det;
+
+            FusedMatrix<T, 3, 3> result(T(0));
+
+            result(0, 0) = c00 * inv_det;
+            result(0, 1) = (A(0, 2) * A(2, 1) - A(0, 1) * A(2, 2)) * inv_det;
+            result(0, 2) = (A(0, 1) * A(1, 2) - A(0, 2) * A(1, 1)) * inv_det;
+
+            result(1, 0) = c01 * inv_det;
+            result(1, 1) = (A(0, 0) * A(2, 2) - A(0, 2) * A(2, 0)) * inv_det;
+            result(1, 2) = (A(0, 2) * A(1, 0) - A(0, 0) * A(1, 2)) * inv_det;
+
+            result(2, 0) = c02 * inv_det;
+            result(2, 1) = (A(0, 1) * A(2, 0) - A(0, 0) * A(2, 1)) * inv_det;
+            result(2, 2) = (A(0, 0) * A(1, 1) - A(0, 1) * A(1, 0)) * inv_det;
+
+            return move(result);
         }
-
-        auto &Y = fwd_result.value();
-
-        // 5. Solve U·X = Y (back substitution)
-        auto back_result = back_substitute(U, Y);
-
-        if (!back_result.has_value())
+        else
         {
-            return Unexpected{back_result.error()};
-        }
+            // Generic LU path
 
-        return move(back_result.value());
+            // 1. Decompose P·A = L·U
+            auto lu_result = lu(A);
+
+            if (!lu_result.has_value())
+            {
+                return Unexpected{lu_result.error()};
+            }
+
+            auto &decomp = lu_result.value();
+
+            // 2. Build P·I (permuted identity)
+            FusedMatrix<T, N, N> PI(T(0));
+
+            for (my_size_t i = 0; i < N; ++i)
+            {
+                PI(i, decomp.perm(i)) = T(1);
+            }
+
+            // 3. Extract L and U for substitution
+            auto L = decomp.L();
+            auto U = decomp.U();
+
+            // 4. Solve L·Y = P·I (forward substitution, unit diagonal)
+            auto fwd_result = forward_substitute<true>(L, PI);
+
+            if (!fwd_result.has_value())
+            {
+                return Unexpected{fwd_result.error()};
+            }
+
+            auto &Y = fwd_result.value();
+
+            // 5. Solve U·X = Y (back substitution)
+            auto back_result = back_substitute(U, Y);
+
+            if (!back_result.has_value())
+            {
+                return Unexpected{back_result.error()};
+            }
+
+            return move(back_result.value());
+        }
     }
 
     /**
