@@ -5,6 +5,7 @@
 #include "fused/fused_tensor.h"
 #include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"
+#include "math/math_utils.h"
 
 template <typename T, my_size_t Rows, my_size_t Cols>
 class FusedMatrix : public FusedTensorND<T, Rows, Cols>
@@ -271,14 +272,14 @@ public:
             {
                 if (i == j)
                 {
-                    if (std::abs((*this)(i, j) - T(1)) > T(PRECISION_TOLERANCE))
+                    if (math::abs((*this)(i, j) - T(1)) > T(PRECISION_TOLERANCE))
                     {
                         return false;
                     }
                 }
                 else
                 {
-                    if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                    if (math::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
                     {
                         return false;
                     }
@@ -316,7 +317,7 @@ public:
         {
             for (my_size_t j = 0; j < i; j++)
             {
-                if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                if (math::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
                 {
                     return false;
                 }
@@ -338,7 +339,7 @@ public:
         {
             for (my_size_t j = i + 1; j < this->getDim(1); j++)
             {
-                if (std::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
+                if (math::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
                 {
                     return false;
                 }
@@ -451,7 +452,7 @@ public:
         {
             for (my_size_t i = j + 1; i < rows; i++)
             {
-                if (std::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
+                if (math::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
                 {
                     /* FusedMatrix is non-invertible */
                     MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Gauss Elimination)");
@@ -481,7 +482,7 @@ public:
         {
             for (int i = j - 1; i >= 0; i--)
             {
-                if (std::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
+                if (math::abs(_temp(j, j)) < T(PRECISION_TOLERANCE))
                 {
                     /* FusedMatrix is non-invertible */
                     MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Jordan)");
@@ -504,7 +505,7 @@ public:
         /* Normalize the matrix */
         for (my_size_t i = 0; i < rows; i++)
         {
-            if (std::abs(_temp(i, i)) < T(PRECISION_TOLERANCE))
+            if (math::abs(_temp(i, i)) < T(PRECISION_TOLERANCE))
             {
                 /* FusedMatrix is non-invertible */
                 MyErrorHandler::error("FusedMatrix is non-invertible cause: diagonal element is zero (Normalization)");
