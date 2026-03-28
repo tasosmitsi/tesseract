@@ -306,16 +306,14 @@ public:
 
     bool isUpperTriangular(void) const
     {
-        // Check if the matrix is square
-        if (!this->areDimsEqual())
-        {
-            MyErrorHandler::error("FusedMatrix is not square");
-        }
+        my_size_t rows = this->getDim(0);
+        my_size_t cols = this->getDim(1);
 
-        // Check if the matrix is upper triangular
-        for (my_size_t i = 1; i < this->getDim(0); i++)
+        for (my_size_t i = 1; i < rows; ++i)
         {
-            for (my_size_t j = 0; j < i; j++)
+            // Below-diagonal entries: columns 0 to min(i, cols) - 1
+            my_size_t jmax = (i < cols) ? i : cols;
+            for (my_size_t j = 0; j < jmax; ++j)
             {
                 if (math::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
                 {
@@ -328,16 +326,12 @@ public:
 
     bool isLowerTriangular(void) const
     {
-        // Check if the matrix is square
-        if (!this->areDimsEqual())
-        {
-            MyErrorHandler::error("FusedMatrix is not square");
-        }
+        my_size_t rows = this->getDim(0);
+        my_size_t cols = this->getDim(1);
 
-        // Check if the matrix is lower triangular
-        for (my_size_t i = 0; i < this->getDim(0); i++)
+        for (my_size_t i = 0; i < rows; ++i)
         {
-            for (my_size_t j = i + 1; j < this->getDim(1); j++)
+            for (my_size_t j = i + 1; j < cols; ++j)
             {
                 if (math::abs((*this)(i, j)) > T(PRECISION_TOLERANCE))
                 {

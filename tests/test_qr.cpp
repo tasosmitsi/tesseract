@@ -90,15 +90,7 @@ TEMPLATE_TEST_CASE("qr_householder: 4x3 rectangular Q*R = A",
     SECTION("R has zeros below diagonal")
     {
         auto R = qr.R();
-
-        // Manual check for M×N rectangular upper triangular
-        for (my_size_t i = 1; i < 4; ++i)
-        {
-            for (my_size_t j = 0; j < i && j < 3; ++j)
-            {
-                REQUIRE(R(i, j) == Approx(T(0)).margin(T(PRECISION_TOLERANCE)));
-            }
-        }
+        REQUIRE(R.isUpperTriangular());
     }
 }
 
@@ -350,14 +342,8 @@ TEST_CASE("qr_householder: 7x5 reconstruction",
     auto QR_product = Matrix75::matmul(Q, R);
     REQUIRE(QR_product == A);
 
-    // R has zeros below diagonal
-    for (my_size_t i = 1; i < 7; ++i)
-    {
-        for (my_size_t j = 0; j < i && j < 5; ++j)
-        {
-            REQUIRE(R(i, j) == Approx(T(0)).margin(T(PRECISION_TOLERANCE)));
-        }
-    }
+    // R is upper-triangular
+    REQUIRE(R.isUpperTriangular());
 }
 
 // ============================================================================
