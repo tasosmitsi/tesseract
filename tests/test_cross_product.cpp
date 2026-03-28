@@ -156,7 +156,6 @@ TEMPLATE_TEST_CASE("cross: agrees with skew_symmetric",
                    "[cross]", double, float)
 {
     using T = TestType;
-    using Matrix = FusedMatrix<T, 3, 3>;
     using Vector = FusedVector<T, 3>;
 
     T a_vals[3][1] = {{4}, {-2}, {7}};
