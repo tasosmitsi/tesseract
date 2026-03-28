@@ -10,7 +10,7 @@ using Catch::Approx;
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: 1x1",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 1, 1>;
@@ -26,7 +26,7 @@ TEMPLATE_TEST_CASE("determinant: 1x1",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: 2x2 known answer",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
@@ -47,7 +47,7 @@ TEMPLATE_TEST_CASE("determinant: 2x2 known answer",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: 3x3 known answer",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -69,7 +69,7 @@ TEMPLATE_TEST_CASE("determinant: 3x3 known answer",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: 3x3 unit determinant",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -113,7 +113,7 @@ TEMPLATE_TEST_CASE("determinant: 4x4 known answer",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: identity is 1",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -129,7 +129,7 @@ TEMPLATE_TEST_CASE("determinant: identity is 1",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: diagonal matrix is product of diagonal",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -148,7 +148,7 @@ TEMPLATE_TEST_CASE("determinant: diagonal matrix is product of diagonal",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: singular matrix returns 0",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
@@ -168,7 +168,7 @@ TEMPLATE_TEST_CASE("determinant: singular matrix returns 0",
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: negative determinant",
-                   "[determinant]", double, float, int32_t)
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 2, 2>;
