@@ -5,6 +5,7 @@
 #include "utilities/expected.h"
 #include "matrix_traits.h"
 #include "simple_type_traits.h"
+#include "math/math_utils.h"
 
 /**
  * @file triangular_solve.h
@@ -82,15 +83,15 @@ namespace matrix_algorithms
         // --- Fixed-size fully unrolled paths ---
         if constexpr (!UnitDiag && N == 3)
         {
-            if (L(0, 0) <= T(PRECISION_TOLERANCE) && L(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = b(0) / L(0, 0);
 
-            if (L(1, 1) <= T(PRECISION_TOLERANCE) && L(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - L(1, 0) * x(0)) / L(1, 1);
 
-            if (L(2, 2) <= T(PRECISION_TOLERANCE) && L(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = (b(2) - L(2, 0) * x(0) - L(2, 1) * x(1)) / L(2, 2);
         }
@@ -102,19 +103,19 @@ namespace matrix_algorithms
         }
         else if constexpr (!UnitDiag && N == 4)
         {
-            if (L(0, 0) <= T(PRECISION_TOLERANCE) && L(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = b(0) / L(0, 0);
 
-            if (L(1, 1) <= T(PRECISION_TOLERANCE) && L(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - L(1, 0) * x(0)) / L(1, 1);
 
-            if (L(2, 2) <= T(PRECISION_TOLERANCE) && L(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = (b(2) - L(2, 0) * x(0) - L(2, 1) * x(1)) / L(2, 2);
 
-            if (L(3, 3) <= T(PRECISION_TOLERANCE) && L(3, 3) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(3, 3)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(3) = (b(3) - L(3, 0) * x(0) - L(3, 1) * x(1) - L(3, 2) * x(2)) / L(3, 3);
         }
@@ -127,27 +128,27 @@ namespace matrix_algorithms
         }
         else if constexpr (!UnitDiag && N == 6)
         {
-            if (L(0, 0) <= T(PRECISION_TOLERANCE) && L(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = b(0) / L(0, 0);
 
-            if (L(1, 1) <= T(PRECISION_TOLERANCE) && L(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - L(1, 0) * x(0)) / L(1, 1);
 
-            if (L(2, 2) <= T(PRECISION_TOLERANCE) && L(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = (b(2) - L(2, 0) * x(0) - L(2, 1) * x(1)) / L(2, 2);
 
-            if (L(3, 3) <= T(PRECISION_TOLERANCE) && L(3, 3) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(3, 3)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(3) = (b(3) - L(3, 0) * x(0) - L(3, 1) * x(1) - L(3, 2) * x(2)) / L(3, 3);
 
-            if (L(4, 4) <= T(PRECISION_TOLERANCE) && L(4, 4) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(4, 4)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(4) = (b(4) - L(4, 0) * x(0) - L(4, 1) * x(1) - L(4, 2) * x(2) - L(4, 3) * x(3)) / L(4, 4);
 
-            if (L(5, 5) <= T(PRECISION_TOLERANCE) && L(5, 5) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(L(5, 5)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(5) = (b(5) - L(5, 0) * x(0) - L(5, 1) * x(1) - L(5, 2) * x(2) - L(5, 3) * x(3) - L(5, 4) * x(4)) / L(5, 5);
         }
@@ -180,7 +181,7 @@ namespace matrix_algorithms
                 {
                     T diag = L(i, i);
 
-                    if (diag <= T(PRECISION_TOLERANCE) && diag >= T(-PRECISION_TOLERANCE))
+                    if (math::abs(diag) <= T(PRECISION_TOLERANCE))
                     {
                         return Unexpected{MatrixStatus::Singular};
                     }
@@ -224,15 +225,15 @@ namespace matrix_algorithms
         // --- Fixed-size fully unrolled paths ---
         if constexpr (!UnitDiag && N == 3)
         {
-            if (U(2, 2) <= T(PRECISION_TOLERANCE) && U(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = b(2) / U(2, 2);
 
-            if (U(1, 1) <= T(PRECISION_TOLERANCE) && U(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - U(1, 2) * x(2)) / U(1, 1);
 
-            if (U(0, 0) <= T(PRECISION_TOLERANCE) && U(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = (b(0) - U(0, 1) * x(1) - U(0, 2) * x(2)) / U(0, 0);
         }
@@ -244,19 +245,19 @@ namespace matrix_algorithms
         }
         else if constexpr (!UnitDiag && N == 4)
         {
-            if (U(3, 3) <= T(PRECISION_TOLERANCE) && U(3, 3) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(3, 3)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(3) = b(3) / U(3, 3);
 
-            if (U(2, 2) <= T(PRECISION_TOLERANCE) && U(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = (b(2) - U(2, 3) * x(3)) / U(2, 2);
 
-            if (U(1, 1) <= T(PRECISION_TOLERANCE) && U(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - U(1, 2) * x(2) - U(1, 3) * x(3)) / U(1, 1);
 
-            if (U(0, 0) <= T(PRECISION_TOLERANCE) && U(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = (b(0) - U(0, 1) * x(1) - U(0, 2) * x(2) - U(0, 3) * x(3)) / U(0, 0);
         }
@@ -269,27 +270,27 @@ namespace matrix_algorithms
         }
         else if constexpr (!UnitDiag && N == 6)
         {
-            if (U(5, 5) <= T(PRECISION_TOLERANCE) && U(5, 5) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(5, 5)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(5) = b(5) / U(5, 5);
 
-            if (U(4, 4) <= T(PRECISION_TOLERANCE) && U(4, 4) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(4, 4)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(4) = (b(4) - U(4, 5) * x(5)) / U(4, 4);
 
-            if (U(3, 3) <= T(PRECISION_TOLERANCE) && U(3, 3) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(3, 3)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(3) = (b(3) - U(3, 4) * x(4) - U(3, 5) * x(5)) / U(3, 3);
 
-            if (U(2, 2) <= T(PRECISION_TOLERANCE) && U(2, 2) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(2, 2)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(2) = (b(2) - U(2, 3) * x(3) - U(2, 4) * x(4) - U(2, 5) * x(5)) / U(2, 2);
 
-            if (U(1, 1) <= T(PRECISION_TOLERANCE) && U(1, 1) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(1, 1)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(1) = (b(1) - U(1, 2) * x(2) - U(1, 3) * x(3) - U(1, 4) * x(4) - U(1, 5) * x(5)) / U(1, 1);
 
-            if (U(0, 0) <= T(PRECISION_TOLERANCE) && U(0, 0) >= T(-PRECISION_TOLERANCE))
+            if (math::abs(U(0, 0)) <= T(PRECISION_TOLERANCE))
                 return Unexpected{MatrixStatus::Singular};
             x(0) = (b(0) - U(0, 1) * x(1) - U(0, 2) * x(2) - U(0, 3) * x(3) - U(0, 4) * x(4) - U(0, 5) * x(5)) / U(0, 0);
         }
@@ -322,7 +323,7 @@ namespace matrix_algorithms
                 {
                     T diag = U(i, i);
 
-                    if (diag <= T(PRECISION_TOLERANCE) && diag >= T(-PRECISION_TOLERANCE))
+                    if (math::abs(diag) <= T(PRECISION_TOLERANCE))
                     {
                         return Unexpected{MatrixStatus::Singular};
                     }
@@ -382,7 +383,7 @@ namespace matrix_algorithms
                 {
                     T diag = L(i, i);
 
-                    if (diag <= T(PRECISION_TOLERANCE) && diag >= T(-PRECISION_TOLERANCE))
+                    if (math::abs(diag) <= T(PRECISION_TOLERANCE))
                     {
                         return Unexpected{MatrixStatus::Singular};
                     }
@@ -442,7 +443,7 @@ namespace matrix_algorithms
                 {
                     T diag = U(i, i);
 
-                    if (diag <= T(PRECISION_TOLERANCE) && diag >= T(-PRECISION_TOLERANCE))
+                    if (math::abs(diag) <= T(PRECISION_TOLERANCE))
                     {
                         return Unexpected{MatrixStatus::Singular};
                     }

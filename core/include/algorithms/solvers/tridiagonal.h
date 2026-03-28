@@ -5,7 +5,7 @@
 #include "utilities/expected.h"
 #include "matrix_traits.h"
 #include "fused/fused_vector.h"
-#include "math/math_utils.h" // math::abs
+#include "math/math_utils.h"
 
 /**
  * @file tridiagonal.h
@@ -104,7 +104,7 @@ namespace matrix_algorithms
         {
             T diag = dp(i - 1);
 
-            if (diag <= T(PRECISION_TOLERANCE) && diag >= T(-PRECISION_TOLERANCE))
+            if (math::abs(diag) <= T(PRECISION_TOLERANCE))
             {
                 return Unexpected{MatrixStatus::Singular};
             }
@@ -115,9 +115,7 @@ namespace matrix_algorithms
         }
 
         // Check last pivot
-        T last = dp(N - 1);
-
-        if (last <= T(PRECISION_TOLERANCE) && last >= T(-PRECISION_TOLERANCE))
+        if (math::abs(dp(N - 1)) <= T(PRECISION_TOLERANCE))
         {
             return Unexpected{MatrixStatus::Singular};
         }

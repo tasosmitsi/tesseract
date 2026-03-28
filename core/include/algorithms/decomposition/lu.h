@@ -6,7 +6,7 @@
 #include "matrix_traits.h"
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
-#include "math/math_utils.h" // math::abs
+#include "math/math_utils.h"
 
 /**
  * @file lu.h
@@ -204,7 +204,7 @@ namespace matrix_algorithms
             // 3. Check for singularity
             T diag = result.LU(j, j);
 
-            if (diag <= tol && diag >= -tol)
+            if (math::abs(diag) <= tol)
             {
                 return Unexpected{MatrixStatus::Singular};
             }

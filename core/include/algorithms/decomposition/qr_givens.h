@@ -4,7 +4,7 @@
 #include "config.h"
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
-#include "math/math_utils.h" // math::sqrt, math::abs
+#include "math/math_utils.h"
 
 /**
  * @file qr_givens.h
@@ -106,7 +106,7 @@ namespace matrix_algorithms
                 T b = result.R(i, j);
 
                 // Skip if already zero
-                if (b <= T(PRECISION_TOLERANCE) && b >= T(-PRECISION_TOLERANCE))
+                if (math::abs(b) <= T(PRECISION_TOLERANCE))
                     continue;
 
                 // Compute Givens rotation
