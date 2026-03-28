@@ -15,6 +15,10 @@
  * Small sizes (1×1, 2×2, 3×3) use direct adjugate/det formulas — O(1),
  * fully unrolled, no LU overhead.
  *
+ * ============================================================================
+ * ALGORITHM
+ * ============================================================================
+ *
  * Generic path (N>3) uses LU decomposition:
  *   1. Decompose P·A = L·U via lu(A)
  *   2. Solve L·Y = P·I, then U·X = Y
