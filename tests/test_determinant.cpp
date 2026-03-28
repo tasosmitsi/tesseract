@@ -422,9 +422,6 @@ TEST_CASE("determinant: 7x7 det(A*B) = det(A)*det(B)",
         }
     }
 
-    A.print();
-    B.print();
-
     auto AB = Matrix::matmul(A, B);
 
     T det_A = matrix_algorithms::determinant(A);
