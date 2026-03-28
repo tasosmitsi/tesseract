@@ -4,8 +4,6 @@
 #include "algorithms/operations/homogeneous_transform.h"
 #include "algorithms/operations/inverse.h"
 
-using Catch::Approx;
-
 // ============================================================================
 // KNOWN ANSWER — PURE TRANSLATION
 // ============================================================================
