@@ -84,11 +84,11 @@ TEMPLATE_TEST_CASE("determinant: 3x3 unit determinant",
 }
 
 // ============================================================================
-// 4×4 KNOWN ANSWER
+// 4×4 KNOWN ANSWER (SPD)
 // ============================================================================
 
-TEMPLATE_TEST_CASE("determinant: 4x4 known answer",
-                   "[determinant]", double, float)
+TEMPLATE_TEST_CASE("determinant: 4x4 known answer SPD",
+                   "[determinant]", double, float, int)
 {
     using T = TestType;
     using Matrix = FusedMatrix<T, 4, 4>;
@@ -109,7 +109,87 @@ TEMPLATE_TEST_CASE("determinant: 4x4 known answer",
 }
 
 // ============================================================================
-// IDENTITY MATRIX
+// 4×4 KNOWN ANSWER (upper triangular)
+// ============================================================================
+
+TEMPLATE_TEST_CASE("determinant: 4x4 upper triangular",
+                   "[determinant]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    // det = product of diagonal = 1*2*3*4 = 24
+    T A_vals[4][4] = {
+        {1, 5, 3, 2},
+        {0, 2, 7, 1},
+        {0, 0, 3, 4},
+        {0, 0, 0, 4}};
+    Matrix A(A_vals);
+
+    REQUIRE(matrix_algorithms::determinant(A) == T(24));
+}
+
+// ============================================================================
+// 4×4 SINGULAR
+// ============================================================================
+
+TEMPLATE_TEST_CASE("determinant: 4x4 singular",
+                   "[determinant]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    // Row 3 = Row 0
+    T A_vals[4][4] = {
+        {1, 2, 3, 4},
+        {5, 6, 7, 8},
+        {9, 10, 11, 12},
+        {1, 2, 3, 4}};
+    Matrix A(A_vals);
+
+    REQUIRE(matrix_algorithms::determinant(A) == T(0));
+}
+
+// ============================================================================
+// 4×4 NEGATIVE DETERMINANT
+// ============================================================================
+
+TEMPLATE_TEST_CASE("determinant: 4x4 negative determinant",
+                   "[determinant]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    // Diagonal with rows 0 and 1 swapped → det negates
+    // det = -(1*2*3*4) = -24
+    T A_vals[4][4] = {
+        {0, 2, 0, 0},
+        {1, 0, 0, 0},
+        {0, 0, 3, 0},
+        {0, 0, 0, 4}};
+    Matrix A(A_vals);
+
+    REQUIRE(matrix_algorithms::determinant(A) == T(-24));
+}
+
+// ============================================================================
+// 4×4 IDENTITY
+// ============================================================================
+
+TEMPLATE_TEST_CASE("determinant: 4x4 identity",
+                   "[determinant]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    Matrix I;
+    I.setIdentity();
+
+    REQUIRE(matrix_algorithms::determinant(I) == T(1));
+}
+
+// ============================================================================
+// IDENTITY MATRIX (3×3)
 // ============================================================================
 
 TEMPLATE_TEST_CASE("determinant: identity is 1",
@@ -118,7 +198,7 @@ TEMPLATE_TEST_CASE("determinant: identity is 1",
     using T = TestType;
     using Matrix = FusedMatrix<T, 3, 3>;
 
-    Matrix I(T(0));
+    Matrix I;
     I.setIdentity();
 
     REQUIRE(matrix_algorithms::determinant(I) == T(1));
@@ -258,6 +338,61 @@ TEST_CASE("determinant: det(cA) = c^N * det(A)",
 
     // c^3 * det(A)
     REQUIRE(det_cA == c * c * c * det_A);
+}
+
+// ============================================================================
+// 4×4 PROPERTY: det(A·B) = det(A) · det(B)
+// ============================================================================
+
+TEST_CASE("determinant: 4x4 det(A*B) = det(A)*det(B)",
+          "[determinant]")
+{
+    using T = double;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    T A_vals[4][4] = {
+        {2, -1, 0, 3},
+        {1, 4, -2, 1},
+        {0, 3, 5, -1},
+        {-1, 2, 1, 6}};
+    Matrix A(A_vals);
+
+    T B_vals[4][4] = {
+        {3, 1, -1, 2},
+        {0, 2, 4, -3},
+        {1, -1, 3, 0},
+        {2, 0, 1, 5}};
+    Matrix B(B_vals);
+
+    auto AB = Matrix::matmul(A, B);
+
+    T det_A = matrix_algorithms::determinant(A);
+    T det_B = matrix_algorithms::determinant(B);
+    T det_AB = matrix_algorithms::determinant(AB);
+
+    REQUIRE(det_AB == Approx(det_A * det_B));
+}
+
+// ============================================================================
+// 4×4 PROPERTY: det(Aᵀ) = det(A)
+// ============================================================================
+
+TEST_CASE("determinant: 4x4 det(A^T) = det(A)",
+          "[determinant]")
+{
+    using T = double;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    T A_vals[4][4] = {
+        {2, -1, 0, 3},
+        {1, 4, -2, 1},
+        {0, 3, 5, -1},
+        {-1, 2, 1, 6}};
+    Matrix A(A_vals), At;
+
+    At = A.transpose_view();
+
+    REQUIRE(matrix_algorithms::determinant(A) == Approx(matrix_algorithms::determinant(At)));
 }
 
 // ============================================================================
