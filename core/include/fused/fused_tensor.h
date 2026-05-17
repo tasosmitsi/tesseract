@@ -1015,6 +1015,9 @@ private:
     template <typename, my_size_t...>
     friend class PermutedViewConstExpr;
 
+    template <typename, my_size_t, my_size_t>
+    friend class SubVectorView;
+
 public:
     FORCE_INLINE constexpr const T *data() const noexcept { return data_.data(); }
     FORCE_INLINE constexpr T *data() noexcept { return data_.data(); }
