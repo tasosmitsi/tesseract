@@ -12,7 +12,7 @@ namespace algebra
         static constexpr bool algebra = false;     // Hamilton product
         static constexpr bool lie_group = false;   // not unit length
         static constexpr bool metric = false;      // dot, norm
-        static constexpr bool tensor = true;       // NOT shape-based
+        static constexpr bool tensor = true;       // shape-based
     };
 
 } // namespace algebra
