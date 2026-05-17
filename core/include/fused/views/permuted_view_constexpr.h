@@ -80,18 +80,18 @@ public:
     FORCE_INLINE const value_type &operator()(Indices... indices) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
         my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-        return t_.data_.data()[Layout::logical_coords_to_physical_flat(idxArray)];
+        return t_.data()[Layout::logical_coords_to_physical_flat(idxArray)];
     }
 
     // Const version of the access operator with array of indices, because this is a view
     FORCE_INLINE const value_type &operator()(my_size_t (&indices)[NumDims]) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return t_.data_.data()[Layout::logical_coords_to_physical_flat(indices)];
+        return t_.data()[Layout::logical_coords_to_physical_flat(indices)];
     }
 
     FORCE_INLINE const value_type &operator()(const my_size_t *indices) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return t_.data_.data()[Layout::logical_coords_to_physical_flat(indices)];
+        return t_.data()[Layout::logical_coords_to_physical_flat(indices)];
     }
 
     // ========================================================================
@@ -130,7 +130,7 @@ public:
         for (my_size_t i = 0; i < width; ++i)
             idxList[i] = Layout::logical_flat_to_physical_flat(logical_flat + i);
 
-        return K::gather(t_.data_.data(), idxList);
+        return K::gather(t_.data(), idxList);
     }
 
     template <typename T, my_size_t Bits, typename Arch>
@@ -183,16 +183,11 @@ public:
         return shape;
     }
 
-    FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data_.data(); }
-    FORCE_INLINE constexpr value_type *data() noexcept { return t_.data_.data(); }
+    FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data(); }
+    FORCE_INLINE constexpr value_type *data() noexcept { return t_.data(); }
 
 private:
     const Tensor &t_;
-
-    // FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data_.data(); }
-
-    // template <typename, my_size_t, typename>
-    // friend struct KernelOps;
 };
 
 #endif // FUSED_PERMUTED_VIEW_CONSTEXPR_H
