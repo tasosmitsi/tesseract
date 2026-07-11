@@ -7,6 +7,58 @@
 using Catch::Approx;
 
 // ============================================================================
+// VIEW SHAPE — DIMS AND SHAPE STRING
+// ============================================================================
+
+TEMPLATE_TEST_CASE("subvector_view: dims and shape",
+                   "[subvector_view]", double, float, int)
+{
+    using T = TestType;
+    using Vec5 = FusedVector<T, 5>;
+    using Row5 = FusedMatrix<T, 1, 5>;
+
+    SECTION("column slice reports [Len, 1]")
+    {
+        Vec5 v;
+        v.setSequencial();
+
+        auto view = SubVectorView<Vec5, 1, 3>(v);
+
+        REQUIRE(view.getDim(0) == 3);
+        REQUIRE(view.getDim(1) == 1);
+        REQUIRE(view.getNumDims() == 2);
+        REQUIRE(view.getTotalSize() == 3);
+        REQUIRE(view.getShape() == "(3,1)");
+    }
+
+    SECTION("row slice reports [1, Len]")
+    {
+        Row5 row;
+        row.setSequencial();
+
+        auto view = SubVectorView<Row5, 2, 3>(row);
+
+        REQUIRE(view.getDim(0) == 1);
+        REQUIRE(view.getDim(1) == 3);
+        REQUIRE(view.getNumDims() == 2);
+        REQUIRE(view.getTotalSize() == 3);
+        REQUIRE(view.getShape() == "(1,3)");
+    }
+
+    SECTION("full view matches source shape")
+    {
+        Vec5 v;
+        v.setSequencial();
+
+        auto view = SubVectorView<Vec5, 0, 5>(v);
+
+        REQUIRE(view.getDim(0) == 5);
+        REQUIRE(view.getDim(1) == 1);
+        REQUIRE(view.getShape() == "(5,1)");
+    }
+}
+
+// ============================================================================
 // COLUMN VECTOR — HEAD
 // ============================================================================
 

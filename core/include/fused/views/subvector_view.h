@@ -144,11 +144,13 @@ public:
         return evalu<T, Bits, Arch>(logical_flat);
     }
 
+    // this is the logical dimension of the view, not the source's physical layout
     FORCE_INLINE static constexpr my_size_t getDim(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return Layout::logical_dim(i);
+        return Dim[i];
     }
 
+    // this is the stride in the source's physical layout, not the view's logical layout
     FORCE_INLINE static constexpr my_size_t getStride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
     {
         return Layout::stride(i);
