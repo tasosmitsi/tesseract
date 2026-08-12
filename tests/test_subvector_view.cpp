@@ -7,7 +7,7 @@
 using Catch::Approx;
 
 // ============================================================================
-// VIEW SHAPE — DIMS AND SHAPE STRING
+// VIEW SHAPE: DIMS AND SHAPE STRING
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: dims and shape",
@@ -59,7 +59,7 @@ TEMPLATE_TEST_CASE("subvector_view: dims and shape",
 }
 
 // ============================================================================
-// COLUMN VECTOR — HEAD
+// COLUMN VECTOR: HEAD
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: column head",
@@ -81,7 +81,7 @@ TEMPLATE_TEST_CASE("subvector_view: column head",
 }
 
 // ============================================================================
-// COLUMN VECTOR — TAIL
+// COLUMN VECTOR: TAIL
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: column tail",
@@ -103,7 +103,7 @@ TEMPLATE_TEST_CASE("subvector_view: column tail",
 }
 
 // ============================================================================
-// COLUMN VECTOR — SEGMENT
+// COLUMN VECTOR: SEGMENT
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: column segment",
@@ -125,7 +125,7 @@ TEMPLATE_TEST_CASE("subvector_view: column segment",
 }
 
 // ============================================================================
-// COLUMN VECTOR — FULL VIEW
+// COLUMN VECTOR: FULL VIEW
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: full view equals source",
@@ -143,7 +143,7 @@ TEMPLATE_TEST_CASE("subvector_view: full view equals source",
 }
 
 // ============================================================================
-// COLUMN VECTOR — SINGLE ELEMENT
+// COLUMN VECTOR: SINGLE ELEMENT
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: single element",
@@ -163,7 +163,7 @@ TEMPLATE_TEST_CASE("subvector_view: single element",
 }
 
 // ============================================================================
-// COLUMN VECTOR — HEAD AND TAIL PARTITION
+// COLUMN VECTOR: HEAD AND TAIL PARTITION
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: head and tail partition the vector",
@@ -189,7 +189,7 @@ TEMPLATE_TEST_CASE("subvector_view: head and tail partition the vector",
 }
 
 // ============================================================================
-// COLUMN VECTOR — ADJACENT SEGMENTS
+// COLUMN VECTOR: ADJACENT SEGMENTS
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: adjacent segments cover full vector",
@@ -216,7 +216,7 @@ TEMPLATE_TEST_CASE("subvector_view: adjacent segments cover full vector",
 }
 
 // ============================================================================
-// ROW VECTOR — MATERIALIZED
+// ROW VECTOR: MATERIALIZED
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: row vector slice",
@@ -324,7 +324,7 @@ TEMPLATE_TEST_CASE("subvector_view: materialized row slice uses direct load",
 }
 
 // ============================================================================
-// EXPRESSION TEMPLATE — VIEW + VIEW
+// EXPRESSION TEMPLATE: VIEW + VIEW
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: view + view",
@@ -348,7 +348,7 @@ TEMPLATE_TEST_CASE("subvector_view: view + view",
 }
 
 // ============================================================================
-// EXPRESSION TEMPLATE — VIEW + VIEW + VIEW
+// EXPRESSION TEMPLATE: VIEW + VIEW + VIEW
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: view + view + view",
@@ -372,7 +372,7 @@ TEMPLATE_TEST_CASE("subvector_view: view + view + view",
 }
 
 // ============================================================================
-// EXPRESSION TEMPLATE — VIEW + VIEW USING HEAD/TAIL
+// EXPRESSION TEMPLATE: VIEW + VIEW USING HEAD/TAIL
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: head + tail expression",
@@ -395,7 +395,7 @@ TEMPLATE_TEST_CASE("subvector_view: head + tail expression",
 }
 
 // ============================================================================
-// EXPRESSION TEMPLATE — VIEW * SCALAR
+// EXPRESSION TEMPLATE: VIEW * SCALAR
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: view * scalar",
@@ -418,7 +418,7 @@ TEMPLATE_TEST_CASE("subvector_view: view * scalar",
 }
 
 // ============================================================================
-// EQUALITY — FULL VIEW EQUALS SOURCE
+// EQUALITY: FULL VIEW EQUALS SOURCE
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: equality with full view",
@@ -435,7 +435,7 @@ TEMPLATE_TEST_CASE("subvector_view: equality with full view",
 }
 
 // ============================================================================
-// EQUALITY — MATCHING SEGMENTS
+// EQUALITY: MATCHING SEGMENTS
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: matching segments are equal",
@@ -472,7 +472,7 @@ TEMPLATE_TEST_CASE("subvector_view: 1x1 vector",
 }
 
 // ============================================================================
-// LARGE VECTOR — 7 ELEMENTS
+// LARGE VECTOR: 7 ELEMENTS
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: 7-element vector segments",
@@ -521,7 +521,7 @@ TEMPLATE_TEST_CASE("subvector_view: non-sequential values",
 }
 
 // ============================================================================
-// VIEW DOES NOT COPY & DOES NOT MATERIALIZE — READS SOURCE DATA
+// VIEW DOES NOT COPY & DOES NOT MATERIALIZE: READS SOURCE DATA
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: reads live source data",
@@ -541,7 +541,7 @@ TEMPLATE_TEST_CASE("subvector_view: reads live source data",
 }
 
 // ============================================================================
-// ROW VECTOR — FULL VIEW
+// ROW VECTOR: FULL VIEW
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: row full view",
@@ -559,7 +559,7 @@ TEMPLATE_TEST_CASE("subvector_view: row full view",
 }
 
 // ============================================================================
-// EXPRESSION — VIEW - VIEW
+// EXPRESSION: VIEW - VIEW
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: view - view",
@@ -583,7 +583,7 @@ TEMPLATE_TEST_CASE("subvector_view: view - view",
 }
 
 // ============================================================================
-// DIFFERENT SOURCE SIZES — VIEW INTO DIFFERENT VECTORS
+// DIFFERENT SOURCE SIZES: VIEW INTO DIFFERENT VECTORS
 // ============================================================================
 
 TEMPLATE_TEST_CASE("subvector_view: different source sizes same result",

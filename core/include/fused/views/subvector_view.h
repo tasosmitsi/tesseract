@@ -7,7 +7,7 @@
 /**
  * @brief Compile-time subvector view over a vector-like tensor.
  *
- * Does not own or copy data — references the underlying vector's physical buffer.
+ * Does not own or copy data, it just references the underlying vector's physical buffer.
  * All access respects the source's layout, padding, and strides via
  * Layout::logical_coords_to_physical_flat for bounds checking and correctness.
  *
@@ -73,7 +73,7 @@ public:
     explicit SubVectorView(const Vector &v) noexcept
         : v_(v) {}
 
-    // Non-copyable, non-movable — lightweight reference
+    // Non-copyable, non-movable
     SubVectorView(const SubVectorView &) = delete;
     SubVectorView &operator=(const SubVectorView &) = delete;
     SubVectorView(SubVectorView &&) = delete;
@@ -101,7 +101,7 @@ public:
     }
 
     /**
-     * @brief SIMD EVALUATION — stride-aware, layout-based.
+     * @brief SIMD EVALUATION: stride-aware, layout-based.
      *
      * Elements are spaced by SliceStride in physical memory.
      * If SliceStride == 1 (e.g. materialized row vector with contiguous columns),
