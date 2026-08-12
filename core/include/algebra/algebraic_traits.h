@@ -10,3 +10,4 @@
 #include "algebra/permuted_view_constexpr_algebraic_traits.h"
 #include "algebra/fma_expr_algebraic_traits.h"
 #include "algebra/subvector_view_algebraic_traits.h"
+#include "algebra/diagonal_view_algebraic_traits.h"
