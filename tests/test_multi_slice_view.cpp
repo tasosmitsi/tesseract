@@ -851,6 +851,167 @@ TEST_CASE("multi_slice_view: float source",
 }
 
 // ============================================================================
+// FusedMatrix CONVENIENCE METHODS
+// ============================================================================
+
+TEMPLATE_TEST_CASE("multi_slice_view: FusedMatrix::row",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 6>;
+
+    Matrix A;
+    A.setSequencial();
+
+    auto view = A.template row<2>();
+
+    REQUIRE(view.getShape() == "(1,6)");
+
+    for (my_size_t j = 0; j < 6; ++j)
+    {
+        REQUIRE(view(0, j) == A(2, j));
+    }
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: FusedMatrix::column",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 6>;
+
+    Matrix A;
+    A.setSequencial();
+
+    auto view = A.template column<3>();
+
+    REQUIRE(view.getShape() == "(4,1)");
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(view(i, 0) == A(i, 3));
+    }
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: FusedMatrix::block",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 6>;
+
+    Matrix A;
+    A.setSequencial();
+
+    auto view = A.template block<1, 2, 2, 3>();
+
+    REQUIRE(view.getShape() == "(2,3)");
+
+    for (my_size_t i = 0; i < 2; ++i)
+    {
+        for (my_size_t j = 0; j < 3; ++j)
+        {
+            REQUIRE(view(i, j) == A(1 + i, 2 + j));
+        }
+    }
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: convenience methods match explicit slices",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 6>;
+
+    Matrix A;
+    A.setSequencial();
+
+    REQUIRE(A.template row<2>() == MultiSliceView<Matrix, Slice<0, 2, 1>>(A));
+    REQUIRE(A.template column<3>() == MultiSliceView<Matrix, Slice<1, 3, 1>>(A));
+    REQUIRE((A.template block<1, 2, 2, 3>()) ==
+            (MultiSliceView<Matrix, Slice<0, 1, 2>, Slice<1, 2, 3>>(A)));
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: assign from convenience methods",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 6>;
+    using Row6 = FusedMatrix<T, 1, 6>;
+    using Col4 = FusedMatrix<T, 4, 1>;
+
+    Matrix A;
+    A.setSequencial();
+
+    Row6 r;
+    r = A.template row<0>();
+
+    Col4 c;
+    c = A.template column<5>();
+
+    for (my_size_t j = 0; j < 6; ++j)
+        REQUIRE(r(0, j) == A(0, j));
+
+    for (my_size_t i = 0; i < 4; ++i)
+        REQUIRE(c(i, 0) == A(i, 5));
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: adding two columns",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Square = FusedMatrix<T, 4, 4>;
+    using Col4 = FusedMatrix<T, 4, 1>;
+
+    Square A;
+    A.setSequencial();
+
+    Col4 result;
+    result = A.template column<0>() + A.template column<3>();
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(result(i, 0) == A(i, 0) + A(i, 3));
+    }
+}
+
+TEMPLATE_TEST_CASE("multi_slice_view: adding a column and a transposed row",
+                   "[multi_slice_view]", double, float, int)
+{
+    using T = TestType;
+    using Square = FusedMatrix<T, 4, 4>;
+    using Col4 = FusedMatrix<T, 4, 1>;
+
+    Square A;
+    A.setSequencial();
+
+    auto tv = A.transpose_view();
+
+    // Column 1 of the transposed view is row 1 of A, shaped [4,1] so it adds
+    // to a column of A directly
+    Col4 result;
+    result = A.template column<0>() +
+             MultiSliceView<decltype(tv), Slice<1, 1, 1>>(tv);
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(result(i, 0) == A(i, 0) + A(1, i));
+    }
+}
+
+TEST_CASE("multi_slice_view: first and last row and column",
+          "[multi_slice_view]")
+{
+    using Matrix = FusedMatrix<double, 4, 6>;
+
+    Matrix A;
+    A.setSequencial();
+
+    // the last column also sits next to the padding
+    REQUIRE(A.row<0>()(0, 0) == A(0, 0));
+    REQUIRE(A.row<3>()(0, 5) == A(3, 5));
+    REQUIRE(A.column<0>()(0, 0) == A(0, 0));
+    REQUIRE(A.column<5>()(3, 0) == A(3, 5));
+}
+
+// ============================================================================
 // NEGATIVE CASES: COMPILE-TIME ERRORS
 // ============================================================================
 // These are static_asserts. Uncomment one at a time; each must fail the build.

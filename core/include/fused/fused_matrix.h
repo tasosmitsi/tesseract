@@ -6,6 +6,7 @@
 #include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"
 #include "math/math_utils.h"
+#include "fused/views/multi_slice_view.h"
 
 template <typename T, my_size_t Rows, my_size_t Cols>
 class FusedMatrix : public FusedTensorND<T, Rows, Cols>
@@ -249,6 +250,30 @@ public:
         // Cast the base class (FusedTensorND) to FusedMatrix to return the derived type
         return *this;
     }
+
+    /* ------ Slice views ------ */
+
+    // View of row I as a [1, Cols] matrix
+    template <my_size_t I>
+    MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, 1>> row() const
+    {
+        return MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, 1>>(*this);
+    }
+
+    // View of column J as a [Rows, 1] matrix
+    template <my_size_t J>
+    MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<1, J, 1>> column() const
+    {
+        return MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<1, J, 1>>(*this);
+    }
+
+    // View of the Nr x Nc block whose top-left corner is (I, J)
+    template <my_size_t I, my_size_t J, my_size_t Nr, my_size_t Nc>
+    MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, Nr>, Slice<1, J, Nc>> block() const
+    {
+        return MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, Nr>, Slice<1, J, Nc>>(*this);
+    }
+    /*---------------------------------------*/
 
     // matmul using einsum of parent class
     template <typename LeftExpr, typename RightExpr>
