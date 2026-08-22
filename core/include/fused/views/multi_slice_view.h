@@ -94,13 +94,6 @@ namespace detail
      * perm_array() is the identity when the layout carries no permutation, so
      * this is a no-op for a plain tensor. Offset and Len are unaffected: a
      * permutation only relabels axes, it does not move elements within one.
-     *
-     * TODO: perm_array() returns PermArray.at(i), and the out-of-bounds branch
-     * calls a non-constexpr error handler. The view's own static_assert catches 
-     * that first, but a failed static_assert does not stop compilation, so RemapSlice 
-     * is still instantiated and more errors are thrown. Switching perm_array to 
-     * PermArray[i] drops the check and the cascade; the axis is already known in range 
-     * by the time this runs.
      */
     template <typename SourceLayout, typename S>
     using RemapSlice = Slice<SourceLayout::perm_array(S::Axis), S::Offset, S::Len>;
