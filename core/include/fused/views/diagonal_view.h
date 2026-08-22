@@ -12,6 +12,7 @@
  * Layout::logical_coords_to_physical_flat for bounds checking and correctness.
  * 
  * TODO: it can be generalized to rectangular matrices, but the current use case is square matrices only.
+ * TODO: it can be generalized to rectangular tensors.
  *
  * Extracts the main diagonal of an N×N matrix as an N-element column vector.
  *
