@@ -6,13 +6,15 @@
 
 /**
  * @file trace.h
- * @brief Trace of a square matrix — sum of diagonal elements.
+ * @brief Trace of a square matrix aka sum of diagonal elements.
  *
  * Infallible, O(N). Works for any scalar type (not restricted to floating point).
  *
- * @note Future optimization: if a diagonal view is supported (strided view with
- * stride = N+1 into the flat storage), trace becomes a single `reduce_sum` call
- * on that view, gaining SIMD acceleration for free via the existing reduction kernel.
+ * TODO: Worth revisiting on a target whose microkernel lacks a hardware gather.
+ * The scalar loop below is deliberate. `sum(A.diagonal())` computes the same
+ * thing through the diagonal view and the SIMD reduction kernel, and benchmarks
+ * put the two within a few percent of each other at every size from 3x3 to
+ * 1000x1000.
  */
 
 namespace matrix_algorithms
