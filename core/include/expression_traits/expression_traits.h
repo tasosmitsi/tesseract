@@ -11,3 +11,4 @@
 #include "expression_traits/fma_expr_traits.h"
 #include "expression_traits/subvector_view_traits.h"
 #include "expression_traits/diagonal_view_traits.h"
+#include "expression_traits/multi_slice_view_traits.h"

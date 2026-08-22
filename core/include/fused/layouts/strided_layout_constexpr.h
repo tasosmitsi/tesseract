@@ -199,6 +199,18 @@ private:
 
 public:
     /**
+     * @brief Rebuild this layout's permutation over a different padding policy.
+     *
+     * A view that narrows or reshapes the logical dims must supply its own
+     * padding policy, but has to keep the source's permutation.
+     * Used by MultiSliceView to rebind the same permutation over the MultiSlicedPadPolicy.
+     *
+     * @tparam NewPolicy  The padding policy to apply the permutation to
+     */
+    template <typename NewPolicy>
+    using rebind = StridedLayoutConstExpr<NewPolicy, Perm...>;
+
+    /**
      * @brief Get number of dimensions.
      *
      * @return constexpr my_size_t
@@ -484,3 +496,32 @@ public:
         }
     }
 };
+
+/**
+ * @brief Raw array of a layout's logical dimensions, for expression types.
+ *
+ * PermutedViewConstExpr escapes this because it has Perm... to expand over:
+ *
+ *   static constexpr my_size_t Dim[] = {Tensor::Dim[Perm]...};
+ *
+ * A view whose shape comes from a layout has no such per-dimension pack. This
+ * helper makes one with index_seq, so the view can bind a reference:
+ *
+ *   static constexpr const my_size_t (&Dim)[NumDims] = LayoutDims<Layout>::value;
+ *
+ * The Seq parameter is filled in by its default; callers pass the layout only.
+ *
+ * @tparam Layout  A StridedLayoutConstExpr specialization
+ * @tparam Seq     Index sequence over the layout's dimensions (defaulted)
+ */
+template <typename Layout,
+          typename Seq = typename make_index_seq<Layout::NumDims>::type>
+struct LayoutDims;
+
+/// @cond
+template <typename Layout, my_size_t... Is>
+struct LayoutDims<Layout, index_seq<Is...>>
+{
+    static constexpr my_size_t value[] = {Layout::logical_dim(Is)...};
+};
+/// @endcond

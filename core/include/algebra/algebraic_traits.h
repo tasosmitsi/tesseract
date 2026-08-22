@@ -11,3 +11,4 @@
 #include "algebra/fma_expr_algebraic_traits.h"
 #include "algebra/subvector_view_algebraic_traits.h"
 #include "algebra/diagonal_view_algebraic_traits.h"
+#include "algebra/multi_slice_view_algebraic_traits.h"
