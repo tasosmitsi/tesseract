@@ -549,3 +549,117 @@ TEMPLATE_TEST_CASE("diagonal_view: negative and mixed values",
     REQUIRE(result(1) == T(0));
     REQUIRE(result(2) == T(7.25));
 }
+
+// ============================================================================
+// FusedMatrix::diagonal
+// ============================================================================
+
+TEMPLATE_TEST_CASE("diagonal_view: FusedMatrix::diagonal",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+
+    Matrix A;
+    A.setSequencial();
+
+    auto view = A.diagonal();
+
+    REQUIRE(view.getShape() == "(4,1)");
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(view(i) == A(i, i));
+    }
+}
+
+TEMPLATE_TEST_CASE("diagonal_view: diagonal matches the explicit view",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 5, 5>;
+
+    Matrix A;
+    A.setSequencial();
+
+    REQUIRE(A.diagonal() == DiagonalView<Matrix>(A));
+}
+
+TEMPLATE_TEST_CASE("diagonal_view: assign from diagonal",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 3, 3>;
+    using Vec3 = FusedVector<T, 3>;
+
+    T A_vals[3][3] = {
+        {2, 9, 9},
+        {9, 5, 9},
+        {9, 9, 8}};
+    Matrix A(A_vals);
+
+    Vec3 result;
+    result = A.diagonal();
+
+    REQUIRE(result(0) == T(2));
+    REQUIRE(result(1) == T(5));
+    REQUIRE(result(2) == T(8));
+}
+
+TEMPLATE_TEST_CASE("diagonal_view: diagonal in an expression",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 4, 4>;
+    using Vec4 = FusedVector<T, 4>;
+
+    Matrix A, B;
+    A.setSequencial();
+    B.setSequencial();
+
+    Vec4 result;
+    result = A.diagonal() + B.diagonal();
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(result(i) == A(i, i) + B(i, i));
+    }
+}
+
+TEMPLATE_TEST_CASE("diagonal_view: diagonal of the identity",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 5, 5>;
+    using Vec5 = FusedVector<T, 5>;
+
+    Matrix I(T(0));
+    I.setIdentity();
+
+    Vec5 result;
+    result = I.diagonal();
+
+    for (my_size_t i = 0; i < 5; ++i)
+    {
+        REQUIRE(result(i) == T(1));
+    }
+}
+
+TEST_CASE("diagonal_view: diagonal plus a column slice",
+          "[diagonal_view]")
+{
+    using Matrix = FusedMatrix<double, 4, 4>;
+    using Vec4 = FusedVector<double, 4>;
+
+    Matrix A;
+    A.setSequencial();
+
+    // A diagonal view and a slice view in one expression
+    Vec4 result;
+    result = A.diagonal() + A.column<0>();
+
+    for (my_size_t i = 0; i < 4; ++i)
+    {
+        REQUIRE(result(i) == A(i, i) + A(i, 0));
+    }
+}

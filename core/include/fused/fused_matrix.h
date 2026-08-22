@@ -7,6 +7,7 @@
 #include "matrix_traits.h"
 #include "math/math_utils.h"
 #include "fused/views/multi_slice_view.h"
+#include "fused/views/diagonal_view.h"
 
 template <typename T, my_size_t Rows, my_size_t Cols>
 class FusedMatrix : public FusedTensorND<T, Rows, Cols>
@@ -272,6 +273,12 @@ public:
     MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, Nr>, Slice<1, J, Nc>> block() const
     {
         return MultiSliceView<FusedMatrix<T, Rows, Cols>, Slice<0, I, Nr>, Slice<1, J, Nc>>(*this);
+    }
+
+    // View of the main diagonal as a [Rows, 1] vector-shaped matrix
+    DiagonalView<FusedMatrix<T, Rows, Cols>> diagonal() const
+    {
+        return DiagonalView<FusedMatrix<T, Rows, Cols>>(*this);
     }
     /*---------------------------------------*/
 
