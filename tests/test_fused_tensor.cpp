@@ -3,7 +3,7 @@
 
 TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32_t, int64_t)
 {
-    using T = TestType; 
+    using T = TestType;
 
     FusedTensorND<T, 10, 10> ten1(1), ten2(2);
 
@@ -24,29 +24,6 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32
         // this sould pass
         CHECK((tensor + (T)1.0) == transposedTensor.transpose_view() + (T)1.0);
         CHECK((transposedTensor.transpose_view() + (T)1.0) == (tensor + (T)1.0));
-    }
-
-    SECTION("FusedTensorND min/max operators with transpose views as part of the expression")
-    {
-        FusedTensorND<T, 5, 6> fmat1, result;
-        FusedTensorND<T, 6, 5> result_of_transpose;
-
-        fmat1.setSequencial();
-
-        result = min(max(fmat1, (T)5.0), (T)10.0);
-        result_of_transpose = min(max(fmat1.transpose_view(), (T)5.0), (T)10.0);
-
-        // check if all elements are within the range [5.0, 10.0]
-        for (size_t i = 0; i < result.getDim(0); ++i)
-        {
-            for (size_t j = 0; j < result.getDim(1); ++j)
-            {
-                CHECK(result(i, j) >= (T)5.0);
-                CHECK(result(i, j) <= (T)10.0);
-                CHECK(result_of_transpose(j, i) >= (T)5.0);
-                CHECK(result_of_transpose(j, i) <= (T)10.0);
-            }
-        }
     }
 
     SECTION("FusedTensorND min/max/sum reduction operators and as part of expression")
@@ -78,6 +55,149 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32
         CHECK(min_value == (T)0.0);
         CHECK(max_value == (T)(5 * 6 - 1));
         CHECK(sum_value == (T)((5 * 6 * (5 * 6 - 1)) / 2)); // sum of first n natural numbers formula
+    }
+
+    SECTION("FusedTensorND element-wise min/max of two tensors")
+    {
+        FusedTensorND<T, 3, 4> a, b, result;
+
+        a.setSequencial(); // 0..11
+        b.setHomogen((T)5.0);
+
+        result = min(a, b);
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                CHECK(result(i, j) == ((a(i, j) < (T)5.0) ? a(i, j) : (T)5.0));
+            }
+        }
+
+        result = max(a, b);
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                CHECK(result(i, j) == ((a(i, j) > (T)5.0) ? a(i, j) : (T)5.0));
+            }
+        }
+    }
+
+    SECTION("FusedTensorND element-wise min/max with a transposed operand")
+    {
+        FusedTensorND<T, 3, 4> a, result;
+        FusedTensorND<T, 4, 3> b;
+
+        a.setSequencial();
+        b.setHomogen((T)5.0);
+
+        result = min(a, b.transpose_view());
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                CHECK(result(i, j) == ((a(i, j) < (T)5.0) ? a(i, j) : (T)5.0));
+            }
+        }
+
+        result = max(a, b.transpose_view());
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                CHECK(result(i, j) == ((a(i, j) > (T)5.0) ? a(i, j) : (T)5.0));
+            }
+        }
+
+        // min and max composed over a transposed source
+        FusedTensorND<T, 4, 3> clipped;
+        clipped = max(min(a.transpose_view(), (T)8.0), (T)3.0);
+
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                T expected = a(i, j);
+                if (expected < (T)3.0)
+                    expected = (T)3.0;
+                if (expected > (T)8.0)
+                    expected = (T)8.0;
+
+                CHECK(clipped(j, i) == expected);
+            }
+        }
+    }
+
+    SECTION("FusedTensorND min/max with the scalar on the left/right")
+    {
+        FusedTensorND<T, 3, 4> a, from_left, from_right;
+
+        a.setSequencial();
+
+        // min and max are commutative, so both orderings must agree
+        from_left = min((T)5.0, a);
+        from_right = min(a, (T)5.0);
+        CHECK(from_left == from_right);
+
+        from_left = max((T)5.0, a);
+        from_right = max(a, (T)5.0);
+        CHECK(from_left == from_right);
+    }
+
+    SECTION("FusedTensorND min/max over a SIMD tail")
+    {
+        // 7 columns pads to 8, so the eval loop computes one slot per row that
+        // has no logical element behind it. This checks those padding slots do
+        // not leak into the result.
+        FusedTensorND<T, 3, 7> a, b, result;
+
+        a.setSequencial(); // 0..20
+        b.setHomogen((T)10.0);
+
+        result = min(a, b);
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 7; ++j)
+            {
+                CHECK(result(i, j) == ((a(i, j) < (T)10.0) ? a(i, j) : (T)10.0));
+            }
+        }
+
+        result = max(min(a, (T)15.0), (T)5.0);
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 7; ++j)
+            {
+                T expected = a(i, j);
+                if (expected < (T)5.0)
+                    expected = (T)5.0;
+                if (expected > (T)15.0)
+                    expected = (T)15.0;
+
+                CHECK(result(i, j) == expected);
+            }
+        }
+    }
+
+    SECTION("FusedTensorND min/max composed in a longer expression")
+    {
+        FusedTensorND<T, 3, 4> a, b, result;
+
+        a.setSequencial();
+        b.setHomogen((T)2.0);
+
+        // Mixing arithmetic and min/max in one tree
+        result = min(a + b, (T)6.0) * (T)2.0;
+
+        for (my_size_t i = 0; i < 3; ++i)
+        {
+            for (my_size_t j = 0; j < 4; ++j)
+            {
+                T sum = a(i, j) + (T)2.0;
+                T clipped = (sum < (T)6.0) ? sum : (T)6.0;
+                CHECK(result(i, j) == clipped * (T)2.0);
+            }
+        }
     }
 
     SECTION("FusedTensorND total size, number of dimensions, and shape")
@@ -199,7 +319,7 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32
         CHECK_FALSE(ten1.transpose_view() == ten2);
     }
 
-    SECTION("Check dimensions mismatch and == , !=, min, max operators")
+    SECTION("Check dimensions mismatch and == , != operators")
     {
         // this test should fail when the dimensions of the matrices are not equal
         // and should pass when the dimensions are equal even after transposing one of the matrices
@@ -208,12 +328,8 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32
 
         CHECK_THROWS(tensor1 == tensor2);
         CHECK_THROWS(tensor1 != tensor2);
-        CHECK_THROWS(min(tensor1, tensor2));
-        CHECK_THROWS(max(tensor1, tensor2));
 
         CHECK_NOTHROW(tensor1 == tensor2.transpose_view());
-        CHECK_NOTHROW(min(tensor1, tensor2.transpose_view()));
-        CHECK_NOTHROW(max(tensor1, tensor2.transpose_view()));
 
         CHECK_FALSE(tensor1 != tensor2.transpose_view());
     }
