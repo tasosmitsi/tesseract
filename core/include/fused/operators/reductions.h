@@ -16,7 +16,7 @@
 template <typename Expr>
     requires(algebra::is_tensor_v<Expr> &&
              !algebra::is_algebra_v<Expr>)
-typename Expr::value_type min(const BaseExpr<Expr> &expr)
+typename Expr::value_type min(const BaseExpr<Expr> &expr) noexcept
 {
     return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_min(expr.derived());
 }
@@ -25,7 +25,7 @@ typename Expr::value_type min(const BaseExpr<Expr> &expr)
 template <typename Expr>
     requires(algebra::is_tensor_v<Expr> &&
              !algebra::is_algebra_v<Expr>)
-typename Expr::value_type max(const BaseExpr<Expr> &expr)
+typename Expr::value_type max(const BaseExpr<Expr> &expr) noexcept
 {
     return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_max(expr.derived());
 }
@@ -34,7 +34,7 @@ typename Expr::value_type max(const BaseExpr<Expr> &expr)
 template <typename Expr>
     requires(algebra::is_tensor_v<Expr> &&
              !algebra::is_algebra_v<Expr>)
-typename Expr::value_type sum(const BaseExpr<Expr> &expr)
+typename Expr::value_type sum(const BaseExpr<Expr> &expr) noexcept
 {
     return KernelOps<typename Expr::value_type, BITS, DefaultArch>::reduce_sum(expr.derived());
 }

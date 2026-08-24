@@ -6,12 +6,20 @@
 #include "helper_traits.h"
 #include "fused/kernel_ops/kernel_ops.h"
 
-// ===============================
-// Comparison Operators
-// ===============================
+/**
+ * @file comparison.h
+ * @brief Approximate equality between tensors.
+ *
+ * Elements compare equal within PRECISION_TOLERANCE, so these are not exact
+ * comparisons and do not form a total order.
+ */
 
+/**
+ * @brief True when every element pair agrees within PRECISION_TOLERANCE.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
 template <typename LHS, typename RHS>
-bool operator==(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+bool operator==(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
     using lhs_type = typename LHS::value_type;
     using rhs_type = typename RHS::value_type;
@@ -39,8 +47,12 @@ bool operator==(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: con
         lhs_type(PRECISION_TOLERANCE));
 }
 
+/**
+ * @brief True when at least one element pair differs by more than PRECISION_TOLERANCE.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
 template <typename LHS, typename RHS>
-bool operator!=(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) // TODO: conditionally noexcept
+bool operator!=(const BaseExpr<LHS> &lhs, const BaseExpr<RHS> &rhs) TESSERACT_CONDITIONAL_NOEXCEPT
 {
     return !(lhs == rhs);
 }
