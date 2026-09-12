@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_vector.h"
 #include <Dense>
-#include "utilities.h"
+#include "../utilities.h"
 
 #define EIGEN_NO_MALLOC
 

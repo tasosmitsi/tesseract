@@ -3,7 +3,7 @@
 
 #include "fused/fused_vector.h"
 #include "algorithms/decomposition/cholesky.h"
-#include "utilities.h"
+#include "../utilities.h"
 #include "utilities/cycle_counter/cycle_counter.h"
 
 #define EIGEN_NO_MALLOC

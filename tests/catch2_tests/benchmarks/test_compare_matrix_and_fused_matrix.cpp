@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 #include "fused/fused_tensor.h"
 #include "tensor.h"
-#include "utilities.h"
+#include "../utilities.h"
 
 TEST_CASE("FusedMatrix & Matrix benchmarks", "[fused_benchmark]")
 {

@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 
 #include "fused/fused_matrix.h"
-#include "utilities.h"
+#include "../utilities.h"
 #include "algorithms/decomposition/cholesky.h"
 #include <Dense>
 

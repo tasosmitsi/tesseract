@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <memory>
 
-#include "../core/include/config.h"
+#include "config.h"
 
 void tick();
 
