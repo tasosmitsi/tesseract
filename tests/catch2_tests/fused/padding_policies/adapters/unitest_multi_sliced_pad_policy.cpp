@@ -1,7 +1,7 @@
 #include <catch_amalgamated.hpp>
 
 #include "fused/padding_policies/simd_padding_policy.h"
-#include "fused/padding_policies/multi_sliced_pad_policy.h"
+#include "fused/padding_policies/adapters/multi_sliced_pad_policy.h"
 #include "fused/layouts/strided_layout_constexpr.h"
 
 // ============================================================================
