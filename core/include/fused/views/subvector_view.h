@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 
 /**
  * @brief Compile-time subvector view over a vector-like tensor.
@@ -73,10 +74,12 @@ public:
     explicit SubVectorView(const Vector &v) noexcept
         : v_(v) {}
 
-    // Non-copyable, non-movable
-    SubVectorView(const SubVectorView &) = delete;
+    // Copyable and movable, so an expression can keep its own copy of a view
+    // that was a temporary (see fused/expr_storage.h). Not assignable: a view
+    // cannot be re-pointed.
+    SubVectorView(const SubVectorView &) = default;
     SubVectorView &operator=(const SubVectorView &) = delete;
-    SubVectorView(SubVectorView &&) = delete;
+    SubVectorView(SubVectorView &&) = default;
     SubVectorView &operator=(SubVectorView &&) = delete;
 
     template <typename Output>
@@ -189,7 +192,7 @@ public:
     }
 
 private:
-    const Vector &v_;
+    ExprStorage<Vector> v_;
 };
 
 #endif // FUSED_SUBVECTOR_VIEW_H

@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 #include "fused/layouts/strided_layout_constexpr.h"
 #include "fused/padding_policies/adapters/multi_sliced_pad_policy.h"
 #include "helper_traits.h"
@@ -228,10 +229,12 @@ public:
     explicit MultiSliceView(const Tensor &t) noexcept
         : t_(t) {}
 
-    // Views are non-copyable, non-movable, they're lightweight references.
-    MultiSliceView(const MultiSliceView &) = delete;
+    // Copyable and movable, so an expression can keep its own copy of a view
+    // that was a temporary (see fused/expr_storage.h). Not assignable: a view
+    // cannot be re-pointed.
+    MultiSliceView(const MultiSliceView &) = default;
     MultiSliceView &operator=(const MultiSliceView &) = delete;
-    MultiSliceView(MultiSliceView &&) = delete;
+    MultiSliceView(MultiSliceView &&) = default;
     MultiSliceView &operator=(MultiSliceView &&) = delete;
 
     template <typename Output>
@@ -343,7 +346,7 @@ public:
     FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data(); }
 
 private:
-    const Tensor &t_;
+    ExprStorage<Tensor> t_;
 };
 
 #endif // FUSED_MULTI_SLICE_VIEW_H

@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 
 /**
  * @brief Compile-time diagonal view over a square matrix.
@@ -56,10 +57,12 @@ public:
     explicit DiagonalView(const Matrix &m) noexcept
         : m_(m) {}
 
-    // Non-copyable, non-movable
-    DiagonalView(const DiagonalView &) = delete;
+    // Copyable and movable, so an expression can keep its own copy of a view
+    // that was a temporary (see fused/expr_storage.h). Not assignable: a view
+    // cannot be re-pointed.
+    DiagonalView(const DiagonalView &) = default;
     DiagonalView &operator=(const DiagonalView &) = delete;
-    DiagonalView(DiagonalView &&) = delete;
+    DiagonalView(DiagonalView &&) = default;
     DiagonalView &operator=(DiagonalView &&) = delete;
 
     template <typename Output>
@@ -149,7 +152,7 @@ public:
     }
 
 private:
-    const Matrix &m_;
+    ExprStorage<Matrix> m_;
 };
 
 #endif // FUSED_DIAGONAL_VIEW_H

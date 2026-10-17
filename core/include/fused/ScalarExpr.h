@@ -1,5 +1,6 @@
 #pragma once
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 #include "fused/Operations.h"
 #include "simple_type_traits.h"
 
@@ -16,7 +17,7 @@ class ScalarExprRHS : public BaseExpr<ScalarExprRHS<EXPR, ScalarT, Op>>
     static_assert(is_same_v<typename EXPR::value_type, ScalarT>,
                   "ScalarExprRHS: EXPR value_type and ScalarT must be the same");
 
-    const EXPR &_expr;
+    ExprStorage<EXPR> _expr;
     ScalarT _scalar;
 
 public:
@@ -97,7 +98,7 @@ class ScalarExprLHS : public BaseExpr<ScalarExprLHS<EXPR, ScalarT, Op>>
     static_assert(is_same_v<typename EXPR::value_type, ScalarT>,
                   "ScalarExprRHS: EXPR value_type and ScalarT must be the same");
 
-    const EXPR &_expr;
+    ExprStorage<EXPR> _expr;
     ScalarT _scalar;
 
 public:

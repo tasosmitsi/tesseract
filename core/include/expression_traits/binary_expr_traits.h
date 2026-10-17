@@ -18,5 +18,6 @@ namespace expression
             traits<LHS>::IsContiguous && traits<RHS>::IsContiguous;
 
         static constexpr bool IsPhysical = false;
+        static constexpr bool OwnsMemory = false;
     };
 } // namespace expression

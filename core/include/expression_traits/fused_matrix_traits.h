@@ -11,6 +11,7 @@ namespace expression
         static constexpr bool IsPermuted = false;
         static constexpr bool IsContiguous = true;
         static constexpr bool IsPhysical = true;
+        static constexpr bool OwnsMemory = true;
     };
 
 } // namespace expression

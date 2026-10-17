@@ -1,6 +1,7 @@
 #pragma once
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 #include "fused/Operations.h"
 #include "helper_traits.h"
 #include "simple_type_traits.h"
@@ -30,8 +31,8 @@ class BinaryExpr : public BaseExpr<BinaryExpr<LHS, RHS, Op>>
     // TODO: runtime checks should be here and not in the operators (in this constructor?)
     // Or not, because in the case of the permuted views? We don't want checks there...
 
-    const LHS &_lhs;
-    const RHS &_rhs;
+    ExprStorage<LHS> _lhs;
+    ExprStorage<RHS> _rhs;
 
 public:
     // Expose compile-time shape constants

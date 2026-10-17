@@ -21,6 +21,7 @@ namespace expression
             traits<A>::IsContiguous && traits<B>::IsContiguous && traits<C>::IsContiguous;
 
         static constexpr bool IsPhysical = false;
+        static constexpr bool OwnsMemory = false;
     };
 
     template <typename EXPR, typename ScalarT, typename C,
@@ -34,5 +35,6 @@ namespace expression
             traits<EXPR>::IsContiguous && traits<C>::IsContiguous;
 
         static constexpr bool IsPhysical = false;
+        static constexpr bool OwnsMemory = false;
     };
 } // namespace expression

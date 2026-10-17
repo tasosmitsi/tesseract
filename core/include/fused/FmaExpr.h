@@ -1,6 +1,7 @@
 #pragma once
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 #include "fused/Operations.h"
 #include "helper_traits.h"
 #include "simple_type_traits.h"
@@ -30,9 +31,9 @@ class FmaExpr : public BaseExpr<FmaExpr<A, B, C, Op>>
                   "FmaExpr: dimension mismatch between A and C");
 #endif
 
-    const A &_a;
-    const B &_b;
-    const C &_c;
+    ExprStorage<A> _a;
+    ExprStorage<B> _b;
+    ExprStorage<C> _c;
 
 public:
     static constexpr my_size_t NumDims = A::NumDims;
@@ -115,9 +116,9 @@ class ScalarFmaExpr : public BaseExpr<ScalarFmaExpr<EXPR, ScalarT, C, Op>>
                   "ScalarFmaExpr: dimension mismatch between EXPR and C");
 #endif
 
-    const EXPR &_expr;
+    ExprStorage<EXPR> _expr;
     ScalarT _scalar;
-    const C &_c;
+    ExprStorage<C> _c;
 
 public:
     static constexpr my_size_t NumDims = EXPR::NumDims;

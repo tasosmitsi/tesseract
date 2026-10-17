@@ -3,6 +3,7 @@
 
 #include "config.h"
 #include "fused/BaseExpr.h"
+#include "fused/expr_storage.h"
 #include "fused/layouts/strided_layout_constexpr.h"
 #include "helper_traits.h"
 
@@ -59,13 +60,12 @@ public:
     explicit PermutedViewConstExpr(const Tensor &t) noexcept
         : t_(t) {}
 
-    // Views are non-copyable, non-movable — they're lightweight references.
-    // delete copy constructor and copy assignment to avoid accidental copies
-    PermutedViewConstExpr(const PermutedViewConstExpr &) = delete;
+    // Copyable and movable, so an expression can keep its own copy of a view
+    // that was a temporary (see fused/expr_storage.h). Not assignable: a view
+    // cannot be re-pointed.
+    PermutedViewConstExpr(const PermutedViewConstExpr &) = default;
     PermutedViewConstExpr &operator=(const PermutedViewConstExpr &) = delete;
-
-    // delete move constructor and move assignment to avoid accidental moves
-    PermutedViewConstExpr(PermutedViewConstExpr &&) = delete;
+    PermutedViewConstExpr(PermutedViewConstExpr &&) = default;
     PermutedViewConstExpr &operator=(PermutedViewConstExpr &&) = delete;
 
     template <typename Output>
@@ -187,7 +187,7 @@ public:
     FORCE_INLINE constexpr value_type *data() noexcept { return t_.data(); }
 
 private:
-    const Tensor &t_;
+    ExprStorage<Tensor> t_;
 };
 
 #endif // FUSED_PERMUTED_VIEW_CONSTEXPR_H

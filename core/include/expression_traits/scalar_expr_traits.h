@@ -20,6 +20,7 @@ namespace expression
         static constexpr bool IsPermuted = traits<EXPR>::IsPermuted;
         static constexpr bool IsContiguous = traits<EXPR>::IsContiguous;
         static constexpr bool IsPhysical = false;
+        static constexpr bool OwnsMemory = false;
     };
 
     template <typename EXPR,
@@ -30,5 +31,6 @@ namespace expression
         static constexpr bool IsPermuted = traits<EXPR>::IsPermuted;
         static constexpr bool IsContiguous = traits<EXPR>::IsContiguous;
         static constexpr bool IsPhysical = false;
+        static constexpr bool OwnsMemory = false;
     };
 } // namespace expression

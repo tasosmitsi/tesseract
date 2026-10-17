@@ -169,6 +169,30 @@ template <typename T>
 using remove_cvref_t = typename remove_cvref<T>::type;
 
 /**
+ * @brief Compile-time type selection (replacement for std::conditional).
+ * @tparam B Condition.
+ * @tparam T Type selected when @p B is true.
+ * @tparam F Type selected when @p B is false.
+ */
+template <bool B, typename T, typename F>
+struct conditional
+{
+    using type = T;
+};
+
+/// @cond
+template <typename T, typename F>
+struct conditional<false, T, F>
+{
+    using type = F;
+};
+/// @endcond
+
+/** @brief Alias template for conditional. */
+template <bool B, typename T, typename F>
+using conditional_t = typename conditional<B, T, F>::type;
+
+/**
  * @brief Cast to rvalue reference (replacement for std::move).
  * @tparam T Deduced argument type.
  * @param t Value to move from.

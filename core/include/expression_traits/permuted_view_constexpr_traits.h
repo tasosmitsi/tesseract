@@ -13,5 +13,6 @@ namespace expression
         static constexpr bool IsPermuted = !is_sequential<Perm...>();
         static constexpr bool IsContiguous = !IsPermuted;
         static constexpr bool IsPhysical = true;
+        static constexpr bool OwnsMemory = false;
     };
 } // namespace expression
