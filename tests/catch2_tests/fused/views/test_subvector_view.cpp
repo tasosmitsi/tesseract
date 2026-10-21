@@ -540,6 +540,20 @@ TEMPLATE_TEST_CASE("subvector_view: reads live source data",
     REQUIRE(view(2) == T(3));
 }
 
+TEMPLATE_TEST_CASE("subvector_view: data() is read-only",
+                   "[subvector_view]", double, float, int)
+{
+    using T = TestType;
+    using Vec5 = FusedVector<T, 5>;
+
+    Vec5 v;
+    v.setSequencial();
+    auto view = SubVectorView<Vec5, 1, 3>(v);
+
+    // even through a non-const view: a view must not hand out write access
+    CHECK((is_same_v<decltype(view.data()), const T *>));
+}
+
 // ============================================================================
 // ROW VECTOR: FULL VIEW
 // ============================================================================

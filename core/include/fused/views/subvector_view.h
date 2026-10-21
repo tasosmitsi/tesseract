@@ -163,7 +163,6 @@ public:
     FORCE_INLINE static constexpr my_size_t getTotalSize() noexcept { return TotalSize; }
 
     FORCE_INLINE constexpr const value_type *data() const noexcept { return v_.data(); }
-    FORCE_INLINE constexpr value_type *data() noexcept { return v_.data(); }
 
     // print layout info
     void printLayoutInfo() const

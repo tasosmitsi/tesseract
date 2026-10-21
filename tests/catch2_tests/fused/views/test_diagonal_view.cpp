@@ -330,6 +330,19 @@ TEMPLATE_TEST_CASE("diagonal_view: reads live source data",
     REQUIRE(view(1) == T(7));
 }
 
+TEMPLATE_TEST_CASE("diagonal_view: data() is read-only",
+                   "[diagonal_view]", double, float, int)
+{
+    using T = TestType;
+    using Matrix = FusedMatrix<T, 3, 3>;
+
+    Matrix A(T(0));
+    auto view = DiagonalView<Matrix>(A);
+
+    // even through a non-const view: a view must not hand out write access
+    CHECK((is_same_v<decltype(view.data()), const T *>));
+}
+
 // ============================================================================
 // EXPRESSION TEMPLATE: DIAGONAL + DIAGONAL
 // ============================================================================

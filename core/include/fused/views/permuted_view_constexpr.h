@@ -184,7 +184,6 @@ public:
     }
 
     FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data(); }
-    FORCE_INLINE constexpr value_type *data() noexcept { return t_.data(); }
 
 private:
     ExprStorage<Tensor> t_;
