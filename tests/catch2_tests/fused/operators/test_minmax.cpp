@@ -3,7 +3,6 @@
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
 #include "fused/operators/minmax.h"
-#include "utilities/expr_diag.h"
 
 // TODO: the element-wise min/max tests are still in test_fused_tensor.cpp.
 // Move them here so the file matches the header.

@@ -117,7 +117,7 @@ auto clamp(const BaseExpr<Expr> &x, T lo, T hi) noexcept
 
 /**
  * @brief Limit every element to the matching elements of @p lo and @p hi.
- * Per-element limits, lo > hi behaviour as the scalar form.
+ * Per-element limits. Same lo > hi behaviour as the scalar form.
  * @throws if the dimensions do not match and runtime checks are enabled.
  */
 template <typename Expr, typename Lo, typename Hi>
