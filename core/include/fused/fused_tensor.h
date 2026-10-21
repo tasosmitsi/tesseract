@@ -2,6 +2,7 @@
 #define FUSEDTENSORND_H
 
 #include <random>
+#include <ctime> // std::time, seeding setRandom
 
 #include "memory/mem_utils.h"
 
