@@ -24,6 +24,8 @@
  * The multiply and divide operators are constrained to tensors and not general
  * algebras, since element-wise product is not what * should mean for a
  * quaternion for example. Addition and subtraction only need vector-space structure.
+ *
+ * lerp at the end is built from these and folds into a single fused multiply-add.
  */
 
 // ===============================
@@ -381,4 +383,27 @@ ScalarExprLHS<RHS, T, Div>
 operator/(T scalar, const BaseExpr<RHS> &rhs) noexcept
 {
     return ScalarExprLHS<RHS, T, Div>(rhs.derived(), scalar);
+}
+
+// ===============================
+// Interpolation
+// ===============================
+
+/**
+ * @brief Linear interpolation from @p a to @p b, element by element.
+ *
+ * Returns a + t * (b - a): @p a at t = 0, @p b at t = 1, the midpoint at
+ * t = 0.5. Outside [0, 1] it follows the same line, so it extrapolates rather
+ * than clamps. The same @p t applies to every element.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
+template <typename A, typename B, typename T>
+    requires(algebra::is_vector_space_v<A> &&
+             algebra::is_vector_space_v<B> &&
+             !is_base_of_v<detail::BaseExprTag, T>)
+auto lerp(const BaseExpr<A> &a, const BaseExpr<B> &b, T t) TESSERACT_CONDITIONAL_NOEXCEPT
+{
+    static_assert(is_floating_point_v<typename A::value_type> || is_floating_point_v<typename B::value_type>,
+                  "lerp requires floating-point tensors");
+    return a + t * (b - a);
 }

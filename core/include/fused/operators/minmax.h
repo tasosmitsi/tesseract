@@ -101,3 +101,67 @@ max(T scalar, const BaseExpr<RHS> &rhs) noexcept
 {
     return ScalarExprRHS<RHS, T, Max>(rhs.derived(), scalar);
 }
+
+/**
+ * @brief Limit every element to [@p lo, @p hi].
+ * If lo > hi every element becomes lo, since the max is applied last.
+ */
+template <typename Expr, typename T>
+    requires(algebra::is_tensor_v<Expr> &&
+             !algebra::is_algebra_v<Expr> &&
+             !is_base_of_v<detail::BaseExprTag, T>)
+auto clamp(const BaseExpr<Expr> &x, T lo, T hi) noexcept
+{
+    return max(min(x, hi), lo);
+}
+
+/**
+ * @brief Limit every element to the matching elements of @p lo and @p hi.
+ * Per-element limits, lo > hi behaviour as the scalar form.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
+template <typename Expr, typename Lo, typename Hi>
+    requires(algebra::is_tensor_v<Expr> &&
+             algebra::is_tensor_v<Lo> &&
+             algebra::is_tensor_v<Hi> &&
+             !algebra::is_algebra_v<Expr> &&
+             !algebra::is_algebra_v<Lo> &&
+             !algebra::is_algebra_v<Hi>)
+auto clamp(const BaseExpr<Expr> &x,
+           const BaseExpr<Lo> &lo,
+           const BaseExpr<Hi> &hi) TESSERACT_CONDITIONAL_NOEXCEPT
+{
+    return max(min(x, hi), lo);
+}
+
+/**
+ * @brief Limit every element to at least @p lo and at most the matching element of @p hi.
+ * A scalar floor with per-element ceilings.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
+template <typename Expr, typename T, typename Hi>
+    requires(algebra::is_tensor_v<Expr> &&
+             algebra::is_tensor_v<Hi> &&
+             !algebra::is_algebra_v<Expr> &&
+             !algebra::is_algebra_v<Hi> &&
+             !is_base_of_v<detail::BaseExprTag, T>)
+auto clamp(const BaseExpr<Expr> &x, T lo, const BaseExpr<Hi> &hi) TESSERACT_CONDITIONAL_NOEXCEPT
+{
+    return max(min(x, hi), lo);
+}
+
+/**
+ * @brief Limit every element to at least the matching element of @p lo and at most @p hi.
+ * Per-element floors with a scalar ceiling.
+ * @throws if the dimensions do not match and runtime checks are enabled.
+ */
+template <typename Expr, typename Lo, typename T>
+    requires(algebra::is_tensor_v<Expr> &&
+             algebra::is_tensor_v<Lo> &&
+             !algebra::is_algebra_v<Expr> &&
+             !algebra::is_algebra_v<Lo> &&
+             !is_base_of_v<detail::BaseExprTag, T>)
+auto clamp(const BaseExpr<Expr> &x, const BaseExpr<Lo> &lo, T hi) TESSERACT_CONDITIONAL_NOEXCEPT
+{
+    return max(min(x, hi), lo);
+}
