@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 /**
  * @file cycle_counter_generic.h
  * @brief No-op cycle counter fallback for unsupported platforms.

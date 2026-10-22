@@ -4,6 +4,7 @@
 #include "config.h"
 #include "fused/BaseExpr.h"
 #include "fused/expr_storage.h"
+#include "fused/microkernels/microkernel_base.h"
 
 /**
  * @brief Compile-time subvector view over a vector-like tensor.

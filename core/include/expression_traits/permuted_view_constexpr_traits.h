@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+#include "expression_traits/basic_expr_traits.h"
 #include "helper_traits.h"
 
 template <typename Tensor, my_size_t... Perm>

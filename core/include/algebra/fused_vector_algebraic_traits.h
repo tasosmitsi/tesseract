@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "algebra/basic_algebraic_traits.h"
+
 template <typename T, my_size_t Size>
 class FusedVector; // forward declarations
 

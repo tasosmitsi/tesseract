@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "expression_traits/basic_expr_traits.h"
+
 template <typename T, my_size_t... Dims>
 class FusedTensorND; // forward declarations
 

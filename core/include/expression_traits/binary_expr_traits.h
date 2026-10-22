@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "expression_traits/basic_expr_traits.h"
+
 // Forward declare BinaryExpr
 template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op>
 class BinaryExpr;

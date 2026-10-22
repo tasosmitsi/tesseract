@@ -1,5 +1,7 @@
 #pragma once
 
+#include "config.h"
+
 /**
  * @file cycle_counter_arm.h
  * @brief Cycle counter using the ARM generic timer (CNTVCT_EL0).

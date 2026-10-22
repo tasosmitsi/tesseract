@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "algebra/basic_algebraic_traits.h"
+
 template <typename Vector, my_size_t Offset, my_size_t Len>
 class SubVectorView; // forward declarations
 

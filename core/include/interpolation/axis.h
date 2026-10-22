@@ -2,7 +2,6 @@
 
 #include "config.h"
 #include "containers/array.h"
-#include "helper_traits.h"
 #include "simple_type_traits.h"
 
 /**

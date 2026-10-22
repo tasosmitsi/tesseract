@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "algebra/basic_algebraic_traits.h"
+
 template <typename Tensor, my_size_t N>
 class PermutedView; // forward declarations
 

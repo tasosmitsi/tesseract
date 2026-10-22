@@ -7,6 +7,7 @@
 #include "simple_type_traits.h"
 #include "algorithms/decomposition/cholesky.h"
 #include "algorithms/solvers/triangular_solve.h"
+#include "fused/fused_vector.h"
 
 /**
  * @file cholesky_solve.h

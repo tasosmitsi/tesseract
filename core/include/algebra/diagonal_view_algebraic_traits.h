@@ -1,5 +1,7 @@
 #pragma once
 
+#include "algebra/basic_algebraic_traits.h"
+
 template <typename Matrix>
 class DiagonalView; // forward declarations
 

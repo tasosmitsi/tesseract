@@ -1,5 +1,7 @@
 #pragma once
 
+#include "algebra/basic_algebraic_traits.h"
+
 template <typename Tensor, typename... Slices>
 class MultiSliceView; // forward declarations
 

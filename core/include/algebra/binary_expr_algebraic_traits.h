@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "algebra/basic_algebraic_traits.h"
+
 // Forward declare BinaryExpr
 template <typename LHS, typename RHS, template <typename, my_size_t, typename> class Op>
 class BinaryExpr;

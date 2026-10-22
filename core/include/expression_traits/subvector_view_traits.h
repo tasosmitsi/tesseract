@@ -1,6 +1,7 @@
 #pragma once
 
-#include "helper_traits.h"
+#include "config.h"
+#include "expression_traits/basic_expr_traits.h"
 
 template <typename Vector, my_size_t Offset, my_size_t Len>
 class SubVectorView; // forward declarations

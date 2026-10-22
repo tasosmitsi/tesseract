@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "expression_traits/basic_expr_traits.h"
+
 template <typename A, typename B, typename C,
           template <typename, my_size_t, typename> class Op>
 class FmaExpr;

@@ -1,5 +1,11 @@
+#pragma once
+
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+
+#include "error_handler/error_handler.h"
 #include "simple_type_traits.h"
 
 class PCErrorHandler

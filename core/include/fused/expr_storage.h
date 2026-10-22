@@ -1,6 +1,5 @@
 #pragma once
 
-#include "config.h"
 #include "simple_type_traits.h"
 #include "expression_traits/expression_traits.h"
 

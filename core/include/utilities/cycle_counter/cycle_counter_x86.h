@@ -2,6 +2,8 @@
 
 #include <x86intrin.h>
 
+#include "config.h"
+
 /**
  * @file cycle_counter_x86.h
  * @brief Cycle counter using x86 RDTSC with LFENCE serialization.

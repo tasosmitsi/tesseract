@@ -1,5 +1,8 @@
 #pragma once
 
+#include "config.h"
+#include "algebra/basic_algebraic_traits.h"
+
 /*
     A scalar expression inherits the tensor-ness of the tensor operand:
         ✔ tensor * scalar → tensor

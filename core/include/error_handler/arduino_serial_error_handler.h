@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include "error_handler/error_handler.h"
 #include "simple_type_traits.h"
 
 class SerialErrorHandler

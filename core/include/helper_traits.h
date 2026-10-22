@@ -1,6 +1,8 @@
 #ifndef HELPERTRAITS_H
 #define HELPERTRAITS_H
 
+#include "config.h"
+
 /**
  * @file HelperTraits.h
  * @brief Compile-time utility functions and types for parameter pack manipulation.

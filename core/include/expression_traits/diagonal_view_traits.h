@@ -1,6 +1,6 @@
 #pragma once
 
-#include "helper_traits.h"
+#include "expression_traits/basic_expr_traits.h"
 
 template <typename Matrix>
 class DiagonalView; // forward declarations

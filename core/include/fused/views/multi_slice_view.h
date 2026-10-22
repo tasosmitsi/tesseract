@@ -5,6 +5,7 @@
 #include "fused/BaseExpr.h"
 #include "fused/expr_storage.h"
 #include "fused/layouts/strided_layout_constexpr.h"
+#include "fused/microkernels/microkernel_base.h"
 #include "fused/padding_policies/adapters/multi_sliced_pad_policy.h"
 #include "helper_traits.h"
 
