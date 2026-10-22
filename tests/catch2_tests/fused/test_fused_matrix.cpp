@@ -1,6 +1,7 @@
 #include <catch_amalgamated.hpp>
 
 #include "fused/fused_matrix.h"
+#include "fused/fused_vector.h"
 #include "../utilities.h"
 #include "algorithms/decomposition/cholesky.h"
 #include <Dense>
@@ -660,4 +661,58 @@ TEMPLATE_TEST_CASE("FusedMatrix class", "[fused_matrix]", double, float)
         matrix3(0, 0) = 2;
         CHECK_FALSE(matrix3.isOrthogonal());
     }
+}
+
+// ============================================================================
+// MATMUL OPERANDS
+// ============================================================================
+
+TEMPLATE_TEST_CASE("FusedMatrix matmul: tensors and transpose views only",
+                   "[fused_matrix]", double, float)
+{
+    using T = TestType;
+
+    T vals[3][3] = {{1, 2, 3}, {4, 5, 6}, {7, 8, 9}};
+    FusedMatrix<T, 3, 3> A(vals), I3;
+    I3.setIdentity();
+
+    SECTION("a transpose view is accepted")
+    {
+        auto C = FusedMatrix<T, 3, 3>::matmul(A.transpose_view(), I3);
+
+        CHECK(C(0, 1) == (T)4);
+        CHECK(C(1, 0) == (T)2);
+    }
+
+    SECTION("a slice is copied into a FusedMatrix first")
+    {
+        FusedMatrix<T, 2, 2> block, I2;
+        block = A.template block<1, 1, 2, 2>();
+        I2.setIdentity();
+
+        auto C = FusedMatrix<T, 2, 2>::matmul(block, I2);
+
+        T expected[2][2] = {{5, 6}, {8, 9}};
+        CHECK(C == FusedMatrix<T, 2, 2>(expected));
+    }
+
+    SECTION("a subvector is copied into a FusedVector first")
+    {
+        FusedVector<T, 4> v;
+        v.setSequencial(); // 0 1 2 3
+        FusedVector<T, 2> tail;
+        tail = v.template tail<2>();
+        FusedMatrix<T, 1, 1> two((T)2);
+
+        auto C = FusedMatrix<T, 2, 1>::matmul(tail, two);
+
+        CHECK(C(0, 0) == (T)4);
+        CHECK(C(1, 0) == (T)6);
+    }
+
+    // Rejected at compile time with "constraints not satisfied" on
+    // FusedTensorND::is_einsum_operand. Uncomment one at a time to check:
+    // auto C1 = FusedMatrix<T, 2, 2>::matmul(A.template block<1, 1, 2, 2>(), FusedMatrix<T, 2, 2>((T)1)); // slice view
+    // auto C2 = FusedMatrix<T, 3, 1>::matmul(A.diagonal(), FusedMatrix<T, 1, 1>((T)1));                   // diagonal view
+    // auto C3 = FusedMatrix<T, 2, 1>::matmul(FusedVector<T, 4>().template head<2>(), FusedMatrix<T, 1, 1>((T)1)); // subvector view
 }

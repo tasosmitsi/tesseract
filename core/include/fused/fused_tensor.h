@@ -472,16 +472,32 @@ public:
      * 2D GEMM — 4 CASES (contract axis a from tensor1, axis b from tensor2)
      * ============================================================================
      *
-     *   a=1, b=0: C[M,N] = A[M,K] × B[K,N]   — favorable, no transpose
-     *   a=0, b=0: C[K,N] = A^T[K,M] × B[M,N]  — transpose A
-     *   a=1, b=1: C[M,K] = A[M,N] × B^T[N,K]  — transpose B
-     *   a=0, b=1: C[K,K'] = A^T × B^T           — transpose both
+     *   a=1, b=0: C[M,N]  = A[M,K] × B[K,N]    — favorable, no transpose
+     *   a=0, b=0: C[K,N]  = A^T[K,M] × B[M,N]  — transpose A
+     *   a=1, b=1: C[M,K]  = A[M,N] × B^T[N,K]  — transpose B
+     *   a=0, b=1: C[K,K'] = A^T × B^T          — transpose both
      *
      * ============================================================================
      */
+    /**
+     * @brief Operands einsum and matmul can read.
+     *
+     * The GEMM reads an operand's buffer through data() and its layout's
+     * strides, so it needs a tensor that owns its memory, or a transpose view,
+     * which einsum swaps for its base tensor or materialises. The transpose()
+     * test is the one einsum's body uses to recognise those views.
+     *
+     * Slices, diagonals and subvectors start at an offset into their source that
+     * the GEMM never sees, so they are rejected at the call rather than failing
+     * deep inside einsum. Copy one into a FusedMatrix first.
+     */
+    template <typename E>
+    static constexpr bool is_einsum_operand =
+        expression::traits<E>::OwnsMemory || requires(const E &e) { e.transpose(); };
+
     template <typename LeftExpr, typename RightExpr>
-        requires(expression::traits<LeftExpr>::IsPhysical &&
-                 expression::traits<RightExpr>::IsPhysical)
+        requires(is_einsum_operand<LeftExpr> &&
+                 is_einsum_operand<RightExpr>)
     static FusedTensorND einsum(
         const BaseExpr<LeftExpr> &_tensor1,
         const BaseExpr<RightExpr> &_tensor2,

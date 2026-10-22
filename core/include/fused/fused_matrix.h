@@ -282,8 +282,11 @@ public:
     }
     /*---------------------------------------*/
 
-    // matmul using einsum of parent class
+    // matmul using einsum of parent class; same operand rule, so a rejected
+    // operand is reported at the caller's line
     template <typename LeftExpr, typename RightExpr>
+        requires(FusedTensorND<T, Rows, Cols>::template is_einsum_operand<LeftExpr> &&
+                 FusedTensorND<T, Rows, Cols>::template is_einsum_operand<RightExpr>)
     static FusedMatrix<T, Rows, Cols> matmul(const BaseExpr<LeftExpr> &mat1, const BaseExpr<RightExpr> &mat2)
     {
         return {FusedTensorND<T, Rows, Cols>::einsum(mat1, mat2, 1, 0)};
