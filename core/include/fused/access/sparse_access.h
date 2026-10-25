@@ -1,6 +1,7 @@
 #ifndef SPARSE_ACCESS_H
 #define SPARSE_ACCESS_H
 
+#include "config.h"
 #include "fused/storage/static_storage.h"
 #include "memory/mem_utils.h"
 #include "simple_type_traits.h"  // for move

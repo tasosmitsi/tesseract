@@ -2,6 +2,7 @@
 #define FUSED_ALGORITHMS_QR_GIVENS_H
 
 #include "config.h"
+#include "simple_type_traits.h"
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
 #include "math/math_utils.h"

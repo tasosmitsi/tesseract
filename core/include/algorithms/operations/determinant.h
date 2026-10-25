@@ -2,6 +2,8 @@
 #define FUSED_ALGORITHMS_DETERMINANT_H
 
 #include "config.h"
+#include "simple_type_traits.h"
+#include "fused/fused_matrix.h"
 #include "algorithms/decomposition/lu.h"
 
 /**

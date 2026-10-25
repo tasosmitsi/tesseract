@@ -25,6 +25,7 @@
 // #include "fused/layouts/strided_layout.h"
 #include "fused/layouts/strided_layout_constexpr.h"
 #include "algebra/algebraic_traits.h"
+#include "expression_traits/expression_traits.h"
 
 // Base class: FusedTensorND
 template <typename T, my_size_t... Dims>

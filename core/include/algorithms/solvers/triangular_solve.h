@@ -6,6 +6,7 @@
 #include "matrix_traits.h"
 #include "simple_type_traits.h"
 #include "math/math_utils.h"
+#include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
 
 /**

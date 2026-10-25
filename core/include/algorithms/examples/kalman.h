@@ -4,6 +4,7 @@
 #include "config.h"
 #include "utilities/expected.h"
 #include "matrix_traits.h"
+#include "simple_type_traits.h"
 #include "fused/fused_matrix.h"
 #include "algorithms/operations/inverse.h"
 

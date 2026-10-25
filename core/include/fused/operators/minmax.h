@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "fused/BaseExpr.h"
 #include "fused/BinaryExpr.h"
 #include "fused/ScalarExpr.h"
 #include "fused/Operations.h"

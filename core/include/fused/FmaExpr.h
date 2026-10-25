@@ -2,6 +2,7 @@
 #include "config.h"
 #include "fused/BaseExpr.h"
 #include "fused/expr_storage.h"
+#include "fused/microkernels/microkernel_base.h"
 #include "fused/Operations.h"
 #include "helper_traits.h"
 #include "simple_type_traits.h"

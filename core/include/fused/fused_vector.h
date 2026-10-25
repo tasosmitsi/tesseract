@@ -1,6 +1,7 @@
 #ifndef FUSEDVECTOR_H
 #define FUSEDVECTOR_H
 
+#include "config.h"
 #include "fused_matrix.h"
 #include "views/subvector_view.h"
 

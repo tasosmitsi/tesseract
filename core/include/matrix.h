@@ -1,6 +1,7 @@
 #ifndef MATRIX_H
 #define MATRIX_H
 
+#include "config.h"
 #include "tensor.h"
 #include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"

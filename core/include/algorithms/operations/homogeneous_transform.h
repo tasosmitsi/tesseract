@@ -2,6 +2,7 @@
 #define FUSED_ALGORITHMS_HOMOGENEOUS_TRANSFORM_H
 
 #include "config.h"
+#include "simple_type_traits.h"
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
 
@@ -23,12 +24,12 @@
  * The inverse exploits the orthogonality of R (R⁻¹ = Rᵀ):
  *
  *       T⁻¹ = [ Rᵀ  | -Rᵀ·t ]
- *             [ 0   |   1    ]
+ *             [ 0   |   1   ]
  *
  * This avoids the general 4×4 inverse (which requires cofactor expansion
  * or LU decomposition) and uses only a 3×3 transpose + 3×3·3×1 matmul.
  *
- * Complexity: O(1) — 9 copies (transpose) + 9 multiplies + 6 adds (matmul).
+ * Complexity: O(1) : 9 copies (transpose) + 9 multiplies + 6 adds (matmul).
  *
  * ============================================================================
  * PRECONDITIONS

@@ -4,6 +4,7 @@
 #include "config.h"
 #include "utilities/expected.h"
 #include "matrix_traits.h"
+#include "simple_type_traits.h" // is_floating_point_v, move
 #include "fused/fused_vector.h"
 #include "math/math_utils.h" // math::abs
 
@@ -17,7 +18,7 @@
  *   [ r(0) r(1) r(2) ... r(N-1) ]
  *   [ r(1) r(0) r(1) ... r(N-2) ]
  *   [ r(2) r(1) r(0) ... r(N-3) ]
- *   [  ...  ...  ...  ...  ...   ]
+ *   [  ...  ...  ...  ...  ...  ]
  *   [r(N-1)r(N-2) ...     r(0)  ]
  *
  * The Levinson-Durbin recursion solves Tx = b in O(N²) by exploiting
@@ -30,14 +31,14 @@
  *
  * The algorithm proceeds in two stages:
  *
- * Stage 1 — Levinson recursion (solve T·a = −r for prediction coefficients):
+ * Stage 1: Levinson recursion (solve T·a = −r for prediction coefficients):
  *   Initialize: a(0) = −r(1)/r(0), err = r(0)·(1 − a(0)²)
  *   For m = 1 … N−2:
  *     λ = −(r(m+1) + Σ_{k=0}^{m-1} a(k)·r(m−k)) / err
  *     Update a(k) using λ and reversed previous a
  *     err *= (1 − λ²)
  *
- * Stage 2 — Solve Tx = b using the Levinson solution:
+ * Stage 2: Solve Tx = b using the Levinson solution:
  *   Uses the forward and backward vectors from Stage 1 to
  *   iteratively build the solution.
  *

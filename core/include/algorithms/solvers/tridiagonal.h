@@ -4,6 +4,7 @@
 #include "config.h"
 #include "utilities/expected.h"
 #include "matrix_traits.h"
+#include "simple_type_traits.h"
 #include "fused/fused_vector.h"
 #include "math/math_utils.h"
 
@@ -12,32 +13,32 @@
  * @brief Thomas algorithm: O(N) solver for tridiagonal systems.
  *
  * Solves Ax = b where A is tridiagonal, represented by three vectors:
- *   - a: sub-diagonal (N−1 elements, a(0) unused)
+ *   - a: sub-diagonal (N-1 elements, a(0) unused)
  *   - d: main diagonal (N elements)
- *   - c: super-diagonal (N−1 elements, c(N−1) unused)
+ *   - c: super-diagonal (N-1 elements, c(N-1) unused)
  *
  *   [ d(0) c(0)                    ] [x(0)]   [b(0)]
  *   [ a(1) d(1) c(1)               ] [x(1)]   [b(1)]
  *   [      a(2) d(2) c(2)          ] [x(2)] = [b(2)]
- *   [            ...   ...   ...    ] [ ... ]   [ ... ]
- *   [              a(N-1) d(N-1)    ] [x(N-1)] [b(N-1)]
+ *   [            ...   ...   ...   ] [ ... ]  [ ... ]
+ *   [              a(N-1) d(N-1)   ] [x(N-1)] [b(N-1)]
  *
  * ============================================================================
  * ALGORITHM
  * ============================================================================
  *
  * Forward sweep (eliminate sub-diagonal):
- *   For i = 1 … N−1:
- *     w = a(i) / d'(i−1)
- *     d'(i) = d(i) − w · c(i−1)
- *     b'(i) = b(i) − w · b'(i−1)
+ *   For i = 1 … N-1:
+ *     w = a(i) / d'(i-1)
+ *     d'(i) = d(i) - w · c(i-1)
+ *     b'(i) = b(i) - w · b'(i-1)
  *
  * Back substitution:
- *   x(N−1) = b'(N−1) / d'(N−1)
- *   For i = N−2 … 0:
- *     x(i) = (b'(i) − c(i) · x(i+1)) / d'(i)
+ *   x(N-1) = b'(N-1) / d'(N-1)
+ *   For i = N-2 … 0:
+ *     x(i) = (b'(i) - c(i) · x(i+1)) / d'(i)
  *
- * Complexity: O(N) — optimal for tridiagonal systems.
+ * Complexity: O(N) —> optimal for tridiagonal systems.
  *
  * ============================================================================
  * USE CASES
@@ -52,7 +53,7 @@
  * FAILURE MODES
  * ============================================================================
  *
- * - MatrixStatus::Singular — zero pivot encountered during forward sweep
+ * - MatrixStatus::Singular : zero pivot encountered during forward sweep
  *
  * ============================================================================
  */
@@ -69,7 +70,7 @@ namespace matrix_algorithms
      * @tparam N  System size (deduced).
      * @param  a  Sub-diagonal vector (N). a(0) is unused.
      * @param  d  Main diagonal vector (N).
-     * @param  c  Super-diagonal vector (N). c(N−1) is unused.
+     * @param  c  Super-diagonal vector (N). c(N-1) is unused.
      * @param  b  Right-hand side vector (N).
      * @return Expected containing solution x on success,
      *         or MatrixStatus::Singular on zero pivot.
@@ -78,9 +79,9 @@ namespace matrix_algorithms
      * @code
      *   // Solve [-2 1 0; 1 -2 1; 0 1 -2] x = b
      *   FusedVector<double, 3> a, d, c, b;
-     *   a(0) = 0; a(1) = 1; a(2) = 1;   // sub-diagonal
-     *   d(0) = -2; d(1) = -2; d(2) = -2; // main diagonal
-     *   c(0) = 1; c(1) = 1; c(2) = 0;   // super-diagonal
+     *   a(0) = 0;  a(1) = 1;  a(2) = 1;   // sub-diagonal
+     *   d(0) = -2; d(1) = -2; d(2) = -2;  // main diagonal
+     *   c(0) = 1;  c(1) = 1;  c(2) = 0;   // super-diagonal
      *   // ... fill b ...
      *   auto result = matrix_algorithms::thomas_solve(a, d, c, b);
      * @endcode

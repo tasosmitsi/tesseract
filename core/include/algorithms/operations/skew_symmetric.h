@@ -2,6 +2,7 @@
 #define FUSED_ALGORITHMS_SKEW_SYMMETRIC_H
 
 #include "config.h"
+#include "simple_type_traits.h"          // is_floating_point_v
 #include "fused/fused_matrix.h"
 #include "fused/fused_vector.h"
 #include "math/math_utils.h"             // math::sqrt, math::sin, math::cos

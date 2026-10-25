@@ -1,7 +1,9 @@
 #ifndef FUSEDMATRIX_H
 #define FUSEDMATRIX_H
 
+#include "config.h"
 #include "simple_type_traits.h"
+#include "fused/BaseExpr.h"
 #include "fused/fused_tensor.h"
 #include "algorithms/decomposition/cholesky.h"
 #include "matrix_traits.h"

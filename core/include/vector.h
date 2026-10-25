@@ -1,6 +1,7 @@
 #ifndef VECTOR_H
 #define VECTOR_H
 
+#include "config.h"
 #include "tensor.h"
 
 // Derived class: Vector

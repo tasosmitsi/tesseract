@@ -1,6 +1,7 @@
 #ifndef __NEON_MICROKERNEL_H__
 #define __NEON_MICROKERNEL_H__
 
+#include "config.h"
 #include "neon_intrinsics.h"
 
 // ============================================================================
