@@ -1,8 +1,10 @@
 #include <catch_amalgamated.hpp>
 
 #include "fused/fused_matrix.h"
+#include "fused/fused_tensor.h"
 #include "fused/fused_vector.h"
 #include "fused/views/multi_slice_view.h"
+#include "fused/views/squeeze_view.h"
 
 // Expressions that outlive the statement that built them. Every case below
 // evaluates an expression after its sub-expression temporaries have died, so
@@ -202,6 +204,23 @@ TEMPLATE_TEST_CASE("expression_lifetime: view temporaries inside a stored expres
         CHECK(out(0) == (T)4);
         CHECK(out(1) == (T)6);
     }
+
+    SECTION("squeeze view of a slice")
+    {
+        using Tensor = FusedTensorND<T, 2, 3, 3>;
+        using Plane = MultiSliceView<Tensor, Slice<0, 1, 1>>;
+
+        Tensor t;
+        t.setSequencial(); // plane 1 holds 9 .. 17
+
+        FusedMatrix<T, 3, 3> out;
+        auto s = SqueezeView<Plane, 0>(Plane(t)) + b;
+        out = s;
+
+        CHECK(out(0, 0) == (T)11);
+        CHECK(out(1, 1) == (T)14);
+        CHECK(out(2, 2) == (T)17);
+    }
 }
 
 TEMPLATE_TEST_CASE("expression_lifetime: a view over a temporary view keeps its own copy",
@@ -258,20 +277,24 @@ TEMPLATE_TEST_CASE("expression_lifetime: views copy and move but do not assign",
     using Row = decltype(Matrix().template row<0>());
     using Diagonal = decltype(Matrix().diagonal());
     using Head = decltype(Vector().template head<2>());
+    using Squeeze = SqueezeView<FusedTensorND<T, 1, 3, 3>, 0>;
 
     CHECK(CopyConstructible<Transposed>);
     CHECK(CopyConstructible<Row>);
     CHECK(CopyConstructible<Diagonal>);
     CHECK(CopyConstructible<Head>);
+    CHECK(CopyConstructible<Squeeze>);
 
     CHECK(MoveConstructible<Transposed>);
     CHECK(MoveConstructible<Row>);
     CHECK(MoveConstructible<Diagonal>);
     CHECK(MoveConstructible<Head>);
+    CHECK(MoveConstructible<Squeeze>);
 
     // a view cannot be re-pointed at another source
     CHECK_FALSE(CopyAssignable<Transposed>);
     CHECK_FALSE(CopyAssignable<Row>);
     CHECK_FALSE(CopyAssignable<Diagonal>);
     CHECK_FALSE(CopyAssignable<Head>);
+    CHECK_FALSE(CopyAssignable<Squeeze>);
 }
