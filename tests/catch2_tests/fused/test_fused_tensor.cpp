@@ -668,18 +668,5 @@ TEMPLATE_TEST_CASE("FusedTensorND class", "[fused_tensor]", double, float, int32
         // This test checks only if the dimension of the result tensor are
         // correct and not the validity of the operation itself.
         // TODO: check the validity too.
-        // The following two use the non-constexpr version of PermutedView, because the order is runtime.
-        // One should prefere the constexpr version (above) for maximum performance if the permutation
-        // in known at compile time. So there are the following versions:
-        // transpose_view<param pack with permutations>()
-        // transpose_view() -> this assumes 2D -> known permutation and hence constexpr view
-        // transpose_vie(order array with permutations)
-        // size_t order[2] = {1, 0};
-        // CHECK_NOTHROW(result2 =
-        //                   FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view(order), 1, 0));
-
-        // size_t order1[2] = {0, 1};
-        // CHECK_NOTHROW(result2 =
-        //                   FusedTensorND<T, 2, 2>::einsum(tensor1, tensor2.template transpose_view(order1), 1, 1));
     }
 }
