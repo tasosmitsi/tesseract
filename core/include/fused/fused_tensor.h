@@ -20,10 +20,8 @@
 #include "fused/padding_policies/no_padding_policy.h"
 #include "fused/access/dense_access.h"
 #include "fused/access/sparse_access.h"
-// #include "fused/views/permuted_view.h"
 #include "fused/views/permuted_view_constexpr.h"
-// #include "fused/layouts/strided_layout.h"
-#include "fused/layouts/strided_layout_constexpr.h"
+#include "fused/layouts/strided_layout.h"
 #include "algebra/algebraic_traits.h"
 #include "expression_traits/expression_traits.h"
 
@@ -317,11 +315,6 @@ public:
         return PermutedViewConstExpr<Self, 1, 0>(*this);
     }
 
-    // FORCE_INLINE auto transpose_view(const my_size_t perm[NumDims]) const noexcept
-    // {
-    //     return PermutedView<Self, NumDims>(*this, perm);
-    // }
-
     FORCE_INLINE static constexpr my_size_t getTotalSize() noexcept
     {
         return TotalSize;
@@ -484,17 +477,24 @@ public:
      * @brief Operands einsum and matmul can read.
      *
      * The GEMM reads an operand's buffer through data() and its layout's
-     * strides, so it needs a tensor that owns its memory, or a transpose view,
-     * which einsum swaps for its base tensor or materialises. The transpose()
-     * test is the one einsum's body uses to recognise those views.
+     * strides, so it needs a tensor that owns its memory, or a transpose view
+     * of one, which einsum swaps for its base tensor or materialises. The
+     * transpose() test is the one einsum's body uses to recognise those views,
+     * and what transpose() hands back has to own its memory too: a transpose
+     * of another view hands back that view.
      *
-     * Slices, diagonals and subvectors start at an offset into their source that
-     * the GEMM never sees, so they are rejected at the call rather than failing
-     * deep inside einsum. Copy one into a FusedMatrix first.
+     * Slices, diagonals, subvectors, squeezes and transposes of them start at
+     * an offset into the root buffer (their layout's Base) that the GEMM never
+     * sees, so they are rejected at the call rather than failing deep inside
+     * einsum. Copy one into a FusedMatrix first.
      */
     template <typename E>
     static constexpr bool is_einsum_operand =
-        expression::traits<E>::OwnsMemory || requires(const E &e) { e.transpose(); };
+        expression::traits<E>::OwnsMemory ||
+        requires(const E &e) {
+            // whatever transpose() returns must own its memory, meaning it's a tensor.
+            requires expression::traits<remove_cvref_t<decltype(e.transpose())>>::OwnsMemory;
+        };
 
     template <typename LeftExpr, typename RightExpr>
         requires(is_einsum_operand<LeftExpr> &&
@@ -971,7 +971,7 @@ private:
                 else
                 {
                     // Direct physical access: row * physical_stride + col
-                    MyErrorHandler::log(data_[Layout::base_stride(0) * i + j]);
+                    MyErrorHandler::log(data_[Layout::stride(0) * i + j]);
                 }
 
                 if (with_padding && j == getDim(1) - 1)
@@ -1027,20 +1027,11 @@ private:
         }
     }
 
-    // template <typename, my_size_t>
-    // friend class PermutedView;
-
-    template <typename, my_size_t...>
-    friend class PermutedViewConstExpr;
-
-    template <typename, my_size_t, my_size_t>
-    friend class SubVectorView;
-
 public:
     FORCE_INLINE constexpr const T *data() const noexcept { return data_.data(); }
     FORCE_INLINE constexpr T *data() noexcept { return data_.data(); }
 
-    using Layout = StridedLayoutConstExpr<typename AccessPolicy::PadPolicy>;
+    using Layout = StridedLayout<typename AccessPolicy::PadPolicy>;
 };
 
 #endif // FUSEDTENSORND_H

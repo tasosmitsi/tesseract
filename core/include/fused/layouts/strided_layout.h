@@ -1,130 +1,125 @@
-#ifndef FUSED_STRIDED_LAYOUT_H
-#define FUSED_STRIDED_LAYOUT_H
+#pragma once
 
 #include "config.h"
-#include "memory/mem_utils.h"
+#include "containers/array.h"
+#include "fused/layouts/strided_layout_base.h"
 
-template <my_size_t NumberOfDims>
-struct StridedLayout
+/**
+ * @brief Compile-time strided layout of a tensor's padded storage.
+ *
+ * @tparam PadPolicy  Padding policy (e.g., SimdPaddingPolicy<T, Dims...>)
+ *
+ * All computations happen at compile-time. Zero runtime overhead.
+ *
+ * Every layout chain starts here. This is the only layout that reads a padding
+ * policy: it turns the policy's dims into the LogicalDims and Strides the view
+ * layouts in layout_adapters.h build on. TPermutation is not part of this layout:
+ * PermutedLayout adds it on top.
+ *
+ * The index functions and the conversions between logical and physical come
+ * from LayoutBase and StridedLayoutBase, shared with the view layouts. The only
+ * thing that stays here is what only a tensor's own storage can answer: the padded
+ * grid, meaning PhysicalSize and physical coordinates, which reach the padding slots.
+ * A tensor starts at the beginning of its buffer, so Base is 0.
+ */
+template <typename PadPolicy>
+struct StridedLayout : StridedLayoutBase<StridedLayout<PadPolicy>, PadPolicy::NumDims>
 {
-    my_size_t shape[NumberOfDims];
-    my_size_t stride[NumberOfDims];
+    static constexpr my_size_t NumDims = PadPolicy::NumDims;
+    static constexpr my_size_t PhysicalSize = PadPolicy::PhysicalSize;
 
-    StridedLayout(const my_size_t dims[NumberOfDims]) noexcept
+    // A tensor's layout starts at the beginning of its own buffer
+    static constexpr my_size_t Base = 0;
+
+    using PadPolicyType = PadPolicy;
+
+    /**
+     * @brief Compute strides from the padded dimensions, row-major.
+     *
+     * @return constexpr Array<my_size_t, NumDims>
+     */
+    static constexpr Array<my_size_t, NumDims> computeStrides() noexcept
     {
-        copy_n_optimized(dims, shape, NumberOfDims);
-        compute_row_major_strides();
-    }
-
-    // copy constructor
-    StridedLayout(const StridedLayout &other) = default;
-
-    // move constructor
-    StridedLayout(StridedLayout &&other) = default;
-
-    // copy assignment
-    StridedLayout &operator=(const StridedLayout &other) = default;
-
-    // move assignment
-    StridedLayout &operator=(StridedLayout &&other) = default;
-
-    FORCE_INLINE constexpr my_size_t getNumDims() const noexcept { return NumberOfDims; }
-
-    FORCE_INLINE my_size_t getDim(my_size_t i) const // TODO: conditionally noexcept
-    {
-#ifdef RUNTIME_USE_BOUNDS_CHECKING
-        if (i >= getNumDims())
+        Array<my_size_t, NumDims> result{};
+        result[NumDims - 1] = 1;
+        for (my_size_t i = NumDims - 1; i > 0; --i)
         {
-            MyErrorHandler::error("In StridedLayout, getDim(): index out of range!");
+            result[i - 1] = result[i] * PadPolicy::PhysicalDims[i];
         }
-#endif
-        return shape[i];
+        return result;
     }
 
-    FORCE_INLINE my_size_t getStride(my_size_t i) const // TODO: conditionally noexcept
+    static constexpr Array<my_size_t, NumDims> LogicalDims = PadPolicy::LogicalDims;
+    static constexpr Array<my_size_t, NumDims> Strides = computeStrides();
+
+    // ========================================================================
+    // PHYSICAL CONVERSION (padded storage only)
+    // ========================================================================
+
+    /**
+     * @brief Physical flat index to physical coordinates.
+     *
+     * Decomposes a flat index into multi-dimensional coordinates
+     * using Strides (row-major order in physical memory).
+     *
+     * Input must be in range [0, PhysicalSize).
+     *
+     * WARNING: If physical_flat is a padding location, the returned
+     * coords will also be in the padding area.
+     *
+     * Example: 2x3 matrix padded to 2x4, physical flat 7:
+     *   Strides = [4, 1]
+     *   7 / 4 = 1, 7 - 4 = 3
+     *   3 / 1 = 3
+     *   → coords (1, 3)  ← column 3 is padding (LogicalDims[1] = 3)
+     *
+     * @param physical_flat
+     * @param indices Output parameter for multi-dimensional coordinates
+     * @return constexpr void
+     * @throws if physical_flat is out of bounds for PhysicalSize
+     */
+    FORCE_INLINE static constexpr void physical_flat_to_physical_coords(my_size_t physical_flat, my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-#ifdef RUNTIME_USE_BOUNDS_CHECKING
-        if (i >= getNumDims())
+        // check physical_flat is in range
+        if (physical_flat >= PhysicalSize)
         {
-            MyErrorHandler::error("In StridedLayout, getStride(): index out of range!");
+            MyErrorHandler::error("physical_flat_to_physical_coords: physical_flat index out of bounds");
         }
-#endif
-        return stride[i];
-    }
 
-    void compute_row_major_strides() noexcept
-    {
-        stride[getNumDims() - 1] = 1;
-        for (my_size_t i = getNumDims() - 1; i > 0; --i)
+        for (my_size_t i = 0; i < NumDims; ++i)
         {
-            stride[i - 1] = stride[i] * shape[i];
-        }
-    }
-
-    FORCE_INLINE void compute_indices_from_flat(my_size_t flatIdx, my_size_t (&indices)[NumberOfDims]) const noexcept
-    {
-        // We assume: flatIdx = sum(indices[i] * stride_[i])
-        // Solve for indices[i] from highest stride to lowest stride.
-        for (my_size_t i = 0; i < getNumDims(); ++i)
-        {
-            const my_size_t s = stride[i];
-            const my_size_t idx = flatIdx / s;
+            const my_size_t s = Strides[i];
+            const my_size_t idx = physical_flat / s;
             indices[i] = idx;
-            flatIdx -= idx * s;
+            physical_flat -= idx * s;
         }
     }
 
-    FORCE_INLINE my_size_t compute_flat_index(const my_size_t *indices) const // TODO: conditionally noexcept
+    /**
+     * @brief Physical coordinates to physical flat index (bounds-checked).
+     *
+     * The inverse of physical_flat_to_physical_coords. Coordinates in the
+     * padding area are valid here, since the padded grid includes them.
+     *
+     * Example: 2x3 matrix padded to 2x4, coords (1, 3):
+     *   Strides = [4, 1]
+     *   1 * 4 + 3 * 1 = 7
+     *
+     * @param indices Physical coordinates
+     * @return constexpr my_size_t
+     * @throws if any index is out of bounds for its physical dimension
+     */
+    FORCE_INLINE static constexpr my_size_t physical_coords_to_physical_flat(const my_size_t (&indices)[NumDims]) TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        my_size_t flatIndex = 0;
-        for (my_size_t i = 0; i < getNumDims(); ++i)
+        my_size_t flat = 0;
+        for (my_size_t i = 0; i < NumDims; ++i)
         {
-#ifdef RUNTIME_USE_BOUNDS_CHECKING
-            if (indices[i] >= shape[i])
+            if (indices[i] >= PadPolicy::PhysicalDims[i])
             {
-                MyErrorHandler::error("In StridedLayout, compute_flat_index(): index out of range!");
+                MyErrorHandler::error("physical_coords_to_physical_flat: index out of bounds for physical dimension");
             }
-#endif
-            flatIndex += indices[i] * stride[i];
+            flat += indices[i] * Strides[i];
         }
-        return flatIndex;
+        return flat;
     }
-
-    FORCE_INLINE my_size_t computeOffsetFromFlat(my_size_t flat) const noexcept
-    {
-        my_size_t off = 0;
-
-        for (my_size_t i = getNumDims(); i-- > 0;)
-        {
-            my_size_t idx = flat % shape[i];
-            flat /= shape[i];
-            off += idx * stride[i];
-        }
-        return off;
-    }
-
-    // FORCE_INLINE my_size_t remapFlatIndex(my_size_t flatIdx, const my_size_t (&permutations)[sizeof...(Dims)]) const noexcept
-    // {
-    //     // Step 1: Unravel flat index in **view order** to multi-index
-    //     my_size_t idx[numDims]; // idx[i] = index along original axis i
-    //     for (my_size_t i = numDims; i-- > 0;)
-    //     {
-    //         const my_size_t dim = getDim(permutations[i]); // dim of permuted axis
-    //         idx[i] = flatIdx % dim;                        // store in original axis position
-    //         flatIdx /= dim;
-    //     };
-
-    //     // Step 2: Compute flat index in original tensor layout
-    //     my_size_t remapedFlatIdx = 0;
-    //     my_size_t factor = 1;
-    //     for (my_size_t i = numDims; i-- > 0;)
-    //     {
-    //         remapedFlatIdx += idx[permutations[i]] * factor;
-    //         factor *= getDim(i); // multiply by original axis size
-    //     }
-
-    //     return remapedFlatIdx;
-    // }
 };
-
-#endif // FUSED_STRIDED_LAYOUT_H

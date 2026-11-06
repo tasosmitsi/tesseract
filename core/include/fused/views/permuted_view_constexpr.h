@@ -2,17 +2,16 @@
 #define FUSED_PERMUTED_VIEW_CONSTEXPR_H
 
 #include "config.h"
-#include "fused/BaseExpr.h"
-#include "fused/expr_storage.h"
-#include "fused/layouts/strided_layout_constexpr.h"
-#include "fused/microkernels/microkernel_base.h"
-#include "helper_traits.h"
+#include "fused/layouts/layout_adapters.h"
+#include "fused/views/strided_view_base.h"
 
 /**
- * @brief Compile-time permuted view over a tensor.
+ * @brief Compile-time permuted view over a tensor or another view.
  *
- * Does not own or copy data — references the underlying tensor's physical buffer.
- * Permutation is applied entirely at compile time through StridedLayoutConstExpr.
+ * This class does not own or copy data, it references the root tensor's physical buffer.
+ * Permutation is applied entirely at compile time: the view's layout is a
+ * PermutedLayout over the source's layout, which reorders its dims and
+ * strides and keeps its Base.
  *
  * The permuted layout reinterprets the same physical memory with permuted
  * logical dimensions and strides:
@@ -30,164 +29,41 @@
  *     view(1,0) → 1*1 + 0*4 = offset 1 → 'b'
  *     view(2,1) → 2*1 + 1*4 = offset 6 → 'f'
  *
- * @tparam Tensor  The underlying tensor type (e.g., FusedTensorND<double, 2, 3>)
+ * Over a view the same holds: the transpose of a block starts where the block
+ * does. Only a transpose of a tensor is an einsum/matmul operand, though: see
+ * FusedTensorND::is_einsum_operand.
+ *
+ * @tparam Tensor  The source: a tensor or another view
  * @tparam Perm    Compile-time permutation indices
  */
 template <typename Tensor, my_size_t... Perm>
-class PermutedViewConstExpr : public BaseExpr<PermutedViewConstExpr<Tensor, Perm...>>
+class PermutedViewConstExpr
+    : public StridedViewBase<PermutedViewConstExpr<Tensor, Perm...>, Tensor,
+                             PermutedLayout<typename Tensor::Layout, Perm...>>
 {
-    // Static assertions to validate the permutation pack at compile time
-    static_assert(sizeof...(Perm) == Tensor::NumDims,
-                  "Permutation pack must match tensor's number of dimensions");
+    // The permutation pack is validated by PermutedLayout
 
-    static_assert(all_unique<Perm...>(),
-                  "Permutation indices must be unique");
-
-    static_assert(max_value<Perm...>() < Tensor::NumDims,
-                  "Max value of permutation pack is greater than the tensor's number of dimensions");
-
-    static_assert(min_value<Perm...>() == 0,
-                  "Min value of permutation pack is not equal to 0");
+    using Base = StridedViewBase<PermutedViewConstExpr<Tensor, Perm...>, Tensor,
+                                 PermutedLayout<typename Tensor::Layout, Perm...>>;
 
 public:
-    using value_type = typename Tensor::value_type;
-    using PadPolicy = typename Tensor::AccessPolicy::PadPolicy;
-    using Layout = StridedLayoutConstExpr<PadPolicy, Perm...>;
+    static constexpr const char *ViewName = "PermutedView";
 
-    static constexpr my_size_t NumDims = Layout::NumDims;
-    static constexpr my_size_t Dim[] = {Tensor::Dim[Perm]...};
-    static constexpr my_size_t TotalSize = Tensor::TotalSize;
+    using Base::Base;
+    using Base::operator();
 
-    explicit PermutedViewConstExpr(const Tensor &t) noexcept
-        : t_(t) {}
-
-    // Copyable and movable, so an expression can keep its own copy of a view
-    // that was a temporary (see fused/expr_storage.h). Not assignable: a view
-    // cannot be re-pointed.
-    PermutedViewConstExpr(const PermutedViewConstExpr &) = default;
-    PermutedViewConstExpr &operator=(const PermutedViewConstExpr &) = delete;
-    PermutedViewConstExpr(PermutedViewConstExpr &&) = default;
-    PermutedViewConstExpr &operator=(PermutedViewConstExpr &&) = delete;
-
-    template <typename Output>
-    bool may_alias(const Output &output) const noexcept
+    // Access by a pointer to NumDims indices
+    FORCE_INLINE const typename Base::value_type &operator()(const my_size_t *indices) const TESSERACT_CONDITIONAL_NOEXCEPT
     {
-        return t_.may_alias(output); // recurse to underlying tensor
+        my_size_t idxArray[Base::NumDims];
+        for (my_size_t i = 0; i < Base::NumDims; ++i)
+            idxArray[i] = indices[i];
+        return Base::operator()(idxArray);
     }
 
-    // Const version of the access operator, because this is a view
-    template <typename... Indices>
-        requires(sizeof...(Indices) == NumDims)
-    FORCE_INLINE const value_type &operator()(Indices... indices) const TESSERACT_CONDITIONAL_NOEXCEPT
-    {
-        my_size_t idxArray[] = {static_cast<my_size_t>(indices)...};
-        return t_.data()[Layout::logical_coords_to_physical_flat(idxArray)];
-    }
-
-    // Const version of the access operator with array of indices, because this is a view
-    FORCE_INLINE const value_type &operator()(my_size_t (&indices)[NumDims]) const TESSERACT_CONDITIONAL_NOEXCEPT
-    {
-        return t_.data()[Layout::logical_coords_to_physical_flat(indices)];
-    }
-
-    FORCE_INLINE const value_type &operator()(const my_size_t *indices) const TESSERACT_CONDITIONAL_NOEXCEPT
-    {
-        return t_.data()[Layout::logical_coords_to_physical_flat(indices)];
-    }
-
-    // ========================================================================
-    // PermutedViewConstExpr::evalu — logical flat, K::gather
-    // ========================================================================
-    // Only used by permuted path. Each logical flat index is remapped
-    // through the permuted layout to a source physical offset.
-    // Consecutive logical flats map to non-contiguous source positions → gather.
-
-    /**
-     * @brief SIMD EVALUATION — logical flat, K::gather
-     *
-     * Consecutive logical flat indices map to non-contiguous physical offsets
-     * through the permuted layout, so gather is required.
-     *
-     * Example: transposed [3,2] view of [2,3] source:
-     * logical_flat 0 → coords(0,0) → physical 0
-     * logical_flat 1 → coords(0,1) → physical 4
-     * logical_flat 2 → coords(1,0) → physical 1
-     * logical_flat 3 → coords(1,1) → physical 5
-     * → gather from offsets [0, 4, 1, 5]
-     *
-     * @tparam T   The value type for evaluation (e.g., float, double)
-     * @tparam Bits Number of bits for the microkernel (e.g., 256 for AVX2)
-     * @tparam Arch The target architecture for the microkernel (e.g., AVX2, AVX-512)
-     * @param logical_flat The logical flat index to evaluate from
-     * @return Microkernel vector type containing the evaluated values for the SIMD width
-     */
-    template <typename T, my_size_t Bits, typename Arch>
-    FORCE_INLINE typename Microkernel<T, Bits, Arch>::VecType evalu(my_size_t logical_flat) const noexcept
-    {
-        using K = Microkernel<T, Bits, Arch>;
-        constexpr my_size_t width = K::simdWidth;
-
-        my_size_t idxList[width];
-        for (my_size_t i = 0; i < width; ++i)
-            idxList[i] = Layout::logical_flat_to_physical_flat(logical_flat + i);
-
-        return K::gather(t_.data(), idxList);
-    }
-
-    template <typename T, my_size_t Bits, typename Arch>
-    FORCE_INLINE typename Microkernel<T, Bits, Arch>::VecType logical_evalu(my_size_t logical_flat) const noexcept
-    {
-        // evalu already expects logical flat for permuted views
-        return evalu<T, Bits, Arch>(logical_flat);
-    }
-
-    FORCE_INLINE static constexpr my_size_t getDim(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
-    {
-        return Layout::logical_dim(i);
-    }
-
-    FORCE_INLINE static constexpr my_size_t getStride(my_size_t i) TESSERACT_CONDITIONAL_NOEXCEPT
-    {
-        return Layout::stride(i);
-    }
-
-    FORCE_INLINE static constexpr my_size_t getNumDims() noexcept { return NumDims; }
-
-    FORCE_INLINE static constexpr my_size_t getTotalSize() noexcept { return TotalSize; }
-
-    // print layout info
-    void printLayoutInfo() const
-    {
-        MyErrorHandler::log("PermutedView Layout Info:", ErrorLevel::Info);
-        MyErrorHandler::log("Number of Dimensions: " + std::to_string(NumDims), ErrorLevel::Info);
-        MyErrorHandler::log("Shape: " + getShape(), ErrorLevel::Info);
-        MyErrorHandler::log("Strides: ", ErrorLevel::Info);
-        for (my_size_t i = 0; i < NumDims; ++i)
-            MyErrorHandler::log(std::to_string(getStride(i)) + " ", ErrorLevel::Info);
-        MyErrorHandler::log("\n", ErrorLevel::Info);
-    }
-
-    // Inverse permutation — restores the base tensor
-    FORCE_INLINE const Tensor &transpose() const noexcept { return t_; }
-
-    // Utility function to retrieve the shape of the tensor as (1,5,6) for a 3D tensor use the getNumDims
-    std::string getShape() const
-    {
-        std::string shape = "(";
-        for (my_size_t i = 0; i < NumDims; ++i)
-        {
-            shape += std::to_string(getDim(i));
-            if (i < NumDims - 1)
-                shape += ",";
-        }
-        shape += ")";
-        return shape;
-    }
-
-    FORCE_INLINE constexpr const value_type *data() const noexcept { return t_.data(); }
-
-private:
-    ExprStorage<Tensor> t_;
+    // Inverse permutation that restores the source. For a transpose of a tensor,
+    // that is the base tensor, whose physical layout IS the transposed data.
+    FORCE_INLINE const Tensor &transpose() const noexcept { return this->source(); }
 };
 
 #endif // FUSED_PERMUTED_VIEW_CONSTEXPR_H
