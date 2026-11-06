@@ -28,7 +28,8 @@
  * trailing axis, and a squeeze or slice can sit on a transpose.
  *
  * Examples:
- *
+ *  T is a [3,5,2,4] double tensor
+ *  
  *   SlicedLayout<T, Slice<0,1,1>, Slice<1,2,1>>  [1,1,2,4]  Strides [40,8,4,1]  Base 1*40 + 2*8 = 56
  *   SqueezedLayout<…, 0, 1>                      [2,4]      Strides [4,1]       Base 56
  *   SlicedLayout<…, Slice<0,1,1>>                [1,4]      Strides [4,1]       Base 56 + 1*4 = 60

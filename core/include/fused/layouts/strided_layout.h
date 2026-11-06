@@ -13,7 +13,7 @@
  *
  * Every layout chain starts here. This is the only layout that reads a padding
  * policy: it turns the policy's dims into the LogicalDims and Strides the view
- * layouts in layout_adapters.h build on. TPermutation is not part of this layout:
+ * layouts in layout_adapters.h build on. Permutation is not part of this layout:
  * PermutedLayout adds it on top.
  *
  * The index functions and the conversions between logical and physical come
