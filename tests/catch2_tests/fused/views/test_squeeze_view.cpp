@@ -462,6 +462,35 @@ TEMPLATE_TEST_CASE("squeeze_view: two pinned axes of a 3D tensor give a vector",
     }
 }
 
+TEMPLATE_TEST_CASE("squeeze_view: a padded trailing axis can be dropped",
+                   "[squeeze_view]", double, float, int)
+{
+    // The trailing 1 is padded to the SIMD width, so the squeezed [2,3] is
+    // strided: consecutive elements sit one padded row apart. Explicit strides
+    // describe that directly.
+    using T = TestType;
+    using Tensor = FusedTensorND<T, 2, 3, 1>;
+
+    Tensor A;
+    A.setSequencial();
+
+    auto view = SqueezeView<Tensor, 2>(A);
+
+    REQUIRE(view.getShape() == "(2,3)");
+    REQUIRE_FALSE(decltype(view)::IsPhysicallyContiguous);
+
+    FusedMatrix<T, 2, 3> result;
+    result = view;
+    for (my_size_t i = 0; i < 2; ++i)
+    {
+        for (my_size_t j = 0; j < 3; ++j)
+        {
+            REQUIRE(view(i, j) == A(i, j, 0));
+            REQUIRE(result(i, j) == A(i, j, 0));
+        }
+    }
+}
+
 TEMPLATE_TEST_CASE("squeeze_view: assign to a 3D tensor",
                    "[squeeze_view]", double, float, int)
 {
@@ -752,7 +781,7 @@ TEMPLATE_TEST_CASE("squeeze_view: matmul takes a copy, not the view",
 // ============================================================================
 // These are static_asserts. Uncomment one at a time; each must fail the build.
 // Reading a member is required, an unused alias never instantiates. The
-// policy's own cases are in unitest_squeezed_pad_policy.cpp.
+// layout's own cases are in fused/layouts/unitest_layout_adapters.cpp.
 
 TEST_CASE("squeeze_view: negative cases are compile-time errors",
           "[squeeze_view]")
@@ -762,11 +791,9 @@ TEST_CASE("squeeze_view: negative cases are compile-time errors",
 
     // using View = SqueezeView<Tensor, 1>;                                    // axis 1 has extent 3
     // using View = SqueezeView<FusedMatrix<double, 1, 4>, 0>;                 // leaves [4]: below the rank floor
-    // using View = SqueezeView<FusedTensorND<double, 2, 3, 1>, 2>;            // the 1 is padded: physically [2,3,4]
-    // using View = SqueezeView<PermutedViewConstExpr<Tensor, 0, 2, 1>, 0>;    // permuted source
-
-    // using Inner = SqueezeView<FusedTensorND<double, 1, 1, 3, 4>, 0>;
-    // using View = SqueezeView<Inner, 0>;                                     // nesting
 
     // (void)View::NumDims;
+
+    // No longer errors, since views compose (test_view_composition.cpp):
+    // a padded trailing 1, a permuted source, and a squeeze of a squeeze.
 }

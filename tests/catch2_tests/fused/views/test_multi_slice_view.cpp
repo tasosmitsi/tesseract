@@ -1029,8 +1029,8 @@ TEST_CASE("multi_slice_view: negative cases are compile-time errors",
     // using View = MultiSliceView<Matrix, Slice<0, 0, 1>, Slice<0, 1, 1>>;  // duplicate axis
     // using View = MultiSliceView<Matrix>;                                  // empty pack
 
-    // using Inner = MultiSliceView<Matrix, Slice<0, 0, 2>>;
-    // using View = MultiSliceView<Inner, Slice<1, 0, 2>>; // nesting
-
     // (void)View::NumDims;
+
+    // A slice of a slice no longer errors, since views compose
+    // (test_view_composition.cpp).
 }
